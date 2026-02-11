@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import {useNavigate} from "react-router-dom";
-// import styles from './Home.css';
 
 const Home: React.FC = () => {
     const navigate = useNavigate();
@@ -14,9 +13,9 @@ const Home: React.FC = () => {
 
     return (
         <div className="w-[1920px] h-[3308px] relative bg-lime-100 overflow-hidden">
-            <img className="w-[1922px] h-[757px] left-[-2px] top-[110px] absolute" src="https://placehold.co/1922x757" />
-            <div className="w-[1922px] h-72 left-0 top-[337px] absolute bg-amber-50/50" />
-            <div className="w-[1922px] h-40 left-0 top-[411px] absolute bg-amber-50/75" />
+            <img className="w-[1920px] h-[757px] left-[-2px] top-[110px] absolute" src="https://placehold.co/1920x757" />
+            <div className="w-[1920px] h-72 left-0 top-[337px] absolute bg-amber-50/50" />
+            <div className="w-[1920px] h-40 left-0 top-[411px] absolute bg-amber-50/75" />
             <div className="left-[594px] top-[414px] absolute text-center justify-start text-green-800 text-8xl font-semibold font-['Prompt'] [text-shadow:_0px_4px_20px_rgb(0_0_0_/_0.25)]">ธีรยุทธการเกษตร</div>
             <div className="w-[1920px] h-[744px] left-0 top-[1862px] absolute bg-amber-50" />
             <div className="w-[1720px] h-96 left-[100px] top-[2108px] absolute overflow-hidden">
