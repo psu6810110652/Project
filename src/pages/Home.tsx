@@ -50,7 +50,6 @@ const Home: React.FC = () => {
           </button>
         </label>
       </div>
-
     </div>
   );
 };
