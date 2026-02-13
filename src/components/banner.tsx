@@ -1,87 +1,128 @@
-// import { type JSX } from 'react';
+import { useRef, useState, useEffect, type JSX } from 'react';
+import { Products } from './products';
+import { type ProductCard } from '../types';
 
-// import { type } from './products';
+import Arrowleft from '../assets/svgs/arrow-left.svg';
+import Arrowright from '../assets/svgs/arrow-right.svg';
 
-// interface BoxProps {
-//     allProducts: (ProductCard & {
-//         isRecommend: boolean, isPromotion: boolean 
-//     })[];
-// }
+interface BoxProps {
+  allProducts: (ProductCard & {
+    isRecommend: boolean;
+    isPromotion: boolean;
+  })[];
+  type: 'recommend' | 'promotion';
+}
 
-// export const Box = ({ allProducts }: BoxProps): JSX.Element => {
-//   const recommendproducts = [
-//   ];
+const NavButton = ({ direction, onClick }: { direction: 'left' | 'right', onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`absolute top-1/2 -translate-y-1/2 z-20 w-20 h-20 flex items-center justify-center transition-transform rounded-full active:scale-90 ${
+      direction === 'left' ? 'left-8' : 'right-8'
+    }`}
+  >
+    <img
+      src={direction === 'left' ? Arrowright : Arrowleft}
+      alt={`nav-${direction}`}
+      className="w-full h-full object-contain"
+    />
+  </button>
+);
 
-//   const promotionalproducts = [
-//   ];
+export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
   
+  // เช็คว่าเป็นโหมดแนะนำหรือไม่
+  const isRecommend = type === 'recommend';
+  
+  const title = isRecommend ? "สินค้าแนะนำ" : "สินค้าโปรโมชั่น";
+  
+  // 1. กรองข้อมูลตามประเภท
+  let products = allProducts.filter(product => 
+    isRecommend ? product.isRecommend : product.isPromotion
+  );
 
-//   return (
-//     <section className="relative w-full h-[744px]">
-//       <div className="fixed top-[1031px] left-0 w-full h-[744px] bg-[#fffef2]">
-//         <header className="absolute top-[33px] left-40 w-[1602px] h-[148px] flex flex-col gap-[27px]">
-//           <h2 className="ml-[601px] w-[398px] h-[121px] [text-shadow:0px_4px_20px_#00000040] [font-family:'Prompt-SemiBold',Helvetica] font-semibold text-[#256d45] text-[80px] text-center tracking-[0] leading-[normal]">
-//             สินค้าแนะนำ
-//           </h2>
+  // 2. ตัดจำนวน "เฉพาะ" สินค้าแนะนำ ให้เหลือ 8 ชิ้น
+  if (isRecommend) {
+    products = products.slice(0, 8);
+  }
+  // (ถ้าเป็น promotion จะข้ามบรรทัดบนไป ทำให้แสดงครบทุกชิ้นที่มี)
 
-//           <img className="w-full h-[5px]" alt="Line" src={line1} />
-//         </header>
+  if (products.length === 0) return null;
 
-//         <div className="absolute top-[246px] right-[100px] w-full h-[442px] overflow-hidden overflow-x-scroll">
-//           {productCards.map((card) => (
-//             <article
-//               key={card.id}
-//               className="absolute w-[333px] h-[416px] aspect-[0.8]"
-//               style={{ top: card.topPosition, left: card.leftPosition }}
-//             >
-//               <div className="absolute w-full h-full top-0 left-0 bg-[#fffef2] rounded-[18.77px] shadow-[0px_3.75px_18.77px_#00000040]">
-//                 <div className="absolute w-[87.50%] h-[70.00%] top-[5.00%] left-[6.25%] bg-white rounded-[18.77px] border-[1.88px] border-solid border-[#256d45] shadow-[0px_3.75px_18.77px_#00000040]" />
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftBtn, setShowLeftBtn] = useState(false);
+  const [showRightBtn, setShowRightBtn] = useState(true);
 
-//                 <img
-//                   className="absolute w-[86.87%] h-[6.14%] top-[80.35%] left-[6.49%]"
-//                   alt="Rating"
-//                   src={card.ratingImage}
-//                 />
-//               </div>
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 400;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
-//               <button
-//                 className="absolute w-[7.42%] h-[6.20%] top-[89.80%] left-[86.25%] border-variable-collection-color"
-//                 aria-label="Add to cart"
-//               >
-//                 <img
-//                   className="absolute w-[87.10%] h-[75.97%] top-[12.49%] left-[6.45%]"
-//                   alt="Cart icon"
-//                   src={card.iconImage}
-//                 />
-//               </button>
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftBtn(scrollLeft > 0);
+      setShowRightBtn(scrollLeft + clientWidth < scrollWidth - 1);
+    }
+  };
 
-//               <p className="absolute w-[45.40%] h-[8.18%] top-[88.80%] left-[6.25%] [font-family:'Prompt-SemiBold',Helvetica] font-semibold text-[#256d45] text-[22.5px] tracking-[0] leading-[normal]">
-//                 {card.title}
-//               </p>
-//             </article>
-//           ))}
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer) {
+      handleScroll();
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [products]);
 
-//           <div className="absolute -top-2 left-[87px] w-[1675px] h-[313px] flex">
-//             {productImages.map((img, index) => (
-//               <img
-//                 key={index}
-//                 className={`${img.className} ${img.marginTop} ${img.marginLeft}`}
-//                 alt={`Product ${index + 1}`}
-//                 src={img.src}
-//               />
-//             ))}
-//           </div>
-//         </div>
+  return (
+    <section className="w-full h-150 bg-[#fffef2] overflow-hidden py-10">
+      <div className="w-full mx-auto">
+        
+        {/* Header */}
+        <header className="flex flex-col items-center mt-1">
+          <h2 className="text-[3rem] font-semibold text-[#256d45] [text-shadow:0px_4px_20px_#00000040] text-center [-webkit-text-stroke:2px_#256d45] tracking-[0.05em] leading-[normal]">
+            {title}
+          </h2>
+          <div className="w-[80%] h-0.75 bg-[#256d45] mt-2 rounded-full" />
+        </header>
 
-//         <nav className="absolute top-[425px] left-[50px] w-[1820px] h-[83px] flex gap-[1618px]">
-//           <button aria-label="Previous products">
-//             <IconComponentNode className="!-mt-3.5 !-ml-5 !w-[121px] !h-[121px]" />
-//           </button>
-//           <button aria-label="Next products">
-//             <Icon className="!-mt-4 !w-[121px] !h-[121px]" />
-//           </button>
-//         </nav>
-//       </div>
-//     </section>
-//   );
-// };
+        {/* Slider Area */}
+        <div className="relative group">
+          {showLeftBtn && (
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30 transition-opacity duration-300">
+              <NavButton direction="left" onClick={() => scroll('left')} />
+            </div>
+          )}
+
+          {showRightBtn && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 transition-opacity duration-300">
+              <NavButton direction="right" onClick={() => scroll('right')} />
+            </div>
+          )}
+
+          <div
+            ref={scrollRef}
+            className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth py-4 px-20 mt-2"
+          >
+            {products.map((product) => (
+              <div key={product.id} className="shrink-0">
+                <Products
+                  title={product.title}
+                  price={product.price}
+                  stock={product.stock}
+                  productImage={product.productImage}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};

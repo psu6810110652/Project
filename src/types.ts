@@ -5,9 +5,3 @@ export interface ProductCard {
     price: number;
     stock: number;
 }
-
-export interface BoxProps {
-    allProducts: (ProductCard & {
-        isRecommend: boolean, isPromotion: boolean 
-    })[];
-}

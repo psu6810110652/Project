@@ -1,7 +1,83 @@
 import React from 'react';
+import { Box } from '../components/banner';
 
-import HomeImage from '/public/images/Home.png';
+import HomeImage from '../assets/images/Home.png';
 import Seacrh from '../assets/svgs/search.svg';
+
+const mockProducts = [
+  {
+    id: 1,
+    title: "ชุดปุ๋ยอินทรีย์ Teerayut",
+    price: 250,
+    stock: 15,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+1",
+    isRecommend: true,
+    isPromotion: false
+  },
+  {
+    id: 2,
+    title: "เมล็ดพันธุ์แครอทออร์แกนิก",
+    price: 45,
+    stock: 50,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+2",
+    isRecommend: true,
+    isPromotion: true
+  },
+  {
+    id: 3,
+    title: "บัวรดน้ำเซรามิกสีพาสเทล",
+    price: 390,
+    stock: 5,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+3",
+    isRecommend: true,
+    isPromotion: false
+  },
+  {
+    id: 4,
+    title: "สเปรย์บำรุงใบ Kanpleet",
+    price: 185,
+    stock: 20,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+4",
+    isRecommend: true,
+    isPromotion: false
+  },
+  {
+    id: 5,
+    title: "สมุนไพรไล่แมลงสูตรเข้มข้น",
+    price: 120,
+    stock: 12,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+5",
+    isRecommend: true,
+    isPromotion: true
+  },
+  {
+    id: 6,
+    title: "จอบทำสวนสแตนเลส",
+    price: 450,
+    stock: 8,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+6",
+    isRecommend: true,
+    isPromotion: false
+  },
+  {
+    id: 7,
+    title: "กระถางต้นไม้ดินเผาใบใหญ่",
+    price: 590,
+    stock: 3,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+7",
+    isRecommend: true,
+    isPromotion: false
+  },
+  {
+    id: 8,
+    title: "ถุงมือทำสวนกันหนาม",
+    price: 89,
+    stock: 30,
+    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+8",
+    isRecommend: true,
+    isPromotion: false
+  }
+];
 
 const Home: React.FC = () => {
   return (
@@ -50,6 +126,14 @@ const Home: React.FC = () => {
           </button>
         </label>
       </div>
+
+      <div className="h-5" /> 
+
+      <Box allProducts={mockProducts} type="recommend" />
+
+      <div className="h-20" /> 
+
+      <Box allProducts={mockProducts} type="promotion" />
     </div>
   );
 };
