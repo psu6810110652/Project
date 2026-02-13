@@ -4,13 +4,14 @@ import { Box } from '../components/banner';
 import HomeImage from '../assets/images/Home.png';
 import Seacrh from '../assets/svgs/search.svg';
 
+// จำลองข้อมูลสินค้า
 const mockProducts = [
   {
     id: 1,
     title: "ชุดปุ๋ยอินทรีย์ Teerayut",
     price: 250,
     stock: 15,
-    productImage: "https://via.placeholder.com/300x400/e2e8f0/256d45?text=Product+1",
+    productImage: "../src/assets/images/test.png",
     isRecommend: true,
     isPromotion: false
   },

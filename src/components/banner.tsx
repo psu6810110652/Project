@@ -81,7 +81,7 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
   }, [products]);
 
   return (
-    <section className="w-full h-150 bg-[#fffef2] overflow-hidden py-10">
+    <section className="w-full h-160 bg-[#fffef2] overflow-hidden py-10">
       <div className="w-full mx-auto">
         
         {/* Header */}
