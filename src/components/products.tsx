@@ -1,6 +1,8 @@
+import { type ProductCard } from "../types";
+
 import Heart from "../assets/svgs/heart.svg";
 
-export const Products = () => {
+export const Products = (props: ProductCard) => {
     return (
         <div className="relative w-80 h-110">
             <div className="absolute w-full h-[90%] top-0 left-0 bg-[#fffef2] rounded-[20px] shadow-[0px_4px_20px_#00000040]">
@@ -8,7 +10,7 @@ export const Products = () => {
                     <img
                         className="absolute w-[75.00%] h-[75.00%] top-[12.50%] left-[12.50%]"
                         alt="Icon"
-                        src={Heart}
+                        src={props.productImage}
                     />
                 </div>
 
@@ -16,13 +18,13 @@ export const Products = () => {
                     
                     {/* บรรทัดบน: ชื่อสินค้า และ ราคา */}
                     <div className="flex justify-between items-baseline mb-1">
-                        <div className="text-2xl">ชื่อสินค้า</div>
-                        <div className="text-2xl">100 บาท</div>
+                        <div className="text-2xl">{props.title}</div>
+                        <div className="text-2xl">{props.price} บาท</div>
                     </div>
 
                     {/* บรรทัดล่าง: มีจำนวน และ หัวใจ (ชิดขวา) */}
                     <div className="flex justify-between items-center">
-                        <div className="text-lg font-normal">มีจำนวน xx ชิ้น</div>
+                        <div className="text-lg font-normal">มีจำนวน {props.stock} ชิ้น</div>
                         <img
                             className="w-6 h-6 object-contain"
                             alt="Heart Icon"
