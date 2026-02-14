@@ -8,12 +8,13 @@ import { ProductModule } from './product/product.module';
 @Module({
   imports: [TypeOrmModule.forRoot({
     type: 'postgres',
-    host: 'localhost',
+    host: 'db',
     port: 5432,
     username: 'admin',
     password: 'password123',
     database: 'teerayut_dev',
     entities: [], 
+    autoLoadEntities: true,
     synchronize: true,
   }), CategoryModule, ProductModule],
   controllers: [AppController],

@@ -18,11 +18,11 @@ export class CategoryService implements OnModuleInit {
     if (count === 0) {
       console.log('🌱 Seeding Agricultural Categories...');
       await this.categoryRepo.save([
-        { name: 'ปุ๋ย', description: 'fertilizer' },
+        { name: 'ปุ๋ย', description: 'fertilizers' },
         { name: 'อุปกรณ์', description: 'tools' },
         { name: 'เมล็ดพันธุ์', description: 'seeds' },
         { name: 'สารเคมี', description: 'chemicals' },
-        { name: 'อื่นๆ', description: 'other' },
+        { name: 'อื่นๆ', description: 'others' },
       ]);
       console.log('✅ Seeding complete.');
     }
