@@ -4,9 +4,11 @@ import {
     Column, 
     CreateDateColumn, 
     ManyToOne, 
-    JoinColumn 
+    JoinColumn,
+    OneToMany
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
+import { WholesalePrice } from './wholesale-price.entity';
 
 @Entity('products')
 export class Product {
@@ -35,8 +37,18 @@ export class Product {
     @CreateDateColumn({ name: 'created_at', nullable: true }) // timestamp
     createdAt: Date;
 
+    @Column({ length: 500, nullable: true })
+    imageUrl: string;
+
+    @Column({ length: 50, nullable: true })
+    unit: string;
+
     // --- ความสัมพันธ์ (Relation) กับตาราง Category ---
     @ManyToOne(() => Category, (category) => category.products)
     @JoinColumn({ name: 'category_id' })
     category: Category;
+
+    // --- ความสัมพันธ์ (Relation) กับตาราง WholesalePrice ---
+    @OneToMany(() => WholesalePrice, (wholesalePrice) => wholesalePrice.product, { cascade: true })
+    wholesalePrices: WholesalePrice[];
 }
