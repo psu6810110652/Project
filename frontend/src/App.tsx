@@ -5,6 +5,7 @@ import './App.css'
 import Home from './pages/Home'
 import Category from './pages/Category';
 import PendingConfirm from './pages/PendingConfirm';
+import PendingDelivery from './pages/PendingDelivery';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -22,6 +23,7 @@ function MainLayout() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/pending-confirm" element={<PendingConfirm />} />
+          <Route path="/pending-delivery" element={<PendingDelivery />} />
         </Routes>
       </div>
       <Footer />
