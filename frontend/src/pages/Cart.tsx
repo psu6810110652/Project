@@ -15,6 +15,22 @@ const Cart = () => {
     }
   };
 
+  const handleQuantityInput = (id: number, value: string) => {
+    if (value === '') {
+      // อนุญาตให้ช่องว่างชั่วคราว
+      setCartItems(cartItems.map(item =>
+        item.id === id ? { ...item, quantity: 0 } : item
+      ));
+    } else {
+      const numValue = parseInt(value) || 0;
+      if (numValue > 0) {
+        setCartItems(cartItems.map(item =>
+          item.id === id ? { ...item, quantity: numValue } : item
+        ));
+      }
+    }
+  };
+
   const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
@@ -46,11 +62,18 @@ const Cart = () => {
                       <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
                         <button
                           onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          className="text-[#256D45]hover:text-gray-700 text-xl w-6 h-6 flex items-center justify-center"
+                          className="text-[#256D45] hover:text-gray-700 text-xl w-6 h-6 flex items-center justify-center"
                         >
                           −
                         </button>
-                        <span className="text-lg font-semibold w-6 text-left text-[#256D45]">{item.quantity}</span>
+                        <input
+                          type="number"
+                          value={item.quantity === 0 ? '' : item.quantity}
+                          onChange={(e) => handleQuantityInput(item.id, e.target.value)}
+                          className="text-lg font-semibold w-10 text-center text-[#256D45] bg-gray-100 border-none outline-none"
+                          min="0"
+                          placeholder="0"
+                        />
                         <button
                           onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                           className="text-[#256D45] hover:text-[#1a4d2e] text-xl w-6 h-6 flex items-center justify-center"
