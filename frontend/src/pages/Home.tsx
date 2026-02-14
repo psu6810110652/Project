@@ -82,7 +82,7 @@ const mockProducts = [
 
 const Home: React.FC = () => {
   return (
-    <div className="mt-5 mb-10 relative overflow-hidden">
+    <div className="mb-10 relative overflow-hidden">
 
       {/* -------------------------------------------
           SECTION: HERO BANNER

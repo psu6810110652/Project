@@ -37,10 +37,10 @@ export default function Footer() {
               </Link>
 
               <Link
-                to="/seeds"
+                to="/fertilizers"
                 className="text-[#256D45] text-xl"
               >
-                เมล็ด
+                ปุ๋ย
               </Link>
 
               <Link
@@ -51,10 +51,10 @@ export default function Footer() {
               </Link>
 
               <Link
-                to="/fertilizers"
+                to="/seeds"
                 className="text-[#256D45] text-xl"
               >
-                ปุ๋ย
+                เมล็ด
               </Link>
               
               <Link

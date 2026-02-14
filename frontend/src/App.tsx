@@ -10,18 +10,28 @@ import Footer from './components/Footer';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 
+function MainLayout() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/:category" element={<Category />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
 function App() {
   return (
     <>
       <Router>
-        <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/:categoryName" element={<Category />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/profile" element={<Profile />} />
-          </Routes>
-        <Footer />
+        <MainLayout />
       </Router>
     </>
   )
