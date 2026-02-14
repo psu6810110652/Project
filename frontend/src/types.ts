@@ -1,14 +1,17 @@
 export interface ProductCard {
     id?: number;
-    productImage?: string;
-    title: string;
+    image?: string;
+    name: string;
     price: number;
     stock: number;
+
+    isRecommend?: boolean;
+    isPromotion?: boolean;
 }
 
 export interface Product{
     id: number;
-    title: string;      
+    name: string;      
     code?: string;     
     price: number;   
     promotionPrice?: number;
@@ -18,7 +21,7 @@ export interface Product{
     Type?: string;         
     description?: string; 
     
-    productImage: string;
+    image: string;
     gallery?: string[];    
     
     isRecommend: boolean;
@@ -28,4 +31,5 @@ export interface Product{
 export interface Category {
     id: number;
     name: string;
+    description: string;
 }
