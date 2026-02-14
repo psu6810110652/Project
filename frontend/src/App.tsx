@@ -4,6 +4,7 @@ import './App.css'
 
 import Home from './pages/Home'
 import Category from './pages/Category';
+import PendingConfirm from './pages/PendingConfirm';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -20,6 +21,7 @@ function MainLayout() {
           <Route path="/:category" element={<Category />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/pending-confirm" element={<PendingConfirm />} />
         </Routes>
       </div>
       <Footer />
