@@ -5,7 +5,7 @@ const statusList = [
   { label: 'รอยืนยัน', value: 7, color: 'text-[#256D45] border-[#256D45] bg-white', link: '/pending-confirm' },
   { label: 'รอจัดส่ง', value: 7, color: 'text-[#256D45] border-[#256D45] bg-white', link: '/pending-delivery' },
   { label: 'รอได้รับ', value: 7, color: 'text-[#256D45] border-[#256D45] bg-white', link: '/pending-received' },
-  { label: 'ไม่สำเร็จ', value: 7, color: 'text-red-600 border-red-400 bg-white' },
+  { label: 'ไม่สำเร็จ', value: 7, color: 'text-red-600 border-red-400 bg-white', link: '/failed' },
   { label: 'สำเร็จ', value: 7, color: 'text-[#256D45] border-[#256D45] bg-white' },
 ];
 
