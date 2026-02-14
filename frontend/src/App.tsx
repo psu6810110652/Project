@@ -8,6 +8,7 @@ import PendingConfirm from './pages/PendingConfirm';
 import PendingDelivery from './pages/PendingDelivery';
 import PendingReceived from './pages/PendingReceived';
 import Failed from './pages/Failed';
+import Success from './pages/Success';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -28,6 +29,7 @@ function MainLayout() {
           <Route path="/pending-delivery" element={<PendingDelivery />} />
           <Route path="/pending-received" element={<PendingReceived />} />
           <Route path="/failed" element={<Failed />} />
+          <Route path="/success" element={<Success />} />
         </Routes>
       </div>
       <Footer />
