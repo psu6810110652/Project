@@ -7,6 +7,8 @@ import Category from './pages/Category';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import Cart from './pages/Cart';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/:categoryName" element={<Category />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         <Footer />
       </Router>
