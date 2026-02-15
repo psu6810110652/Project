@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const statusList = [
@@ -32,7 +31,7 @@ const Profile = () => {
 
         {/* Status Cards */}
         <div className="flex flex-wrap gap-x-8 gap-y-8 justify-center mb-16">
-          {statusList.map((s, i) => (
+          {statusList.map((s) => (
             s.link ? (
               <button
                 key={s.label}

@@ -1,6 +1,4 @@
-import React from 'react';
 import BackButton from '../components/BackButton';
-
 const Success = () => {
   return (
     <div className="min-h-screen bg-[#DCEDC1] flex items-center justify-center font-['Prompt'] text-[#256D45]">
