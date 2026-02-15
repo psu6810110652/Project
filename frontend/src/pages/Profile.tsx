@@ -25,7 +25,7 @@ const Profile = () => {
           </div>
           <div className="flex flex-row gap-3 items-center self-start md:self-auto mt-2 md:mt-0">
             <button className="bg-white border border-[#256D45] text-[#256D45] font-semibold rounded-lg px-6 py-2 shadow-sm hover:bg-[#f3fbe9] transition text-lg" onClick={() => navigate('/favorites')}>รายการโปรด</button>
-            <button className="bg-white border border-[#256D45] text-[#256D45] font-semibold rounded-lg px-6 py-2 shadow-sm hover:bg-[#f3fbe9] transition text-lg">แก้ไข</button>
+            <button className="bg-white border border-[#256D45] text-[#256D45] font-semibold rounded-lg px-6 py-2 shadow-sm hover:bg-[#f3fbe9] transition text-lg" onClick={() => navigate('/edit-profile')}>แก้ไข</button>
             <button className="bg-white border border-red-500 text-red-600 font-semibold rounded-lg px-6 py-2 shadow-sm hover:bg-red-50 transition text-lg" onClick={() => navigate('/')}>ออกจากระบบ</button>
           </div>
         </div>

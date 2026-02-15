@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="absolute flex-1 flex flex-col text-left items-start left-30 top-8">
           <img
             src={logo}
-            alt="ธีรยุทธการเกษตร Logo"
+            alt="logo.png"
             className="w-30 h-30"
           />
           <h2 className="text-[#256D45] text-3xl font-bold mt-3 whitespace-nowrap [-webkit-text-stroke:1px_#256d45]">

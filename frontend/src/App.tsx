@@ -15,6 +15,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
+import EditProfile from './pages/EditProfile';
 
 function MainLayout() {
   return (
@@ -26,6 +27,7 @@ function MainLayout() {
           <Route path="/:category" element={<Category />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/pending-confirm" element={<PendingConfirm />} />
           <Route path="/pending-delivery" element={<PendingDelivery />} />
           <Route path="/pending-received" element={<PendingReceived />} />
