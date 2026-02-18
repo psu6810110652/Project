@@ -4,6 +4,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CategoryModule } from './category/category.module';
 import { ProductModule } from './product/product.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -16,7 +18,7 @@ import { ProductModule } from './product/product.module';
     entities: [], 
     autoLoadEntities: true,
     synchronize: true,
-  }), CategoryModule, ProductModule],
+  }), CategoryModule, ProductModule, UsersModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
