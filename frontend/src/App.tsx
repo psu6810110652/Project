@@ -7,8 +7,8 @@ import Category from './pages/Category';
 import PendingConfirm from './pages/PendingConfirm';
 import PendingDelivery from './pages/PendingDelivery';
 import PendingReceived from './pages/PendingReceived';
-import Failed from './pages/Failed';
-import Success from './pages/Success';
+import Failed from './components/Failed';
+import Success from './components/Success';
 import Favorites from './pages/Favorites';
 
 import Navbar from './components/Navbar';
