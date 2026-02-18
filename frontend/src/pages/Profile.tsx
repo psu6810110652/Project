@@ -14,7 +14,7 @@ const Profile = () => {
             </div>
             <div className="text-xl font-medium w-fit pb-2">อีเมล</div>
           </div>
-          <div className="flex flex-row gap-4 items-center flex-shrink-0">
+          <div className="flex flex-row gap-4 items-center shrink-0">
             <button className="bg-white border border-[#256D45] text-[#256D45] font-semibold rounded-lg px-10 py-4 shadow-sm hover:bg-[#f3fbe9] transition text-2xl" onClick={() => navigate('/favorites')}>รายการโปรด</button>
             <button className="bg-white border border-[#256D45] text-[#256D45] font-semibold rounded-lg px-10 py-4 shadow-sm hover:bg-[#f3fbe9] transition text-2xl" onClick={() => navigate('/edit-profile')}>แก้ไข</button>
             <button className="bg-white border border-red-500 text-red-600 font-semibold rounded-lg px-10 py-4 shadow-sm hover:bg-red-50 transition text-2xl" onClick={() => navigate('/')}>ออกจากระบบ</button>

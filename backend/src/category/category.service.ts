@@ -33,7 +33,8 @@ export class CategoryService implements OnModuleInit {
   async getCategoryStats() {
     try {
       const categories = await this.categoryRepo.find({
-        relations: ['products']
+        relations: ['products'],
+        order: { id: 'ASC' }
       });
 
       return categories.map(cat => ({

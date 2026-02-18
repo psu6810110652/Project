@@ -33,3 +33,9 @@ export interface Category {
     name: string;
     description: string;
 }
+
+export interface CategoryStat {
+    id: number;
+    name: string;
+    productCount: string | number;
+}
