@@ -14,7 +14,7 @@ function Navbar() {
         </Link>
 
         {/* เส้นคั่นแนวตั้ง */}
-        <div className="h-10 w-[2px] bg-[#256D45] mx-2"></div>
+        <div className="h-10 w-0.5 bg-[#256D45] mx-2"></div>
 
         {/* Navigation Links */}
         <nav className="flex gap-8 items-center">

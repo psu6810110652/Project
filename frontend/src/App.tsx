@@ -1,5 +1,4 @@
-// import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route }from 'react-router-dom'
 import './App.css'
 
 import Home from './pages/Home'
@@ -17,7 +16,12 @@ import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 
-function MainLayout() {
+{/* Admin Pages */}
+import BarAdmin from './components/BarAdmin';
+import Dashboard from './pages/Admin/Dashboard';
+import Order from './pages/Admin/Order';
+
+function UserLayout() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -41,13 +45,33 @@ function MainLayout() {
   );
 }
 
+function AdminLayout() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar /> 
+      <div className="flex flex-1">
+        <aside className="fixed left-0 top-20 w-80 h-[calc(100vh-80px)] z-20">
+          <BarAdmin />
+        </aside>
+        <main className="flex-1 ml-80 p-8 min-h-screen">
+          <Routes>
+            <Route index element={<Dashboard />} />
+            <Route path="orders" element={<Order />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <>
-      <Router>
-        <MainLayout />
-      </Router>
-    </>
+    <Router>
+      <Routes>
+        <Route path="/*" element={<UserLayout />} />
+        <Route path="/admin/*" element={<AdminLayout />} />
+      </Routes>
+    </Router>
   )
 }
 
