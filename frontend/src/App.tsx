@@ -21,6 +21,8 @@ import { ProductDetail } from './pages/ProductDetail';
 import BarAdmin from './components/BarAdmin';
 import Dashboard from './pages/Admin/Dashboard';
 import Order from './pages/Admin/Order';
+import ManageCategories from './pages/Admin/Category';
+import ManageProducts from './pages/Admin/Product';
 
 function UserLayout() {
   return (
@@ -59,6 +61,8 @@ function AdminLayout() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Order />} />
+            <Route path="products" element={<ManageCategories />} />
+            <Route path="products/:categoryId" element={<ManageProducts />} />
           </Routes>
         </main>
       </div>

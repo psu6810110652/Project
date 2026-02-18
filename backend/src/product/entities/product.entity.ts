@@ -1,21 +1,21 @@
-import { 
-    Entity, 
-    PrimaryGeneratedColumn, 
-    Column, 
-    CreateDateColumn, 
-    ManyToOne, 
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    ManyToOne,
     JoinColumn,
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
 
 @Entity('products')
 export class Product {
-    
+
     @PrimaryGeneratedColumn() // id เป็น serial (autoincrement)
     id: number;
 
-    @Column({ name: 'category_id', nullable: true }) // foreign key
-    categoryId: number;
+    // @Column({ name: 'category_id', nullable: true }) // foreign key
+    // categoryId: number;
 
     @Column() // varchar NN (Not Null)
     name: string;

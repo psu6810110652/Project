@@ -5,10 +5,19 @@ import { Home, ShoppingCart, ShoppingBag } from "lucide-react";
 const adminMenus = [
     { name: 'หน้าหลัก', icon: <Home className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin' },
     { name: 'คำสั่งซื้อ', icon: <ShoppingCart className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/orders',
-        subMenus: ['รอยืนยัน', 'รอจัดส่ง']
+        subMenus: [
+            { id: 'pending', name: 'รอยืนยัน' },
+            { id: 'shipping', name: 'รอจัดส่ง' }
+        ]
     },
     { name: 'สินค้า', icon: <ShoppingBag className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/products',
-        subMenus: ['เมล็ด', 'อุปกรณ์', 'ปุ๋ย', 'สารเคมี', 'อื่นๆ']
+        subMenus: [
+            { id: 1, name: 'ปุ๋ย' },
+            { id: 2, name: 'อุปกรณ์' },
+            { id: 3, name: 'เมล็ด' },
+            { id: 4, name: 'สารเคมี' },
+            { id: 5, name: 'อื่นๆ' }
+        ]
     },
     // { name: 'ลูกค้า', icon: '👤', path: '/admin/customers' },
 ];
@@ -44,7 +53,7 @@ const BarAdmin: React.FC = () => {
                                 className="no-underline"
                                 onClick={() => {
                                     if (menu.subMenus) {
-                                        setOpenMenu(isOpen ? null : menu.name);
+                                        setOpenMenu(menu.name);
                                     } else {
                                         setOpenMenu(null);
                                     }
@@ -74,18 +83,18 @@ const BarAdmin: React.FC = () => {
                             {menu.subMenus && isOpen && (
                                 <div className="bg-[#FFFEF2] rounded-br-[20px] flex flex-col w-[85%]">
                                     {menu.subMenus.map((sub, idx, arr) => {
-                                        const subPath = `${menu.path}/${sub}`;
+                                        const subPath = `${menu.path}/${sub.id}`;
                                         const isSubActive = location.pathname === subPath;
 
                                         return (
-                                            <React.Fragment key={sub}>
+                                            <React.Fragment key={sub.id}>
                                                 <Link 
                                                     to={subPath}
                                                     className={`pt-2 text-xl font-bold font-['Prompt'] transition-all ${
                                                         isSubActive ? 'text-[#256D45] scale-110' : 'text-[#256D45]'
                                                     }`}
                                                 >
-                                                    {sub}
+                                                    {sub.name}
                                                 </Link>
                                                 {idx !== arr.length && (
                                                     <div className="w-3/4 border-2 border-[#256D45] my-2 rounded-full mx-auto" />
@@ -101,7 +110,7 @@ const BarAdmin: React.FC = () => {
             </nav>
 
             {/* ปุ่มออกจากระบบ */}
-            <div className="px-5 mb-20">
+            <div className="px-10 mb-20">
                 <button className="w-full h-15 bg-[#FFFEF2] border-solid border-2 border-[#FF0004] rounded-[1.25rem] shadow-xl flex items-center justify-center group hover:bg-[#FF0004] transition-dissolve">
                     <span className="text-[#FF0004] text-2xl font-bold font-['Prompt'] group-hover:text-[#FFFEF2] transition-dissolve">
                         ออกจากระบบ

@@ -4,13 +4,15 @@ import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CategoryService implements OnModuleInit {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepo: Repository<Category>,
-  ) {}
+  ) { }
 
   // --- 1. ระบบ Seeding ข้อมูลเริ่มต้น (ทำงานตอน Start Server) ---
   async onModuleInit() {
@@ -28,11 +30,24 @@ export class CategoryService implements OnModuleInit {
     }
   }
 
-  // --- 2. สร้างหมวดหมู่ใหม่ ---
-  async create(createCategoryDto: CreateCategoryDto) {
-    const newCategory = this.categoryRepo.create(createCategoryDto);
-    return await this.categoryRepo.save(newCategory);
+  async getCategoryStats() {
+    try {
+      const categories = await this.categoryRepo.find({
+        relations: ['products'],
+        order: { id: 'ASC' }
+      });
+
+      return categories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        productCount: cat.products ? cat.products.length : 0
+      }));
+    } catch (error) {
+      console.error('Error fetching category stats:', error);
+      throw error;
+    }
   }
+
 
   // --- 3. ดึงหมวดหมู่ทั้งหมด ---
   async findAll() {
@@ -44,7 +59,7 @@ export class CategoryService implements OnModuleInit {
 
   // --- 4. ดึงหมวดหมู่ตาม ID ---
   async findOne(id: number) {
-    const category = await this.categoryRepo.findOne({ 
+    const category = await this.categoryRepo.findOne({
       where: { id },
       relations: ['products'] // ดึงข้อมูลสินค้าที่อยู่ในหมวดหมู่นี้ออกมาด้วย
     });
@@ -60,12 +75,5 @@ export class CategoryService implements OnModuleInit {
     const category = await this.findOne(id); // ตรวจสอบก่อนว่ามีไหม
     const updated = Object.assign(category, updateCategoryDto);
     return await this.categoryRepo.save(updated);
-  }
-
-  // --- 6. ลบหมวดหมู่ ---
-  async remove(id: number) {
-    const category = await this.findOne(id); // ตรวจสอบก่อนว่ามีไหม
-    await this.categoryRepo.remove(category);
-    return { message: `ลบหมวดหมู่ #${id} เรียบร้อยแล้ว` };
   }
 }

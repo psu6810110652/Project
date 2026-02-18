@@ -16,6 +16,9 @@ services:
       DB_NAME: teerayut_dev
     depends_on:
       - db
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
   db:
     image: postgres:14-alpine
     container_name: teerayut_db
