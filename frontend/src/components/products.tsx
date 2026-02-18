@@ -1,12 +1,24 @@
 import { type ProductCard } from "../types";
+import { useNavigate } from "react-router-dom";
 
 import Heart from "../assets/svgs/heart.svg";
 
 export const Products = (props: ProductCard) => {
+    const navigate = useNavigate();
+
+    const handleProductClick = () => {
+        if (props.id) {
+            navigate(`/product/${props.id}`);
+        }
+    };
+
     return (
         <div className="relative w-95 h-125">
             <div className="absolute w-full h-[90%] top-0 left-0 bg-[#fffef2] rounded-[20px] shadow-[0px_4px_20px_#00000040]">
-                <div className="absolute w-80 h-80 top-7.5 left-1/2 transform -translate-x-1/2 bg-white rounded-[20px] overflow-hidden border-2 border-solid border-[#256d45] shadow-[0px_4px_20px_#00000040]">
+                <div 
+                    className="absolute w-80 h-80 top-7.5 left-1/2 transform -translate-x-1/2 bg-white rounded-[20px] overflow-hidden border-2 border-solid border-[#256d45] shadow-[0px_4px_20px_#00000040] cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={handleProductClick}
+                >
                     <img
                         className="absolute w-80 h-80 py-5 left-1/2 transform -translate-x-1/2 object-contain"
                         alt="Icon"
@@ -20,7 +32,6 @@ export const Products = (props: ProductCard) => {
                 </div>
 
                 <div className="absolute w-80 top-90 left-7.5 font-semibold text-[#256d45]">
-                    
                     {/* บรรทัดบน: ชื่อสินค้า และ ราคา */}
                     <div className="flex items-baseline mb-1">
                         <div className=" text-2xl text-left font-semibold [-webkit-text-stroke:0.75px_#256d45] tracking-[0.05em] leading-[normal]">{props.name}</div>

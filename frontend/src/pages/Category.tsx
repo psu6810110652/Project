@@ -110,6 +110,7 @@ const Category: React.FC = () => {
                             products.map((product) => (
                                 <Products
                                     key={product.id}
+                                    id={product.id}
                                     name={product.name}
                                     price={product.price}
                                     stock={product.stock}

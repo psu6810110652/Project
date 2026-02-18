@@ -15,6 +15,7 @@ import Footer from './components/Footer';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
+import { ProductDetail } from './pages/ProductDetail';
 
 {/* Admin Pages */}
 import BarAdmin from './components/BarAdmin';
@@ -38,6 +39,7 @@ function UserLayout() {
           <Route path="/failed" element={<Failed />} />
           <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
         </Routes>
       </div>
       <Footer />
