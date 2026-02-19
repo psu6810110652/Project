@@ -62,7 +62,7 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           
           <div className="flex flex-col gap-1.5">
-            <label className="text-[#256D45] text-xl font-semibold">ชื่อผู้ใช้</label>
+            <label className="text-[#256D45] text-xl font-semibold relative right-51">ชื่อผู้ใช้</label>
             <input
               type="text"
               name="username"
@@ -74,7 +74,7 @@ const Register = () => {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[#256D45] text-xl font-semibold">อีเมล</label>
+            <label className="text-[#256D45] text-xl font-semibold relative right-52">อีเมล</label>
             <input
               type="email"
               name="email"
@@ -86,7 +86,7 @@ const Register = () => {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[#256D45] text-xl font-semibold">รหัสผ่าน</label>
+            <label className="text-[#256D45] text-xl font-semibold relative right-49">รหัสผ่าน</label>
             <input
               type="password"
               name="password"
@@ -98,7 +98,7 @@ const Register = () => {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[#256D45] text-xl font-semibold">ยืนยันรหัสผ่านอีกครั้ง</label>
+            <label className="text-[#256D45] text-xl font-semibold relative right-35">ยืนยันรหัสผ่านอีกครั้ง</label>
             <input
               type="password"
               name="confirmPassword"
@@ -113,7 +113,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-xl font-semibold w-[121px] h-[55px] rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center"
+              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-5xl font-semibold w-[121px] h-[55px] rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center"
             >
               {loading ? '...' : 'ยืนยัน'}
             </button>

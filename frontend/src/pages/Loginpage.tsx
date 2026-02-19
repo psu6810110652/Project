@@ -35,7 +35,7 @@ const Login = () => {
     
     <div className="min-h-screen bg-[#DCEDC1] flex flex-col items-center justify-center font-['Prompt'] p-4">
       
-      {/* Title */}
+      {/* เข้าสู่ระบบ */}
       <h1 
         className="text-[#256D45] text-5xl md:text-[80px] font-semibold mb-8 text-center"
         style={{ textShadow: '0px 4px 20px rgba(0, 0, 0, 0.25)' }}
@@ -54,9 +54,9 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           
-          {/* Input: Username/Email */}
+          {/* ใส่ Username/Email */}
           <div className="flex flex-col gap-2">
-            <label className="text-[#256D45] text-xl md:text-2xl font-semibold">อีเมล หรือ ชื่อผู้ใช้งาน</label>
+            <label className="text-[#256D45] text-xl md:text-2xl font-semibold relative right-30">อีเมล หรือ ชื่อผู้ใช้งาน</label>
             <input
               type="text"
               name="username"
@@ -67,9 +67,9 @@ const Login = () => {
             />
           </div>
 
-          {/* Input: Password */}
+          {/* ใส่รหัสผ่าน */}
           <div className="flex flex-col gap-2">
-            <label className="text-[#256D45] text-xl md:text-2xl font-semibold">รหัสผ่าน</label>
+            <label className="text-[#256D45] text-xl md:text-2xl font-semibold relative right-47">รหัสผ่าน</label>
             <input
               type="password"
               name="password"
@@ -80,7 +80,7 @@ const Login = () => {
             />
           </div>
 
-          {/* Options: Remember me & Forgot Password */}
+          {/* จดจำฉัน กับ ลืมรหัสผ่าน */}
           <div className="flex justify-between items-center mt-2">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" className="w-5 h-5 md:w-[22px] md:h-[22px] accent-[#256D45]" />
@@ -96,7 +96,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-xl md:text-2xl font-semibold w-[121px] h-[56px] rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center"
+              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-5xl md:text-2xl font-semibold w-[121px] h-[56px] rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center"
             >
               {loading ? '...' : 'ยืนยัน'}
             </button>
