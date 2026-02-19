@@ -36,7 +36,6 @@ function MainLayout() {
           <Route path="/failed" element={<Failed />} />
           <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
-          
           <Route path="/login" element={<Loginpage />} />
           <Route path="/register" element={<Register />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -57,4 +56,4 @@ function App() {
   )
 }
 
-export default App;
+export default App; 
