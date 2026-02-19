@@ -1,5 +1,5 @@
 export interface ProductCard {
-    id?: number;
+    id?: string;
     image?: string;
     name: string;
     price: number;
@@ -9,23 +9,25 @@ export interface ProductCard {
     isPromotion?: boolean;
 }
 
-export interface Product{
-    id: number;
-    name: string;      
-    code?: string;     
-    price: number;   
+export interface Product {
+    id: string; // Product Code is used as ID
+    name: string;
+    price: number;
     promotionPrice?: number;
-    stock: number;         
+    stock: number;
     volumeDiscount?: string;
-    Category?: string;      
-    Type?: string;         
-    description?: string; 
-    
-    image: string;
-    gallery?: string[];    
-    
+    Category?: string;
+    Type?: string;
+    description?: string;
+
+    image?: string;
+    imageUrl?: string;
+    thumbnailUrl?: string; // Small version
+    gallery?: string[];
+
     isRecommend: boolean;
     isPromotion: boolean;
+    stockQuantity?: number;
 }
 
 export interface Category {

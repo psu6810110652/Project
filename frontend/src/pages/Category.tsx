@@ -37,7 +37,6 @@ const Category: React.FC = () => {
 
                 if (!targetCategory) {
                     console.warn(`Category not found. Searched for: "${decodedSlug}"`);
-                    // alert(`Debug: ไม่พบหมวดหมู่ "${decodedSlug}" ในระบบ \nรายชื่อที่มี: ${allCategories.map(c => c.name + '/' + c.description).join(", ")}`);
                 }
 
                 if (targetCategory) {
@@ -58,7 +57,7 @@ const Category: React.FC = () => {
         if (categorySlug) {
             fetchCategoryData();
         }
-    }, [categorySlug]); // Re-fetch เมื่อเปลี่ยนหมวดหมู่ใน URL
+    }, [categorySlug]);
 
     if (loading) return <div>กำลังโหลดข้อมูล...</div>;
 

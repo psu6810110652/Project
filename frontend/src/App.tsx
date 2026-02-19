@@ -22,7 +22,8 @@ import BarAdmin from './components/BarAdmin';
 import Dashboard from './pages/Admin/Dashboard';
 import Order from './pages/Admin/Order';
 import ManageCategories from './pages/Admin/Category';
-import ManageProducts from './pages/Admin/Product';
+import ViewProducts from './pages/Admin/Product';
+import ManageProduct from './pages/Admin/ManagerProduct';
 
 function UserLayout() {
   return (
@@ -62,7 +63,9 @@ function AdminLayout() {
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Order />} />
             <Route path="products" element={<ManageCategories />} />
-            <Route path="products/:categoryId" element={<ManageProducts />} />
+            <Route path="products/:categoryId" element={<ViewProducts />} />
+            <Route path="products/:categoryId/new" element={<ManageProduct />} />
+            <Route path="products/:categoryId/:code" element={<ManageProduct />} />
           </Routes>
         </main>
       </div>
