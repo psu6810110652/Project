@@ -113,6 +113,8 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
             {products.map((product) => (
               <div key={product.id} className="shrink-0">
                 <Products
+                  key={product.id}
+                  id={product.id}
                   name={product.name}
                   price={product.price}
                   stock={product.stock}

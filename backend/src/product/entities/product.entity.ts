@@ -1,24 +1,31 @@
-import { 
-    Entity, 
-    PrimaryGeneratedColumn, 
-    Column, 
-    CreateDateColumn, 
-    ManyToOne, 
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    ManyToOne,
     JoinColumn,
+    PrimaryColumn,
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
 
 @Entity('products')
 export class Product {
-    
-    @PrimaryGeneratedColumn() // id เป็น serial (autoincrement)
-    id: number;
 
-    @Column({ name: 'category_id', nullable: true }) // foreign key
-    categoryId: number;
+    @PrimaryColumn() // id is now the product code (string)
+    id: string;
 
     @Column() // varchar NN (Not Null)
     name: string;
+
+    @Column({ name: 'image_url', nullable: true, type: 'text' })
+    imageUrl: string;
+
+    @Column({ name: 'thumbnail_url', nullable: true, type: 'text' })
+    thumbnailUrl: string;
+
+    @Column({ nullable: true }) // Product type/subcategory
+    type: string;
 
     @Column({ type: 'text', nullable: true }) // description text (nullable)
     description: string;
@@ -28,6 +35,12 @@ export class Product {
 
     @Column({ name: 'stock_quantity' }) // int NN
     stockQuantity: number;
+
+    @Column({ name: 'is_promotion', default: false })
+    isPromotion: boolean;
+
+    @Column({ name: 'promotion_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
+    promotionPrice: number;
 
     @Column({ name: 'is_featured', nullable: true }) // boolean
     isFeatured: boolean;

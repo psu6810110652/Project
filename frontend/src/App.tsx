@@ -22,6 +22,7 @@ import Loginpage from './pages/Loginpage';
 import Register from './pages/Register';
 
 // Admin Pages
+{/* Admin Pages */ }
 import BarAdmin from './components/BarAdmin';
 import Dashboard from './pages/Admin/Dashboard';
 import Order from './pages/Admin/Order';
