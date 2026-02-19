@@ -10,16 +10,16 @@ import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [TypeOrmModule.forRoot({
     type: 'postgres',
-    host: 'localhost',
-    port: 5432,
-    username: 'admin',
-    password: 'password123',
-    database: 'teerayut_dev',
-    entities: [], 
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    username: process.env.DB_USERNAME || 'admin',
+    password: process.env.DB_PASSWORD || 'password123',
+    database: process.env.DB_NAME || 'teerayut_dev',
+    entities: [],
     autoLoadEntities: true,
     synchronize: true,
   }), CategoryModule, ProductModule, UsersModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
