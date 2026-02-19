@@ -17,25 +17,25 @@ const ManageCategories: React.FC = () => {
 
     return (
         <div className="flex flex-col gap-10 font-['Prompt'] p-8">
-            <h1 className="text-6xl font-semibold text-[#256D45] drop-shadow-md">
-                จัดการสินค้า
-            </h1>
+            <div className="flex flex-col items-center justify-center w-full mx-auto">
+                <h1 className="text-6xl font-semibold text-[#256D45] drop-shadow-md [-webkit-text-stroke:1.75px_#256d45] tracking-[0.05em]">
+                    จัดการสินค้า
+                </h1>
+                <div className="mt-4 h-1 w-full bg-[#256D45] rounded-full shadow-sm"></div>
+            </div>
 
-            <div className="grid grid-cols-2 gap-10">
-                {stats.map((item, index) => {
-                    // ✅ แปลง productCount เป็นตัวเลขเพื่อเช็คค่า 0
+            <div className="flex flex-wrap justify-center gap-10">
+                {stats.map((item) => {
                     const countNumber = Number(item.productCount) || 0;
                     const isEmpty = countNumber === 0;
-                    const isLastItem = index === stats.length - 1 && stats.length % 2 !== 0;
 
                     return (
                         <div 
                             key={item.id}
                             onClick={() => navigate(`/admin/products/${item.id}`)}
                             className={`
-                                h-96 rounded-[30px] shadow-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105
+                                h-90 w-90 rounded-[20px] shadow-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105
                                 ${isEmpty ? 'bg-gray-50 border-2 border-dashed border-gray-300' : 'bg-[#FFFEF2]'} 
-                                ${isLastItem ? 'col-span-2 w-1/2 mx-auto' : ''}
                             `}
                         >
                             <span className={`text-7xl font-semibold ${isEmpty ? 'text-gray-400' : 'text-[#256D45]'}`}>
