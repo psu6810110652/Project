@@ -17,6 +17,9 @@ import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 
+import Loginpage from './pages/Loginpage';
+import Register from './pages/Register';
+
 function MainLayout() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -34,6 +37,8 @@ function MainLayout() {
           <Route path="/failed" element={<Failed />} />
           <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
+          <Route path="/login" element={<Loginpage />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </div>
       <Footer />
