@@ -15,11 +15,20 @@ import Footer from './components/Footer';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
+import { ProductDetail } from './pages/ProductDetail';
 
+//Login/Registerนะเพื่อนๆ
 import Loginpage from './pages/Loginpage';
 import Register from './pages/Register';
 
-function MainLayout() {
+import BarAdmin from './components/BarAdmin';
+import Dashboard from './pages/Admin/Dashboard';
+import Order from './pages/Admin/Order';
+import ManageCategories from './pages/Admin/Category';
+import ViewProducts from './pages/Admin/Product';
+import ManageProduct from './pages/Admin/ManagerProduct';
+
+function UserLayout() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -38,6 +47,7 @@ function MainLayout() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/login" element={<Loginpage />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -46,14 +56,38 @@ function MainLayout() {
   );
 }
 
+function AdminLayout() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex flex-1">
+        <aside className="fixed left-0 top-20 h-[calc(100vh-80px)] z-20">
+          <BarAdmin />
+        </aside>
+        <main className="flex-1 ml-70 p-8 min-h-screen">
+          <Routes>
+            <Route index element={<Dashboard />} />
+            <Route path="orders" element={<Order />} />
+            <Route path="products" element={<ManageCategories />} />
+            <Route path="products/:categoryId" element={<ViewProducts />} />
+            <Route path="products/:categoryId/new" element={<ManageProduct />} />
+            <Route path="products/:categoryId/:code" element={<ManageProduct />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <>
-      <Router>
-        <MainLayout />
-      </Router>
-    </>
+    <Router>
+      <Routes>
+        <Route path="/*" element={<UserLayout />} />
+        <Route path="/admin/*" element={<AdminLayout />} />
+      </Routes>
+    </Router>
   )
 }
 
-export default App; 
+export default App;
