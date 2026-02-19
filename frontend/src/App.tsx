@@ -1,5 +1,4 @@
-// import { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 
 import Home from './pages/Home'
@@ -37,8 +36,10 @@ function MainLayout() {
           <Route path="/failed" element={<Failed />} />
           <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
+          
           <Route path="/login" element={<Loginpage />} />
           <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
       <Footer />
