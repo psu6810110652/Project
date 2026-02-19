@@ -17,10 +17,11 @@ import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import { ProductDetail } from './pages/ProductDetail';
 
-//Login/Registerนะเพื่อนๆ
+// Login/Register
 import Loginpage from './pages/Loginpage';
 import Register from './pages/Register';
 
+// Admin Pages
 import BarAdmin from './components/BarAdmin';
 import Dashboard from './pages/Admin/Dashboard';
 import Order from './pages/Admin/Order';
