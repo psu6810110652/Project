@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BackButton from '../components/BackButton';
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -42,7 +41,6 @@ const EditProfile = () => {
   return (
     <div className="min-h-screen bg-[#DCEDC1] font-['Prompt'] text-[#256D45]">
       <div className="relative">
-        <BackButton />
         <button 
           onClick={handleDeleteAccount}
           className="absolute top-4 right-8 bg-white border-2 border-red-500 text-red-500 font-bold py-2 px-4 rounded-full shadow hover:bg-red-50 transition-colors"
