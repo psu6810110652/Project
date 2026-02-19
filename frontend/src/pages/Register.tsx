@@ -51,7 +51,7 @@ const Register = () => {
         สมัครบัญชี
       </h1>
 
-      <div className="bg-[#FFFEF2] w-full max-w-[563px] rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] p-8 md:p-12">
+      <div className="bg-[#FFFEF2] w-full max-w-140 rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] p-8 md:p-12">
         
         {error && (
           <div className="bg-red-100 text-red-600 p-3 rounded-lg mb-6 text-center font-medium">
@@ -68,7 +68,7 @@ const Register = () => {
               name="username"
               placeholder="ชื่อผู้ใช้"
               required
-              className="bg-[#EDEDED] w-full h-[57px] rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
+              className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
           </div>
@@ -80,7 +80,7 @@ const Register = () => {
               name="email"
               placeholder="อีเมล"
               required
-              className="bg-[#EDEDED] w-full h-[57px] rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
+              className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
           </div>
@@ -92,7 +92,7 @@ const Register = () => {
               name="password"
               placeholder="รหัสผ่าน"
               required
-              className="bg-[#EDEDED] w-full h-[57px] rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
+              className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
           </div>
@@ -104,7 +104,7 @@ const Register = () => {
               name="confirmPassword"
               placeholder="รหัสผ่าน"
               required
-              className="bg-[#EDEDED] w-full h-[57px] rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
+              className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
           </div>
@@ -113,7 +113,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-5xl font-semibold w-[121px] h-[55px] rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center"
+              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-2xl font-semibold w-30 h-12 rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center"
             >
               {loading ? '...' : 'ยืนยัน'}
             </button>
