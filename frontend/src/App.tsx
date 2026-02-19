@@ -11,6 +11,7 @@ import Success from './components/Success';
 import Favorites from './pages/Favorites';
 
 import Navbar from './components/Navbar';
+import { AuthProvider } from './context/AuthContext';
 import Footer from './components/Footer';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
@@ -84,12 +85,16 @@ function AdminLayout() {
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/*" element={<UserLayout />} />
-        <Route path="/admin/*" element={<AdminLayout />} />
-      </Routes>
+      {/* เอา AuthProvider มาครอบไว้ตรงนี้ */}
+      <AuthProvider> 
+        <Routes>
+          <Route path="/*" element={<UserLayout />} />
+          <Route path="/admin/*" element={<AdminLayout />} />
+        </Routes>
+      </AuthProvider>
     </Router>
   )
 }
+
 
 export default App;

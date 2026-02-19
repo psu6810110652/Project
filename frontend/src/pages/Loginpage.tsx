@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react'; // 🌟 1. เพิ่ม useContext
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api'; 
+import { AuthContext } from '../context/AuthContext'; // 🌟 2. Import AuthContext
 
 const Login = () => {
   const navigate = useNavigate();
+  const auth = useContext(AuthContext); // 🌟 3. เรียกใช้ AuthContext
+
   const [formData, setFormData] = useState({
     username: '', 
     password: '',
@@ -22,7 +25,18 @@ const Login = () => {
 
     try {
       const response = await api.post('/auth/login', formData);
+      
+      // เก็บ Token ลง localStorage (ตามที่คุณเคยเขียนไว้)
       localStorage.setItem('token', response.data.access_token);
+      
+      // 🌟 4. โยนข้อมูลบอก Context ว่ามีคนล็อกอินแล้วนะ!
+      if (auth) {
+        auth.login({
+          name: formData.username, // ตอนนี้เอา username ที่กรอกมาแสดงเป็นชื่อชั่วคราวก่อนครับ
+          token: response.data.access_token
+        });
+      }
+
       navigate('/'); 
     } catch (err: any) {
       setError('อีเมล/ชื่อผู้ใช้งาน หรือ รหัสผ่านไม่ถูกต้อง');
@@ -32,7 +46,6 @@ const Login = () => {
   };
 
   return (
-    
     <div className="min-h-screen bg-[#DCEDC1] flex flex-col items-center justify-center font-['Prompt'] p-4">
       
       {/* เข้าสู่ระบบ */}
