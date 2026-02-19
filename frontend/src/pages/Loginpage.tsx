@@ -115,10 +115,16 @@ const Login = () => {
 
           {/* Google Login Button */}
           <button className="bg-[#D9D9D9] w-full h-[72px] rounded-[20px] flex items-center justify-center gap-4 hover:bg-gray-300 transition-colors">
-            {/* ใส่ Icon Google ตรงนี้แทน placehold */}
-            <div className="w-[30px] h-[30px] bg-white rounded-full flex items-center justify-center font-bold text-lg">G</div>
-            <span className="text-[#256D45] text-xl md:text-2xl font-semibold">เข้าสู่ระบบผ่าน Google</span>
-          </button>
+  
+  {/* รูปโลโก้ Google ผ่าน URL */}
+  <img 
+    src="https://www.svgrepo.com/show/475656/google-color.svg" 
+    alt="Google Logo" 
+    className="w-[30px] h-[30px]" 
+  />
+
+  <span className="text-[#256D45] text-xl md:text-2xl font-semibold">เข้าสู่ระบบผ่าน Google</span>
+  </button>
         </div>
 
       </div>
