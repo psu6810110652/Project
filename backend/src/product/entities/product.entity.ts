@@ -24,6 +24,9 @@ export class Product {
     @Column({ name: 'thumbnail_url', nullable: true, type: 'text' })
     thumbnailUrl: string;
 
+    @Column({ nullable: true }) // Product type/subcategory
+    type: string;
+
     @Column({ type: 'text', nullable: true }) // description text (nullable)
     description: string;
 

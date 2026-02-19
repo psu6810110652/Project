@@ -4,6 +4,7 @@ export interface ProductCard {
     name: string;
     price: number;
     stock: number;
+    type?: string;
 
     isRecommend?: boolean;
     isPromotion?: boolean;
@@ -40,4 +41,11 @@ export interface CategoryStat {
     id: number;
     name: string;
     productCount: string | number;
+}
+
+export interface SearchProps {
+    onSearch?: (value: string) => void;
+    onChange?: (value: string) => void;
+    placeholder?: string;
+    className?: string;
 }

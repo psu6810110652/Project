@@ -8,5 +8,6 @@ export class CreateProductDto {
     stockQuantity: number;
     imageUrl?: string;
     thumbnailUrl?: string;
+    type?: string;
     category: { id: number };
 }

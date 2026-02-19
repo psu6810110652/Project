@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Save, ImagePlus, X, Package, Hash, Coins, Database, FileText, Tag } from 'lucide-react';
-import { message } from 'antd';
+import { Save, ImagePlus, X, Package, Hash, Coins, Database, FileText, Tag, FolderTree } from 'lucide-react';
+import { message, AutoComplete } from 'antd';
 
 const ManagerProduct: React.FC = () => {
     const [messageApi, contextHolder] = message.useMessage();
@@ -20,11 +20,22 @@ const ManagerProduct: React.FC = () => {
         stock: 0,
         description: '',
         imageUrl: '',
-        thumbnailUrl: ''
+        thumbnailUrl: '',
+        type: ''
     });
 
-    // ถ้าเป็นโหมดแก้ไข ให้ดึงข้อมูลเก่ามาใส่ฟอร์ม
+    const [existingTypes, setExistingTypes] = useState<{ value: string }[]>([]);
+
     useEffect(() => {
+        if (categoryId) {
+            axios.get(`/api/product/category/${categoryId}`)
+                .then(res => {
+                    const uniqueTypes = [...new Set(res.data.map((p: any) => p.type).filter((t: any) => t))];
+                    setExistingTypes(uniqueTypes.map((t: any) => ({ value: t })));
+                })
+                .catch(err => console.error("Error fetching types:", err));
+        }
+
         if (isEditMode) {
             axios.get(`/api/product/${productId}`).then(res => {
                 setFormData({
@@ -34,11 +45,12 @@ const ManagerProduct: React.FC = () => {
                     isPromotion: res.data.isPromotion || false,
                     promotionPrice: res.data.promotionPrice || 0,
                     imageUrl: res.data.imageUrl || '',
-                    thumbnailUrl: res.data.thumbnailUrl || ''
+                    thumbnailUrl: res.data.thumbnailUrl || '',
+                    type: res.data.type || ''
                 });
             }).catch(() => messageApi.error("ดึงข้อมูลสินค้าไม่สำเร็จ"));
         }
-    }, [productId, isEditMode]);
+    }, [productId, isEditMode, categoryId]);
 
     const handleSave = async () => {
         setLoading(true);
@@ -53,6 +65,7 @@ const ManagerProduct: React.FC = () => {
                 description: formData.description,
                 imageUrl: formData.imageUrl,
                 thumbnailUrl: formData.thumbnailUrl,
+                type: formData.type,
                 category: { id: Number(categoryId) }
             };
 
@@ -64,8 +77,7 @@ const ManagerProduct: React.FC = () => {
                 messageApi.success("เพิ่มสินค้าใหม่เรียบร้อย");
             }
             navigate(-1);
-        } catch (err) {
-            // Check for 413 error specifically
+        } catch (err: any) {
             if (axios.isAxiosError(err) && err.response?.status === 413) {
                 messageApi.error("ไฟล์ภาพมีขนาดใหญ่เกินไป กรุณาลดขนาดไฟล์");
             } else {
@@ -99,11 +111,11 @@ const ManagerProduct: React.FC = () => {
                         canvas.width = width;
                         canvas.height = height;
                         ctx?.drawImage(img, 0, 0, width, height);
-                        return canvas.toDataURL('image/jpeg', 0.8); // 80% quality JPEG
+                        return canvas.toDataURL('image/jpeg', 0.8);
                     };
 
-                    const mainImage = resizeImage(800); // Full size for details
-                    const thumbnail = resizeImage(300); // 300px for thumbnails
+                    const mainImage = resizeImage(800);
+                    const thumbnail = resizeImage(300);
 
                     setFormData(prev => ({
                         ...prev,
@@ -144,10 +156,12 @@ const ManagerProduct: React.FC = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Main Content: Single Column for Forms, Image at Bottom */}
+            <div className="flex flex-col gap-10">
 
-                <div className="lg:col-span-2 space-y-6 bg-white p-8 rounded-[40px] shadow-xl border-4 border-[#256D45]">
-                    <div className="grid grid-cols-2 gap-6">
+                {/* FIELDS SECTION */}
+                <div className="bg-white p-8 rounded-[40px] shadow-xl border-4 border-[#256D45]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputBox label="ชื่อสินค้า" icon={<Package size={20} />}>
                             <input
                                 className="input-style"
@@ -162,12 +176,41 @@ const ManagerProduct: React.FC = () => {
                                 onChange={e => setFormData({ ...formData, code: e.target.value })}
                             />
                         </InputBox>
+
+                        {/* Type Field: Now Col Span 1 */}
+                        <InputBox label="ประเภทสินค้า" icon={<FolderTree size={20} />}>
+                            <AutoComplete
+                                options={existingTypes}
+                                value={formData.type}
+                                onChange={(val) => setFormData({ ...formData, type: val })}
+                                className="w-full"
+                                filterOption={(inputValue, option) =>
+                                    option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+                                }
+                            >
+                                <input
+                                    className="input-style"
+                                    placeholder="ระบุหรือเลือกประเภทสินค้า"
+                                />
+                            </AutoComplete>
+                        </InputBox>
+
+                        {/* Price: Moved next to Type */}
                         <InputBox label="ราคาสินค้าปกติ (บาท)" icon={<Coins size={20} />}>
                             <input
                                 type="number"
                                 className="input-style"
                                 value={formData.price}
                                 onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
+                            />
+                        </InputBox>
+
+                        <InputBox label="จำนวนสินค้าในคลัง" icon={<Database size={20} />}>
+                            <input
+                                type="number"
+                                className="input-style"
+                                value={formData.stock}
+                                onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
                             />
                         </InputBox>
 
@@ -198,54 +241,52 @@ const ManagerProduct: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <InputBox label="จำนวนสินค้าในคลัง" icon={<Database size={20} />}>
-                            <input
-                                type="number"
-                                className="input-style"
-                                value={formData.stock}
-                                onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
-                            />
-                        </InputBox>
-                    </div>
 
-                    <InputBox label="รายละเอียดสินค้า" icon={<FileText size={20} />}>
-                        <textarea
-                            rows={6}
-                            className="input-style"
-                            value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        />
-                    </InputBox>
+                        {/* Description: Col Span 2 (Full Width) */}
+                        <div className="col-span-1 md:col-span-2">
+                            <InputBox label="รายละเอียดสินค้า" icon={<FileText size={20} />}>
+                                <textarea
+                                    rows={6}
+                                    className="input-style"
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </InputBox>
+                        </div>
+                    </div>
                 </div>
 
-                {/* ฝั่งขวา: รูปภาพสินค้า (1/3) */}
-                <div className="lg:col-span-1">
-                    <div className="bg-white p-6 rounded-[40px] border-4 border-[#256D45] shadow-xl h-full min-h-100 flex flex-col items-center justify-center relative group">
-                        {formData.imageUrl ? (
-                            <div className="w-full h-full">
-                                <img src={formData.imageUrl} className="w-full h-full object-contain rounded-3xl" />
-                                <button
-                                    onClick={() => setFormData({ ...formData, imageUrl: '', thumbnailUrl: '' })}
-                                    className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full shadow-lg"
-                                >
-                                    <X size={20} />
-                                </button>
+                {/* IMAGE UPLOAD SECTION: Moved to Bottom */}
+                <div className="bg-white p-8 rounded-[40px] border-4 border-[#256D45] shadow-xl flex flex-col items-center justify-center relative group min-h-80">
+                    <h2 className="text-2xl font-bold text-[#256D45] mb-6 flex items-center gap-2">
+                        <ImagePlus /> รูปภาพสินค้า
+                    </h2>
+
+                    {formData.imageUrl ? (
+                        <div className="relative w-full max-w-lg">
+                            <img src={formData.imageUrl} className="w-full h-auto object-contain rounded-3xl border-2 border-[#E8E8E8]" />
+                            <button
+                                onClick={() => setFormData({ ...formData, imageUrl: '', thumbnailUrl: '' })}
+                                className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-all"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                    ) : (
+                        <label className="flex flex-col items-center gap-4 cursor-pointer text-[#256D45] w-full h-60 justify-center border-2 border-dashed border-[#256D45]/30 rounded-3xl hover:bg-[#F0F7F0] transition-all">
+                            <div className="p-6 bg-[#F0F7F0] rounded-full group-hover:bg-[#256D45] group-hover:text-white transition-all">
+                                <ImagePlus size={64} />
                             </div>
-                        ) : (
-                            <label className="flex flex-col items-center gap-4 cursor-pointer text-[#256D45]">
-                                <div className="p-6 bg-[#F0F7F0] rounded-full group-hover:bg-[#256D45] group-hover:text-white transition-all">
-                                    <ImagePlus size={64} />
-                                </div>
-                                <span className="text-xl font-bold">อัปโหลดรูปสินค้า</span>
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                />
-                            </label>
-                        )}
-                    </div>
+                            <span className="text-xl font-bold">อัปโหลดรูปสินค้า</span>
+                            <span className="text-sm text-gray-500">รองรับไฟล์ JPG, PNG (แนะนำขนาด 800x800px)</span>
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                            />
+                        </label>
+                    )}
                 </div>
             </div>
 

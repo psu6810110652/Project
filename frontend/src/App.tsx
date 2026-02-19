@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route }from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 
 import Home from './pages/Home'
@@ -17,7 +17,7 @@ import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import { ProductDetail } from './pages/ProductDetail';
 
-{/* Admin Pages */}
+{/* Admin Pages */ }
 import BarAdmin from './components/BarAdmin';
 import Dashboard from './pages/Admin/Dashboard';
 import Order from './pages/Admin/Order';
@@ -43,6 +43,7 @@ function UserLayout() {
           <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
       <Footer />
@@ -53,7 +54,7 @@ function UserLayout() {
 function AdminLayout() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar /> 
+      <Navbar />
       <div className="flex flex-1">
         <aside className="fixed left-0 top-20 h-[calc(100vh-80px)] z-20">
           <BarAdmin />
