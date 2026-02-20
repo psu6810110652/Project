@@ -13,8 +13,11 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ default: 'Customer' })
+  @Column({ default: 'User' })
   role: string;
+
+  @Column({ default: false })
+  isGoogleLogin: boolean;
 
   @Column({ name:'phone_number', nullable: true })
   phoneNumber: string;

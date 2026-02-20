@@ -149,7 +149,7 @@ const ManagerProduct: React.FC = () => {
                 <button
                     onClick={handleSave}
                     disabled={loading}
-                    className="flex items-center gap-2 bg-[#256D45] text-white !px-10 !py-3 rounded-full font-bold text-xl shadow-lg hover:bg-[#1a4d31] transition-all disabled:bg-gray-400"
+                    className="flex items-center gap-2 bg-[#256D45] text-white px-10! py-3! rounded-full font-bold text-xl shadow-lg hover:bg-[#1a4d31] transition-all disabled:bg-gray-400"
                 >
                     <Save size={24} />
                     {loading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
