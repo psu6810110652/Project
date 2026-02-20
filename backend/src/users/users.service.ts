@@ -35,18 +35,41 @@ export class UsersService {
       where: { username } 
     });
   }
+
+  async findOneById(id: number): Promise<User | null> {
+    return await this.usersRepository.findOne({ 
+      where: { id } 
+    });
+  }
   
-  findAll() {
+  async findOneByEmail(email: string): Promise<User | null> {
+    return await this.usersRepository.findOne({ 
+      where: { email } 
+    });
+  }
+
+  async findAll(): Promise<User[]> {
     return this.usersRepository.find();
   }
 
   
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.usersRepository.preload({
+      id,
+      ...updateUserDto,
+    });
+    if (!user) {
+      throw new ConflictException('User not found');
+    }
+    return this.usersRepository.save(user);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    const user = await this.findOneById(id);
+    if (!user) {
+      throw new ConflictException('User not found');
+    }
+    return this.usersRepository.remove(user);
   }
 }
     
