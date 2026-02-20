@@ -61,7 +61,7 @@ const PaymentPage: React.FC = () => {
       <div className="w-full max-w-4xl flex justify-start mb-4">
         <button
           onClick={() => navigate('/cart')}
-          className="bg-white text-[#256D45] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50 border border-gray-200"
+          className="bg-white text-[#256D45] font-bold !py-2 !px-6 rounded-xl shadow-sm hover:bg-gray-50 border border-gray-200"
         >
           กลับไปตะกร้า
         </button>
@@ -165,7 +165,7 @@ const PaymentPage: React.FC = () => {
             </div>
             <div className="text-[#256D45]">
               <h3 className="text-xl font-bold mb-1">Prompt pay</h3>
-              <p className="text-2xl md:text-3xl font-black mb-2 tracking-wider">09X-XXXXXXX</p>
+              <p className="text-2xl md:text-3xl font-black mb-2 tracking-wider">098-1911669</p>
               <p className="font-bold">ชื่อบัญชี :</p>
               <p className="font-bold">Teerayutkankasatshop</p>
               <p className="font-bold">ธีรยุทธการเกษตร</p>
@@ -198,7 +198,7 @@ const PaymentPage: React.FC = () => {
         <div className="flex justify-end mt-4">
           <button 
             onClick={handleConfirm}
-            className="bg-[#256D45] border-2 border-[#256D45] text-white font-bold text-xl px-12 py-3 rounded-full hover:bg-white hover:text-[#256D45] transition-all shadow-md"
+            className="bg-[#256D45] border-2 border-[#256D45] text-white font-bold text-xl !px-5 !py-2 rounded-full hover:bg-white hover:text-[#256D45] transition-all shadow-md"
           >
             ยืนยันการสั่งซื้อ
           </button>

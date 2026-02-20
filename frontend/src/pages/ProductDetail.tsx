@@ -118,37 +118,6 @@ export const ProductDetail: React.FC = () => {
     }
   };
 
-  const handleAddToFavorites = async () => {
-    if (!id) {
-      setMessage('ไม่พบ ID สินค้า');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/favorites/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId: id
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      setMessage('เพิ่มสินค้าลงรายการโปรดเรียบร้อยแล้ว');
-      setTimeout(() => setMessage(''), 3000);
-      
-    } catch (error) {
-      console.error('Error adding to favorites:', error);
-      setMessage(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถเพิ่มรายการโปรดได้'}`);
-      setTimeout(() => setMessage(''), 5000);
-    }
-  };
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1 && product && newQuantity <= product.stockQuantity) {
@@ -156,16 +125,6 @@ export const ProductDetail: React.FC = () => {
     }
   };
 
-  const handleImageChange = (direction: 'prev' | 'next') => {
-    const images = product?.imageUrl ? [product.imageUrl] : [];
-    if (images.length <= 1) return;
-    
-    if (direction === 'prev') {
-      setSelectedImageIndex((prev) => prev === 0 ? images.length - 1 : prev - 1);
-    } else {
-      setSelectedImageIndex((prev) => prev === images.length - 1 ? 0 : prev + 1);
-    }
-  };
 
   const renderStars = (rating: number = 0) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -198,7 +157,7 @@ export const ProductDetail: React.FC = () => {
       <div className="fixed top-24 left-4 z-40">
         <button 
           onClick={() => navigate(-1)}
-          className="bg-white text-[#2a6b3b] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50"
+          className="bg-white text-[#2a6b3b] font-bold !py-2 !px-6 rounded-xl shadow-sm hover:bg-gray-50"
         >
             กลับ
         </button>
@@ -344,7 +303,7 @@ export const ProductDetail: React.FC = () => {
                 <div className="flex gap-1 p-2">
                     <button 
                         onClick={() => setActiveTab('description')}
-                        className={`font-bold py-3 px-8 rounded-t-xl transition-colors ${
+                        className={`font-bold !py-3 !px-8 rounded-t-xl transition-colors ${
                             activeTab === 'description' 
                                 ? 'bg-[#3a7c50] text-white' 
                                 : 'bg-gray-200 text-gray-600'
@@ -354,7 +313,7 @@ export const ProductDetail: React.FC = () => {
                     </button>
                     <button 
                         onClick={() => setActiveTab('pricing')}
-                        className={`font-bold py-3 px-8 rounded-t-xl transition-colors ${
+                        className={`font-bold py-3 !px-8 rounded-t-xl transition-colors ${
                             activeTab === 'pricing' 
                                 ? 'bg-[#3a7c50] text-white' 
                                 : 'bg-gray-200 text-gray-600'
