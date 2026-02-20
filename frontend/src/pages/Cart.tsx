@@ -212,11 +212,17 @@ const Cart = () => {
               </div>
 
               <button 
-                onClick={() => navigate('/')}
-                className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors"
-              >
-                สั่งซื้อ
-              </button>
+  // 🌟 แก้ไขตรงนี้: แนบ state ข้อมูลตะกร้าและราคารวมไปด้วย
+          onClick={() => navigate('/payment', { 
+            state: { 
+              cartItems: cartItems, 
+              totalPrice: totalPrice 
+            } 
+          })}
+          className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors"
+        >
+          สั่งซื้อ
+        </button>
             </div>
           </div>
         )}

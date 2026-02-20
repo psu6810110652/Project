@@ -30,6 +30,7 @@ import Order from './pages/Admin/Order';
 import ManageCategories from './pages/Admin/Category';
 import ViewProducts from './pages/Admin/Product';
 import ManageProduct from './pages/Admin/ManagerProduct';
+import PaymentPage from './pages/PaymentPage';
 
 function UserLayout() {
   return (
@@ -42,6 +43,7 @@ function UserLayout() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/payment" element={<PaymentPage />} />
           <Route path="/pending-confirm" element={<PendingConfirm />} />
           <Route path="/pending-delivery" element={<PendingDelivery />} />
           <Route path="/pending-received" element={<PendingReceived />} />
