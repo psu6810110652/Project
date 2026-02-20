@@ -1,22 +1,35 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload } from 'lucide-react';
+
+// สร้าง Interface สำหรับรับข้อมูลที่ส่งมาจาก Cart
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  imageUrl?: string;
+  isPromotion?: boolean;
+  promotionPrice?: number;
+}
 
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [slipImage, setSlipImage] = useState<string | null>(null);
 
-  // จำลองข้อมูล (ของจริงอาจจะดึงมาจาก Context, Redux หรือ API)
-  const orderData = {
-    productName: 'ชื่อสินค้า',
-    quantity: 1000,
-    price: 100,
-    shippingFee: 10000,
-    discount: 1000,
-    total: 9100,
-    address: 'ชื่อ-นามสกุล เบอร์โทร\nบ้านเลขที่/ชื่อหอพักและเลขห้องพัก ซอย ถนน ตำบล จังหวัด\nรหัสไปรษณีย์',
-    qrCodeUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg' // เปลี่ยนเป็นรูป QR Code จริงของคุณ
-  };
+  // 🌟 ดึงข้อมูลจากตะกร้า ถ้าไม่มีให้ใช้ค่าเริ่มต้น (อาทิเช่น ผู้ใช้ Refresh หน้า)
+  const cartItems: CartItem[] = location.state?.cartItems || [];
+  const totalPrice: number = location.state?.totalPrice || 0;
+
+  // ข้อมูลที่ต้องจำลองไว้ก่อน (เพราะหน้า Cart ยังไม่มี)
+  const shippingFee = 0; // สมมติว่าส่งฟรี
+  const discount = 0;
+  const finalTotal = totalPrice + shippingFee - discount;
+
+  // ที่อยู่ และ QR Code ปลอม (ของจริงควรดึงจาก API หรือให้ผู้ใช้กรอก)
+  const deliveryAddress = 'นาย สมชาย ใจดี 089-123-4567\n123/45 ซอยสุขใจ ถนนลาดพร้าว\nแขวงจตุจักร เขตจตุจักร กรุงเทพฯ\n10900';
+  const qrCodeUrl = 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg';
 
   const handleUploadSlip = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -27,6 +40,11 @@ const PaymentPage: React.FC = () => {
   };
 
   const handleConfirm = () => {
+    if (cartItems.length === 0) {
+      alert("ไม่มีสินค้าในตะกร้า กลับไปเลือกสินค้าก่อนนะครับ");
+      navigate('/cart');
+      return;
+    }
     if (!slipImage) {
       alert("กรุณาอัปโหลดสลิปโอนเงินก่อนยืนยันครับ");
       return;
@@ -37,9 +55,20 @@ const PaymentPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-8 flex flex-col items-center">
+    <div className="min-h-screen p-8 flex flex-col items-center font-['Prompt']">
+      
+      {/* ปุ่มย้อนกลับ */}
+      <div className="w-full max-w-4xl flex justify-start mb-4">
+        <button
+          onClick={() => navigate('/cart')}
+          className="bg-white text-[#256D45] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50 border border-gray-200"
+        >
+          กลับไปตะกร้า
+        </button>
+      </div>
+
       {/* หัวข้อหน้า */}
-      <h1 className="text-4xl md:text-5xl font-bold text-[#256D45] mb-8 mt-4">
+      <h1 className="text-4xl md:text-5xl font-bold text-[#256D45] mb-8">
         ชำระเงิน
       </h1>
 
@@ -47,24 +76,48 @@ const PaymentPage: React.FC = () => {
         
         {/* === การ์ดที่ 1: สรุปคำสั่งซื้อ === */}
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col md:flex-row gap-8">
+          
           {/* ซ้าย: ข้อมูลสินค้าและที่อยู่ */}
           <div className="flex-1 flex flex-col gap-6">
-            <div className="flex gap-4">
-              {/* รูปสินค้า */}
-              <div className="w-24 h-24 bg-gray-100 rounded-xl border border-gray-200 flex-shrink-0 overflow-hidden">
-                 <img src="https://via.placeholder.com/100" alt="Product" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-[#256D45]">{orderData.productName}</h2>
-                <p className="text-[#256D45] font-semibold mt-1">จำนวน <span className="ml-4">{orderData.quantity} ชิ้น</span></p>
-              </div>
+            
+            {/* 🌟 แสดงรายการสินค้าแบบ Scroll ได้ */}
+            <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
+              <h3 className="text-xl font-bold text-[#256D45] border-b pb-2">รายการสินค้า ({cartItems.length} รายการ)</h3>
+              
+              {cartItems.length === 0 ? (
+                <p className="text-red-500">ไม่พบข้อมูลสินค้า กรุณากลับไปที่ตะกร้า</p>
+              ) : (
+                cartItems.map((item) => (
+                  <div key={item.id} className="flex gap-4 items-center bg-gray-50 p-3 rounded-xl">
+                    {/* รูปสินค้า */}
+                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xl text-gray-400">📦</span>
+                      )}
+                    </div>
+                    {/* ข้อมูล */}
+                    <div className="flex-1">
+                      <h2 className="text-lg font-bold text-[#256D45]">{item.name}</h2>
+                      <div className="flex justify-between mt-1">
+                        <p className="text-[#256D45] font-medium">จำนวน: {item.quantity} ชิ้น</p>
+                        <p className="text-[#256D45] font-bold">
+                          {(item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price) * item.quantity} ฿
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            <div>
+            {/* ที่อยู่จัดส่ง */}
+            <div className="mt-4">
               <h3 className="text-xl font-bold text-[#256D45] mb-2">สถานที่จัดส่ง</h3>
               <div className="border-2 border-[#256D45]/30 rounded-2xl p-4 bg-[#F8FBF8]">
                 <p className="text-[#256D45] whitespace-pre-line text-sm md:text-base leading-relaxed font-medium">
-                  {orderData.address}
+                  {deliveryAddress}
                 </p>
               </div>
             </div>
@@ -77,24 +130,28 @@ const PaymentPage: React.FC = () => {
 
           {/* ขวา: สรุปยอดเงิน */}
           <div className="flex-1 flex flex-col justify-between py-2">
+            <h3 className="text-xl font-bold text-[#256D45] border-b pb-2 mb-4">สรุปยอด</h3>
+            
             <div className="space-y-4 text-lg font-bold text-[#256D45]">
               <div className="flex justify-between">
-                <span>ราคาสินค้า</span>
-                <span>{orderData.price} ฿</span>
+                <span>ราคาสินค้ารวม</span>
+                <span>{totalPrice} ฿</span>
               </div>
               <div className="flex justify-between">
                 <span>ค่าจัดส่ง</span>
-                <span>{orderData.shippingFee} ฿</span>
+                <span>{shippingFee} ฿</span>
               </div>
-              <div className="flex justify-between">
-                <span>ส่วนลด</span>
-                <span>{orderData.discount} ฿</span>
-              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-red-500">
+                  <span>ส่วนลด</span>
+                  <span>-{discount} ฿</span>
+                </div>
+              )}
             </div>
             
-            <div className="flex justify-between mt-8 text-xl md:text-2xl font-black text-[#256D45] pt-4 border-t-2 border-transparent">
-              <span>รวมยอดสั่งซื้อทั้งหมด</span>
-              <span>{orderData.total} ฿</span>
+            <div className="flex justify-between mt-8 text-xl md:text-2xl font-black text-[#256D45] pt-4 border-t-2 border-[#256D45]">
+              <span>ยอดชำระสุทธิ</span>
+              <span className="text-2xl">฿ {finalTotal}</span>
             </div>
           </div>
         </div>
@@ -104,7 +161,7 @@ const PaymentPage: React.FC = () => {
           {/* ซ้าย: QR Code */}
           <div className="flex-1 flex items-center gap-6 w-full">
             <div className="w-32 h-32 md:w-40 md:h-40 flex-shrink-0 bg-white border border-gray-200 rounded-xl p-2 shadow-sm">
-              <img src={orderData.qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
+              <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
             </div>
             <div className="text-[#256D45]">
               <h3 className="text-xl font-bold mb-1">Prompt pay</h3>
@@ -141,9 +198,9 @@ const PaymentPage: React.FC = () => {
         <div className="flex justify-end mt-4">
           <button 
             onClick={handleConfirm}
-            className="bg-white border-2 border-[#256D45] text-[#256D45] font-bold text-xl px-12 py-3 rounded-full hover:bg-[#256D45] hover:text-white transition-all shadow-md"
+            className="bg-[#256D45] border-2 border-[#256D45] text-white font-bold text-xl px-12 py-3 rounded-full hover:bg-white hover:text-[#256D45] transition-all shadow-md"
           >
-            ยืนยัน
+            ยืนยันการสั่งซื้อ
           </button>
         </div>
 
