@@ -160,10 +160,32 @@ export const ProductDetail: React.FC = () => {
   };
 
   const currentImages = product?.imageUrl ? [product.imageUrl] : [];
-  const currentImage = currentImages[selectedImageIndex] || product?.imageUrl;
+  // If no images exist, create array with first image repeated 4 times
+  const displayImages = currentImages.length === 0 ? [
+    '/api/placeholder/320/320',
+    '/api/placeholder/320/320',
+    '/api/placeholder/320/320',
+    '/api/placeholder/320/320'
+  ] : currentImages.length === 1 ? [
+    product?.imageUrl,
+    product?.imageUrl,
+    product?.imageUrl,
+    product?.imageUrl
+  ] : currentImages;
+  const currentImage = displayImages[selectedImageIndex] || product?.imageUrl || '/api/placeholder/320/320';
 
   return (
     <div className="min-h-screen bg-[#DCEDC1] font-['Prompt']">
+      {/* Fixed Back Button */}
+      <div className="fixed top-24 left-4 z-40">
+        <button 
+          onClick={() => navigate(-1)}
+          className="bg-white text-[#2a6b3b] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50"
+        >
+            กลับ
+        </button>
+      </div>
+      
       {/* Message Display */}
       {message && (
         <div className={`fixed top-24 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
@@ -190,23 +212,13 @@ export const ProductDetail: React.FC = () => {
       {!productLoading && product && (
         <div className="pt-24 pb-8">
           <div className="container mx-auto px-4 max-w-6xl">
-            
-            {/* Back Button */}
-            <div className="mb-6">
-              <button 
-                onClick={() => navigate(-1)}
-                className="bg-white text-[#2a6b3b] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50"
-              >
-                  กลับ
-              </button>
-            </div>
 
             <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
                 
                 <div className="flex flex-col md:flex-row gap-8">
                         <div className="flex gap-4">
                             <div className="flex flex-col gap-3">
-                                {currentImages.map((image, index) => (
+                                {displayImages.map((image, index) => (
                                     <div 
                                         key={index} 
                                         onClick={() => setSelectedImageIndex(index)}
@@ -214,7 +226,13 @@ export const ProductDetail: React.FC = () => {
                                             index === selectedImageIndex ? 'border-[#2a6b3b]' : 'border-gray-300'
                                         }`}
                                     >
-                                        <img src={image} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
+                                        {image && image.includes('/api/placeholder/') ? (
+                                            <div className="text-gray-400 text-center">
+                                                <span className="text-2xl">�</span>
+                                            </div>
+                                        ) : (
+                                            <img src={image || ''} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -260,15 +278,25 @@ export const ProductDetail: React.FC = () => {
                                     <span className="text-lg font-bold">−</span>
                                 </button>
                                 <input
-                                    type="number"
+                                    type="text"
                                     min="1"
                                     max={product?.stockQuantity || 999}
                                     value={quantity}
                                     onChange={(e) => {
-                                        const newQuantity = parseInt(e.target.value) || 1;
-                                        if (newQuantity >= 1 && product && newQuantity <= product.stockQuantity) {
-                                            setQuantity(newQuantity);
+                                        const inputValue = e.target.value;
+                                        // Allow empty input or valid numbers
+                                        if (inputValue === '' || /^\d+$/.test(inputValue)) {
+                                            setQuantity(inputValue === '' ? 0 : parseInt(inputValue));
                                         }
+                                    }}
+                                    onBlur={(e) => {
+                                        // Ensure valid value on blur
+                                        const value = parseInt(e.target.value) || 1;
+                                        const finalQuantity = Math.max(1, Math.min(value, product?.stockQuantity || 999));
+                                        setQuantity(finalQuantity);
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.select(); // Select all text on focus for easy replacement
                                     }}
                                     className="w-20 h-10 text-center border-2 border-[#2a6b3b] font-bold text-lg focus:outline-none focus:border-green-600 rounded"
                                 />
