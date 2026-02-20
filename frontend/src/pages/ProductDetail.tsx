@@ -63,8 +63,8 @@ export const ProductDetail: React.FC = () => {
   }, [id]);
 
   const handleAddToCart = async () => {
-    if (!id) {
-      setMessage('ไม่พบ ID สินค้า');
+    if (!id || !product) {
+      setMessage('ไม่พบข้อมูลสินค้า');
       return;
     }
 
@@ -72,21 +72,39 @@ export const ProductDetail: React.FC = () => {
     setMessage('');
 
     try {
-      const response = await fetch('/api/cart/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId: id,
-          quantity: quantity
-        })
-      });
+      // Get existing cart from localStorage
+      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      
+      // Check if product already exists in cart
+      const existingItemIndex = existingCart.findIndex((item: any) => item.id === id);
+      
+      const cartItem = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: quantity,
+        imageUrl: product.imageUrl,
+        stockQuantity: product.stockQuantity,
+        isPromotion: product.isPromotion,
+        promotionPrice: product.promotionPrice
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      if (existingItemIndex >= 0) {
+        // Update existing item quantity
+        existingCart[existingItemIndex].quantity += quantity;
+      } else {
+        // Add new item
+        existingCart.push(cartItem);
       }
+
+      // Save to localStorage
+      localStorage.setItem('cart', JSON.stringify(existingCart));
+      
+      // Trigger storage event for other components
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'cart',
+        newValue: JSON.stringify(existingCart)
+      }));
 
       setMessage('เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว');
       setTimeout(() => setMessage(''), 3000);

@@ -1,13 +1,59 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  imageUrl?: string;
+  stockQuantity?: number;
+  isPromotion?: boolean;
+  promotionPrice?: number;
+}
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: 'เมล็ดแตงโม', price: 150, quantity: 2, image: 'https://placehold.co/100x100' },
-    { id: 2, name: 'ปุ๋ยยูเรีย', price: 200, quantity: 1, image: 'https://placehold.co/100x100' },
-    { id: 3, name: 'จอบ', price: 250, quantity: 1, image: 'https://placehold.co/100x100' },
-  ]);
+  const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleQuantityChange = (id: number, newQuantity: number) => {
+  // Load cart data from localStorage on component mount
+  useEffect(() => {
+    const loadCart = () => {
+      try {
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+          const cartData = JSON.parse(savedCart);
+          setCartItems(cartData);
+        }
+      } catch (error) {
+        console.error('Error loading cart:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCart();
+
+    // Listen for cart updates from other components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cart') {
+        loadCart();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    if (!isLoading) {
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    }
+  }, [cartItems, isLoading]);
+
+  const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity > 0) {
       setCartItems(cartItems.map(item =>
         item.id === id ? { ...item, quantity: newQuantity } : item
@@ -15,9 +61,8 @@ const Cart = () => {
     }
   };
 
-  const handleQuantityInput = (id: number, value: string) => {
+  const handleQuantityInput = (id: string, value: string) => {
     if (value === '') {
-      // อนุญาตให้ช่องว่างชั่วคราว
       setCartItems(cartItems.map(item =>
         item.id === id ? { ...item, quantity: 0 } : item
       ));
@@ -31,10 +76,39 @@ const Cart = () => {
     }
   };
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const handleRemoveItem = (id: string) => {
+    setCartItems(cartItems.filter(item => item.id !== id));
+  };
+
+  const totalPrice = cartItems.reduce((sum, item) => {
+    const itemPrice = item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price;
+    return sum + (itemPrice * item.quantity);
+  }, 0);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#DCEDC1] font-['Prompt'] text-[#256D45] py-12">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="text-center py-12">
+            <p className="text-xl text-[#256D45]">กำลังโหลดข้อมูลรถเข็น...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#DCEDC1] font-['Prompt'] text-[#256D45] py-12">
+      {/* Fixed Back Button */}
+      <div className="fixed top-24 left-4 z-40">
+        <button
+          onClick={() => navigate('/')}
+          className="bg-white text-[#256D45] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50"
+        >
+          กลับ
+        </button>
+      </div>
+      
       <div className="container mx-auto px-4 max-w-7xl">
         <h1 className="text-5xl font-bold mb-12 text-left text-[#256D45]">รถเข็น</h1>
 
@@ -48,45 +122,72 @@ const Cart = () => {
             <div className="lg:col-span-3">
               <div className="bg-[#FFFEF2] rounded-2xl shadow-lg overflow-hidden p-6">
                 <div className="space-y-4">
-                  {cartItems.map(item => (
-                    <div key={item.id} className="flex items-center gap-6 pb-4 border-b border-gray-200 last:border-b-0">
-                      <div className="flex-shrink-0">
-                        <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg bg-gray-300" />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-semibold text-[#256D45]">{item.name}</h3>
-                        <p className="text-lg text-[#256D45]">ราคา: ฿{item.price}</p>
-                      </div>
+                  {cartItems.map(item => {
+                    const itemPrice = item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price;
+                    return (
+                      <div key={item.id} className="flex items-center gap-6 pb-4 border-b border-gray-200 last:border-b-0">
+                        <div className="flex-shrink-0">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.name} className="w-20 h-20 object-cover rounded-lg bg-gray-300" />
+                          ) : (
+                            <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                              <span className="text-2xl text-gray-400">📦</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-semibold text-[#256D45]">{item.name}</h3>
+                          <p className="text-lg text-[#256D45]">
+                            ราคา: 
+                            <span className={item.isPromotion ? 'line-through text-gray-500' : ''}>
+                              ฿{item.price}
+                            </span>
+                            {item.isPromotion && item.promotionPrice && (
+                              <span className="text-red-600 font-bold ml-2">฿{item.promotionPrice}</span>
+                            )}
+                          </p>
+                        </div>
 
-                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
-                        <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          className="text-[#256D45] hover:text-gray-700 text-xl w-6 h-6 flex items-center justify-center"
-                        >
-                          −
-                        </button>
-                        <input
-                          type="number"
-                          value={item.quantity === 0 ? '' : item.quantity}
-                          onChange={(e) => handleQuantityInput(item.id, e.target.value)}
-                          className="text-lg font-semibold w-10 text-center text-[#256D45] bg-gray-100 border-none outline-none"
-                          min="0"
-                          placeholder="0"
-                        />
-                        <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                          className="text-[#256D45] hover:text-[#1a4d2e] text-xl w-6 h-6 flex items-center justify-center"
-                        >
-                          +
-                        </button>
-                      </div>
+                        <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
+                          <button
+                            onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            className="text-[#256D45] hover:text-gray-700 text-xl w-6 h-6 flex items-center justify-center"
+                            disabled={item.quantity <= 1}
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            value={item.quantity === 0 ? '' : item.quantity}
+                            onChange={(e) => handleQuantityInput(item.id, e.target.value)}
+                            className="text-lg font-semibold w-10 text-center text-[#256D45] bg-gray-100 border-none outline-none"
+                            min="0"
+                            placeholder="0"
+                          />
+                          <button
+                            onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            className="text-[#256D45] hover:text-[#1a4d2e] text-xl w-6 h-6 flex items-center justify-center"
+                            disabled={item.stockQuantity ? item.quantity >= item.stockQuantity : false}
+                          >
+                            +
+                          </button>
+                        </div>
 
-                      <div className="text-2xl font-bold text-[#256D45] min-w-[80px] text-right">
-                        ฿{item.price * item.quantity}
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="text-2xl font-bold text-[#256D45] min-w-[80px] text-right">
+                            ฿{itemPrice * item.quantity}
+                          </div>
+                          <button
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            ลบ
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -110,7 +211,10 @@ const Cart = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors">
+              <button 
+                onClick={() => navigate('/')}
+                className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors"
+              >
                 สั่งซื้อ
               </button>
             </div>
