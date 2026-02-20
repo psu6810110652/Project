@@ -43,7 +43,7 @@ const EditProfile = () => {
       <div className="relative">
         <button 
           onClick={handleDeleteAccount}
-          className="absolute top-4 right-8 bg-white border-2 border-red-500 text-red-500 font-bold py-2 px-4 rounded-full shadow hover:bg-red-50 transition-colors"
+          className="absolute top-4 right-8 bg-white border-2 border-red-500 text-red-500 font-bold !py-2 !px-4 rounded-full shadow hover:bg-red-50 transition-colors"
         >
           ลบบัญชี
         </button>

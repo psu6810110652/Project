@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Save, ImagePlus, X, Package, Hash, Coins, Database, FileText, Tag, FolderTree } from 'lucide-react';
-import { message, AutoComplete } from 'antd';
+import { message } from 'antd';
 
 const ManagerProduct: React.FC = () => {
     const [messageApi, contextHolder] = message.useMessage();
@@ -149,7 +149,7 @@ const ManagerProduct: React.FC = () => {
                 <button
                     onClick={handleSave}
                     disabled={loading}
-                    className="flex items-center gap-2 bg-[#256D45] text-white px-10 py-3 rounded-full font-bold text-xl shadow-lg hover:bg-[#1a4d31] transition-all disabled:bg-gray-400"
+                    className="flex items-center gap-2 bg-[#256D45] text-white !px-10 !py-3 rounded-full font-bold text-xl shadow-lg hover:bg-[#1a4d31] transition-all disabled:bg-gray-400"
                 >
                     <Save size={24} />
                     {loading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
@@ -179,21 +179,22 @@ const ManagerProduct: React.FC = () => {
 
                         {/* Type Field: Now Col Span 1 */}
                         <InputBox label="ประเภทสินค้า" icon={<FolderTree size={20} />}>
-                            <AutoComplete
-                                options={existingTypes}
-                                value={formData.type}
-                                onChange={(val) => setFormData({ ...formData, type: val })}
-                                className="w-full"
-                                filterOption={(inputValue, option) =>
-                                    option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-                                }
-                            >
-                                <input
-                                    className="input-style"
-                                    placeholder="ระบุหรือเลือกประเภทสินค้า"
-                                />
-                            </AutoComplete>
-                        </InputBox>
+                        {/* ใช้ input เดิมของคุณ และเพิ่มคำสั่ง list="type-options" */}
+                        <input
+                            className="input-style"
+                            placeholder="ระบุหรือเลือกประเภทสินค้า"
+                            value={formData.type}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            list="type-options" // 🌟 ผูกกับ datalist ด้านล่าง
+                        />
+
+                        {/* สร้าง datalist เพื่อเป็นตัวเลือก Dropdown */}
+                        <datalist id="type-options">
+                            {existingTypes.map((item, index) => (
+                                <option key={index} value={item.value} />
+                            ))}
+                        </datalist>
+                    </InputBox>
 
                         {/* Price: Moved next to Type */}
                         <InputBox label="ราคาสินค้าปกติ (บาท)" icon={<Coins size={20} />}>
