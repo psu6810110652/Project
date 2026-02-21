@@ -32,6 +32,10 @@ export const ProductDetail: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'description' | 'pricing'>('description');
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // Fetch product data
   useEffect(() => {
@@ -51,6 +55,39 @@ export const ProductDetail: React.FC = () => {
         
         const data = await response.json();
         setProduct(data);
+        
+        // Check if product is in favorites
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        setIsFavorite(favorites.includes(id));
+        
+        // Fetch reviews for this product to calculate average rating
+        try {
+          const reviewsResponse = await fetch(`/api/product/${id}/reviews`);
+          if (reviewsResponse.ok) {
+            const reviewsData = await reviewsResponse.json();
+            setReviews(reviewsData);
+            
+            // Calculate average rating
+            if (reviewsData.length > 0) {
+              const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+              const avgRating = totalRating / reviewsData.length;
+              setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
+              setTotalReviews(reviewsData.length);
+            } else {
+              setAverageRating(0);
+              setTotalReviews(0);
+            }
+          } else {
+            // Use product's existing rating if API fails
+            setAverageRating(data.rating || 0);
+            setTotalReviews(data.reviewCount || 0);
+          }
+        } catch (error) {
+          console.error('Error fetching reviews:', error);
+          // Use product's existing rating if API fails
+          setAverageRating(data.rating || 0);
+          setTotalReviews(data.reviewCount || 0);
+        }
       } catch (error) {
         console.error('Error fetching product:', error);
         setMessage(`ไม่สามารถโหลดข้อมูลสินค้าได้: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -123,6 +160,28 @@ export const ProductDetail: React.FC = () => {
     if (newQuantity >= 1 && product && newQuantity <= product.stockQuantity) {
       setQuantity(newQuantity);
     }
+  };
+
+  const toggleFavorite = () => {
+    if (!id) return;
+    
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    
+    if (isFavorite) {
+      // Remove from favorites
+      const newFavorites = favorites.filter((favId: string) => favId !== id);
+      localStorage.setItem('favorites', JSON.stringify(newFavorites));
+      setIsFavorite(false);
+      setMessage('ลบออกจากรายการโปรดแล้ว');
+    } else {
+      // Add to favorites
+      favorites.push(id);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      setIsFavorite(true);
+      setMessage('เพิ่มไปยังรายการโปรดแล้ว');
+    }
+    
+    setTimeout(() => setMessage(''), 2000);
   };
 
 
@@ -225,16 +284,41 @@ export const ProductDetail: React.FC = () => {
                             </div>
                         </div>
 
-                    <div className="flex-1">
-                        <h1 className="text-3xl font-bold text-[#1f502c] mb-2">{product.name}</h1>
-                        
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="flex">
-                                {renderStars(product.rating || 5.0)}
-                            </div>
-                            <span className="text-sm text-gray-600">{product.rating || 5.0} ({product.reviewCount || 0} รีวิว) ขายแล้ว {product.soldCount || 1}</span>
+                    <div className="flex-1 text-left">
+                        <div className="flex justify-between items-start mb-2">
+                            <h1 className="text-3xl font-bold text-[#1f502c]">{product.name}</h1>
+                            <button 
+                                onClick={toggleFavorite}
+                                className="p-3 rounded-full hover:bg-gray-100 transition-colors"
+                                title={isFavorite ? "ลบออกจากรายการโปรด" : "เพิ่มไปยังรายการโปรด"}
+                            >
+                                <svg 
+                                    className={`w-8 h-8 transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} 
+                                    fill={isFavorite ? "currentColor" : "none"}
+                                    stroke="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path 
+                                        fillRule="evenodd" 
+                                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
+                                        clipRule="evenodd" 
+                                    />
+                                </svg>
+                            </button>
                         </div>
-
+                        
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="flex items-center gap-1">
+                                {renderStars(averageRating || product.rating || 5.0)}
+                            </div>
+                            <span className="text-lg font-semibold text-[#1f502c]">
+                                {(averageRating || product.rating || 5.0).toFixed(1)}/5.0
+                            </span>
+                            <span className="text-gray-600">
+                                ({totalReviews || product.reviewCount || 0} รีวิว)
+                            </span>
+                        </div>
+                        
                         <div className="mb-6">
                             <span className="text-lg text-[#2a6b3b] font-medium">ราคา</span>
                             <div className="bg-[#dcf0c3] rounded-lg p-4 mt-2">
@@ -285,21 +369,27 @@ export const ProductDetail: React.FC = () => {
                                     <span className="text-lg font-bold">+</span>
                                 </button>
                             </div>
+                            <span className="text-base font-medium text-gray-700 ml-4">
+                                มีสินค้าทั้งหมด {product?.stockQuantity || 0} ชิ้น
+                            </span>
+                        </div>
+
+                        <div className="flex flex-col gap-3 mb-6">
                             <button 
                                 onClick={() => navigate(`/review/${id}`)}
-                                className="px-4 py-2 border border-[#2a6b3b] text-[#2a6b3b] rounded-lg hover:bg-[#2a6b3b] hover:text-white transition-colors"
+                                className="px-6 py-3 border border-[#2a6b3b] text-[#2a6b3b] rounded-lg hover:bg-[#2a6b3b] hover:text-white transition-colors font-medium"
                             >
-                                รีวิว
+                                เขียนรีวิว
                             </button>
                         </div>
 
-                        <button 
-                            onClick={handleAddToCart}
-                            disabled={isLoading}
-                            className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-4 rounded-xl hover:bg-[#cbe6a8] transition flex justify-center items-center gap-2 shadow-sm"
-                        >
-                            🛒 {isLoading ? 'กำลังเพิ่ม...' : 'เพิ่มไปยังรถเข็น'}
-                        </button>
+                            <button 
+                                onClick={handleAddToCart}
+                                disabled={isLoading}
+                                className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-4 rounded-xl hover:bg-[#cbe6a8] transition flex justify-center items-center gap-2 shadow-sm"
+                            >
+                                🛒 {isLoading ? 'กำลังเพิ่ม...' : 'เพิ่มไปยังรถเข็น'}
+                            </button>
                     </div>
                 </div>
             </div>
