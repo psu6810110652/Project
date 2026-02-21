@@ -17,6 +17,7 @@ import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import { ProductDetail } from './pages/ProductDetail';
+import ReviewPage from './pages/ReviewPage';
 
 // Login/Register
 import Loginpage from './pages/Loginpage';
@@ -53,6 +54,7 @@ function UserLayout() {
           <Route path="/login" element={<Loginpage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/review/:productId" element={<ReviewPage />} />
           {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
         </Routes>
       </div>

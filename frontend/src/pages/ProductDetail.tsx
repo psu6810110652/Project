@@ -285,6 +285,12 @@ export const ProductDetail: React.FC = () => {
                                     <span className="text-lg font-bold">+</span>
                                 </button>
                             </div>
+                            <button 
+                                onClick={() => navigate(`/review/${id}`)}
+                                className="px-4 py-2 border border-[#2a6b3b] text-[#2a6b3b] rounded-lg hover:bg-[#2a6b3b] hover:text-white transition-colors"
+                            >
+                                รีวิว
+                            </button>
                         </div>
 
                         <button 
