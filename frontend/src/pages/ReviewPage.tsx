@@ -29,6 +29,15 @@ interface Product {
   soldCount?: number;
 }
 
+interface ExistingReview {
+  id: string;
+  userName: string;
+  rating: number;
+  reviewContent: string;
+  orderDate: string;
+  userId: string;
+}
+
 const ReviewPage: React.FC = () => {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
@@ -53,6 +62,7 @@ const ReviewPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [existingReviews, setExistingReviews] = useState<ExistingReview[]>([]);
 
   useEffect(() => {
     const loadReviewData = async () => {
@@ -91,6 +101,21 @@ const ReviewPage: React.FC = () => {
           minute: '2-digit'
         })
         }));
+
+        // Fetch existing reviews for this product
+        try {
+          const reviewsResponse = await fetch(`/api/product/${productId}/reviews`);
+          if (reviewsResponse.ok) {
+            const reviewsData = await reviewsResponse.json();
+            setExistingReviews(reviewsData);
+          } else {
+            console.log('Reviews API not available, no reviews to display');
+            setExistingReviews([]);
+          }
+        } catch (error) {
+          console.error('Error fetching reviews:', error);
+          setExistingReviews([]);
+        }
       } catch (error) {
         console.error('Error loading review data:', error);
         
@@ -113,6 +138,21 @@ const ReviewPage: React.FC = () => {
           minute: '2-digit'
         })
         }));
+        
+        // Fetch existing reviews for this product
+        try {
+          const reviewsResponse = await fetch(`/api/product/${productId}/reviews`);
+          if (reviewsResponse.ok) {
+            const reviewsData = await reviewsResponse.json();
+            setExistingReviews(reviewsData);
+          } else {
+            console.log('Reviews API not available, no reviews to display');
+            setExistingReviews([]);
+          }
+        } catch (error) {
+          console.error('Error fetching reviews:', error);
+          setExistingReviews([]);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -144,16 +184,40 @@ const ReviewPage: React.FC = () => {
     setMessage('');
 
     try {
-      // In a real app, you would send this to your API
-      console.log('Submitting review:', reviewData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setMessage('ส่งรีวิวเรียบร้อยแล้ว');
-      setTimeout(() => {
-        navigate(`/product/${productId}`);
-      }, 2000);
+      // Send review to API
+      const reviewPayload = {
+        productId: productId,
+        userId: auth?.user?.id || 'guest',
+        userName: reviewData.userName,
+        rating: reviewData.rating,
+        reviewContent: reviewData.reviewContent,
+        orderDate: reviewData.orderDate
+      };
+
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(reviewPayload)
+      });
+
+      if (response.ok) {
+        const newReview = await response.json();
+        // Add the new review to the existing reviews
+        setExistingReviews(prev => [newReview, ...prev]);
+        
+        // Clear the form
+        setReviewData(prev => ({ ...prev, reviewContent: '', rating: 5.0 }));
+        
+        setMessage('ส่งรีวิวเรียบร้อยแล้ว');
+        setTimeout(() => {
+          setMessage('');
+        }, 3000);
+      } else {
+        throw new Error('Failed to submit review');
+      }
       
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -269,6 +333,56 @@ const ReviewPage: React.FC = () => {
               {isSubmitting ? 'กำลังส่ง...' : 'ส่งรีวิว'}
             </button>
           </div>
+        </div>
+
+        {/* Existing Reviews Section */}
+        <div className="mt-8">
+          <h3 className="text-2xl font-semibold mb-6">รีวิวจากผู้ใช้งานท่านอื่น</h3>
+          {existingReviews.length > 0 ? (
+            <div className="space-y-4">
+              {existingReviews.map((review) => (
+                <div key={review.id} className="bg-[#fdfef9] rounded-lg shadow-lg p-6">
+                  <div className="flex gap-6">
+                    {/* Left side - User info and rating */}
+                    <div className="flex-shrink-0 w-48">
+                      <a 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate(`/user/${review.userId}`);
+                        }}
+                        className="text-lg font-semibold text-[#1f653a] hover:underline no-underline block mb-2"
+                      >
+                        {review.userName}
+                      </a>
+                      <div className="flex items-center gap-1 mb-2">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <span key={i} className="text-[#1f653a] text-sm">
+                            {i < Math.floor(review.rating) ? '★' : '☆'}
+                          </span>
+                        ))}
+                        <span className="text-sm text-gray-600 ml-1">({review.rating})</span>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {review.orderDate}
+                      </div>
+                    </div>
+                    
+                    {/* Right side - Review content */}
+                    <div className="flex-1">
+                      <p className="text-gray-700 leading-relaxed">
+                        {review.reviewContent}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-[#fdfef9] rounded-lg shadow-lg p-8 text-center">
+              <p className="text-gray-600">ยังไม่มีรีวิวสำหรับสินค้านี้ เป็นคนแรกที่รีวิวสินค้านี้!</p>
+            </div>
+          )}
         </div>
       </main>
 
