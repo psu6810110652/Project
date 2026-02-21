@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload } from 'lucide-react';
 
@@ -18,18 +18,32 @@ const PaymentPage: React.FC = () => {
   const location = useLocation();
   const [slipImage, setSlipImage] = useState<string | null>(null);
 
-  // 🌟 ดึงข้อมูลจากตะกร้า ถ้าไม่มีให้ใช้ค่าเริ่มต้น (อาทิเช่น ผู้ใช้ Refresh หน้า)
+  // 🌟 State สำหรับเก็บที่อยู่ที่ดึงมา
+  const [deliveryAddress, setDeliveryAddress] = useState<string>('กำลังโหลดข้อมูลที่อยู่...');
+
+  // ดึงข้อมูลจากตะกร้า ถ้าไม่มีให้ใช้ค่าเริ่มต้น
   const cartItems: CartItem[] = location.state?.cartItems || [];
   const totalPrice: number = location.state?.totalPrice || 0;
 
-  // ข้อมูลที่ต้องจำลองไว้ก่อน (เพราะหน้า Cart ยังไม่มี)
+  // ข้อมูลที่ต้องจำลองไว้ก่อน
   const shippingFee = 0; // สมมติว่าส่งฟรี
   const discount = 0;
   const finalTotal = totalPrice + shippingFee - discount;
-
-  // ที่อยู่ และ QR Code ปลอม (ของจริงควรดึงจาก API หรือให้ผู้ใช้กรอก)
-  const deliveryAddress = 'นาย สมชาย ใจดี 089-123-4567\n123/45 ซอยสุขใจ ถนนลาดพร้าว\nแขวงจตุจักร เขตจตุจักร กรุงเทพฯ\n10900';
   const qrCodeUrl = 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg';
+
+  // 🌟 ดึงข้อมูลที่อยู่จาก localStorage เมื่อโหลดหน้านี้
+  useEffect(() => {
+    const savedAddress = localStorage.getItem('shippingAddress');
+    
+    if (savedAddress) {
+      const addr = JSON.parse(savedAddress);
+      // จัดรูปแบบให้เหมือนหน้าซองจดหมาย
+      const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} โทร: ${addr.phone || '-'}\n${addr.houseNumber || ''} ${addr.streetSoi || ''}\nต.${addr.subDistrict || ''} อ.${addr.district || ''} จ.${addr.province || ''}\nรหัสไปรษณีย์ ${addr.postalCode || ''}`;
+      setDeliveryAddress(fullAddress);
+    } else {
+      setDeliveryAddress('ไม่พบข้อมูลการจัดส่ง กรุณากลับไปเพิ่มที่อยู่ในหน้าโปรไฟล์');
+    }
+  }, []);
 
   const handleUploadSlip = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,10 +59,18 @@ const PaymentPage: React.FC = () => {
       navigate('/cart');
       return;
     }
+    
+    // 🌟 เช็คว่ามีที่อยู่หรือยังก่อนให้จ่ายเงิน
+    if (deliveryAddress.includes('ไม่พบข้อมูล')) {
+      alert("กรุณาระบุที่อยู่จัดส่งในหน้าแก้ไขโปรไฟล์ก่อนยืนยันครับ");
+      return;
+    }
+
     if (!slipImage) {
       alert("กรุณาอัปโหลดสลิปโอนเงินก่อนยืนยันครับ");
       return;
     }
+
     // ส่งข้อมูลไป API สร้างออเดอร์
     alert("ยืนยันการสั่งซื้อเรียบร้อย!");
     navigate('/success'); // เปลี่ยนไปหน้าขอบคุณหรือหน้าออเดอร์
