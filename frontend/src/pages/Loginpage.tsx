@@ -24,18 +24,22 @@ const Login = () => {
     setLoading(true);
     try {
       console.log('Sending token to backend:', tokenResponse.access_token);
-      // ส่ง access_token ที่ได้จาก Google ไปให้ Backend ตรวจสอบ
-      // สมมติว่า backend มี endpoint ชื่อ /auth/google
       const response = await api.post('/auth/google', {
         token: tokenResponse.access_token,
       });
       console.log('Backend response:', response.data);
 
       localStorage.setItem('token', response.data.access_token);
+      
+      // 🌟 เพิ่มบรรทัดนี้: เซฟก้อน User (ที่มี ID) ลง Local Storage ตรงๆ เลย
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
 
       if (auth) {
         auth.login({
-          name: response.data.user?.name || response.data.username, // Handle potentially different response structure
+          id: response.data.user?.id, // 👈 เพิ่มการส่ง ID ให้ Context
+          name: response.data.user?.name || response.data.username,
           token: response.data.access_token
         });
       }
@@ -64,13 +68,19 @@ const Login = () => {
     try {
       const response = await api.post('/auth/login', formData);
 
-      // เก็บ Token ลง localStorage (ตามที่คุณเคยเขียนไว้)
+      // เก็บ Token ลง localStorage
       localStorage.setItem('token', response.data.access_token);
 
-      // 🌟 4. โยนข้อมูลบอก Context ว่ามีคนล็อกอินแล้วนะ!
+      // 🌟 เพิ่มบรรทัดนี้: เซฟก้อน User (ที่มี ID) ลง Local Storage ตรงๆ เลย
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
+      // โยนข้อมูลบอก Context ว่ามีคนล็อกอินแล้วนะ!
       if (auth) {
         auth.login({
-          name: formData.username, // ตอนนี้เอา username ที่กรอกมาแสดงเป็นชื่อชั่วคราวก่อนครับ
+          id: response.data.user?.id, // 👈 เพิ่มการส่ง ID ให้ Context ด้วย
+          name: response.data.user?.name || formData.username, 
           token: response.data.access_token
         });
       }
