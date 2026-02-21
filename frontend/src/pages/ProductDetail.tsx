@@ -32,7 +32,7 @@ export const ProductDetail: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'description' | 'pricing'>('description');
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [, setReviews] = useState<any[]>([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
