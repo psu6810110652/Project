@@ -103,7 +103,7 @@ const Cart = () => {
       <div className="fixed top-24 left-4 z-40">
         <button
           onClick={() => navigate('/')}
-          className="bg-white text-[#256D45] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50"
+          className="bg-white text-[#256D45] font-bold !py-2 !px-6 rounded-xl shadow-sm hover:bg-gray-50"
         >
           กลับ
         </button>

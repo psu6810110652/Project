@@ -286,7 +286,7 @@ const EditProfile = () => {
           <div className="flex justify-end gap-4">
             <button
               type="submit"
-              className="px-12 py-3 bg-[#256D45] text-white font-semibold rounded-lg hover:bg-[#1a5434] transition-colors text-lg shadow-md"
+              className="!px-8 !py-3 bg-[#256D45] text-white font-semibold rounded-lg hover:bg-[#1a5434] transition-colors text-lg shadow-md"
             >
               บันทึกข้อมูล
             </button>
