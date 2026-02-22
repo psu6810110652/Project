@@ -1,5 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Exclude } from 'class-transformer'; // อย่าลืม Import บรรทัดนี้นะครับ
+import { Exclude } from 'class-transformer'; 
+
+export enum UserRole {
+  USER = 'User',
+  ADMIN = 'Admin',
+}
+
 
 @Entity('users')
 export class User {
@@ -10,19 +16,19 @@ export class User {
   username: string;
 
   @Column({ nullable: true })
-  @Exclude() // ย้ายมาซ่อน password ตรงนี้ครับ!
+  @Exclude() 
   password?: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column({ default: 'User' })
-  role: string;
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
 
   @Column({ default: false })
   isGoogleLogin: boolean;
 
-  // ใช้ phone ตัวเดียวให้ตรงกับ React State ไปเลยครับ จะได้ไม่งง
+  
   @Column({ nullable: true })
   phone?: string; 
 
