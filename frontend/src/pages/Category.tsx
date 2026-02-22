@@ -88,34 +88,59 @@ const Category: React.FC = () => {
     return (
         <div className="min-h-screen bg-lime-100 font-['Prompt'] text-green-800 pb-20">
 
-            {/* --- ส่วน Hero Banner (เมล็ด) --- */}
-            <section className="z-0 -ml-0.5 w-full h-150 relative ">
+            {/* --- ส่วน Hero Banner --- */}
+            <section className="z-0 w-full h-72 md:h-120 lg:h-150 relative">
                 <img
-                    className="absolute top-0 left-0.5 w-full h-150 object-cover"
-                    alt="Backgorund Image"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    alt="Background Image"
                     src={Seeds}
                 />
 
-                <div className="absolute top-1/2 -translate-y-1/2 w-full h-73 bg-[#fffef280]" />
+                <div className="absolute top-1/2 -translate-y-1/2 w-full h-32 md:h-48 lg:h-73 bg-[#fffef280]" />
 
-                <div className="absolute top-1/2 -translate-y-1/2 w-full h-35 bg-[#fffef2bf]" />
+                <div className="absolute top-1/2 -translate-y-1/2 w-full h-16 md:h-24 lg:h-35 bg-[#fffef2bf]" />
 
-                <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-[5rem] text-center font-semibold [-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal]">
+                <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-center font-semibold [-webkit-text-stroke:1px_#256d45] md:[-webkit-text-stroke:2.5px_#256d45] lg:[-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal] w-full px-4 break-words">
                     {categoryInfo?.name || "ไม่พบหมวดหมู่"}
                 </h2>
             </section>
 
-            <div className="w-full flex justify-center px-4">
+            <div className="w-full flex justify-center px-4 md:px-8">
                 {/* ช่องค้นหาอยู่ด้านบนสุดของ Grid */}
-                <div className="w-full max-w-180 mt-8">
+                <div className="w-full max-w-3xl mt-4">
                     <Search onChange={(value) => setSearchTerm(value)} />
                 </div>
             </div>
 
             {/* --- ส่วนเนื้อหาหลัก (Sidebar + Grid) --- */}
-            <div className="container mt-12 flex flex-col md:flex-row gap-8 w-full">
+            <div className="container mt-6 md:mt-12 flex flex-col md:flex-row gap-8 w-full">
 
-                {/* 1. Sidebar (ประเภท) */}
+                {/* Mobile Filter */}
+                <div className="md:hidden flex overflow-x-auto gap-4 pb-4 snap-x w-full px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div
+                        className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors cursor-pointer snap-start
+                            ${selectedType === null ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
+                        onClick={() => setSelectedType(null)}
+                    >
+                        <span className="font-semibold whitespace-nowrap">ทั้งหมด ({products.length})</span>
+                    </div>
+
+                    {Object.entries(typeCounts).map(([type, count]) => (
+                        <div
+                            key={type}
+                            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors cursor-pointer snap-start
+                                ${selectedType === type ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
+                            onClick={() => setSelectedType(type)}
+                        >
+                            <span className="font-semibold whitespace-nowrap">{type} ({count})</span>
+                        </div>
+                    ))}
+
+                    {/* Spacer to ensure scrolling can reach the very end including pseudo padding */}
+                    <div className="w-1 shrink-0"></div>
+                </div>
+
+                {/* 1. Sidebar (ประเภท) Desktop */}
                 <aside className="hidden md:block w-72 shrink-0">
                     <div className="bg-amber-50 rounded-tr-[20px] rounded-br-[20px] p-8 shadow-lg min-h-125 sticky top-24">
                         <h2 className="text-4xl font-semibold mb-6">ประเภท</h2>
@@ -149,8 +174,8 @@ const Category: React.FC = () => {
                 </aside>
 
                 {/* Grid แสดงสินค้า */}
-                <div className="flex-1">
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-6">
+                <div className="flex-1 pl-4 md:pl-0 pr-4">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4 md:gap-6 w-full">
                         {filteredProducts.length > 0 ? (
                             filteredProducts.map((product) => (
                                 <Products
@@ -163,7 +188,7 @@ const Category: React.FC = () => {
                                 />
                             ))
                         ) : (
-                            <div className="col-span-full text-center py-20 bg-white/50 rounded-3xl">
+                            <div className="col-span-full w-full flex items-center justify-center py-20 bg-white/50 rounded-3xl shadow-sm">
                                 <span className="text-2xl text-gray-500 font-bold">ไม่มีสินค้าในหมวดหมู่นี้</span>
                             </div>
                         )}

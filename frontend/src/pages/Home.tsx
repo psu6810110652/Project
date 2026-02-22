@@ -31,18 +31,18 @@ const Home: React.FC = () => {
       {/* -------------------------------------------
           SECTION: HERO BANNER
       ------------------------------------------- */}
-      <section className="z-0 -ml-0.5 w-full h-150 relative ">
+      <section className="z-0 w-full h-72 md:h-120 lg:h-150 relative">
         <img
-          className="absolute top-0 left-0.5 w-full h-150"
-          alt="Rectangle"
+          className="absolute inset-0 w-full h-full object-cover"
+          alt="Background Image"
           src={HomeImage}
         />
 
-        <div className="absolute top-1/2 -translate-y-1/2 w-full h-73 bg-[#fffef280]" />
+        <div className="absolute top-1/2 -translate-y-1/2 w-full h-32 md:h-48 lg:h-73 bg-[#fffef280]" />
 
-        <div className="absolute top-1/2 -translate-y-1/2 w-full h-35 bg-[#fffef2bf]" />
+        <div className="absolute top-1/2 -translate-y-1/2 w-full h-16 md:h-24 lg:h-35 bg-[#fffef2bf]" />
 
-        <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-[5rem] text-center font-semibold [-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal]">
+        <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-center font-semibold [-webkit-text-stroke:1px_#256d45] md:[-webkit-text-stroke:2.5px_#256d45] lg:[-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal] w-full px-4 break-words">
           ธีรยุทธการเกษตร
         </h2>
       </section>

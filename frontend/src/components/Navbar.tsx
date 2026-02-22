@@ -7,7 +7,7 @@ import { AuthContext } from "../context/AuthContext"; // 🌟 2. Import AuthCont
 function Navbar() {
   // 🌟 3. ดึงข้อมูล user และ ฟังก์ชัน logout ออกมาจาก Context
   const auth = useContext(AuthContext);
-  const user = auth?.user; 
+  const user = auth?.user;
   const logout = auth?.logout;
   const navigate = useNavigate();
 
@@ -20,56 +20,68 @@ function Navbar() {
   };
 
   return (
-    <div className="sticky w-full h-20 top-0 z-50 bg-[#FFFEF2] flex items-center justify-between px-10 md:px-20 border-b border-gray-100">
-      
-      {/* ฝั่งซ้าย: Logo และ Menu */}
-      <div className="flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="Logo" className="w-14 h-14 object-contain" />
-          <span className="text-[#256D45] text-2xl font-bold">ธีรยุทธการเกษตร</span>
-        </Link>
+    <div className="sticky top-0 z-50 w-full bg-[#FFFEF2] border-b border-gray-100 shadow-sm flex flex-col">
 
-        {/* เส้นคั่นแนวตั้ง */}
-        <div className="h-10 w-0.5 bg-[#256D45] mx-2"></div>
+      {/* แถวบน: Logo และ ไอคอนผู้ใช้/ตะกร้า */}
+      <div className="flex w-full items-center justify-between px-4 md:px-10 lg:px-20 h-16 md:h-20">
 
-        {/* Navigation Links */}
-        <nav className="flex gap-8 items-center">
-          <Link to="/fertilizers" className="text-[#256D45] text-lg font-medium hover:opacity-80">ปุ๋ย</Link>
-          <Link to="/tools" className="text-[#256D45] text-lg font-medium hover:opacity-80">อุปกรณ์</Link>
-          <Link to="/seeds" className="text-[#256D45] text-lg font-medium hover:opacity-80">เมล็ด</Link>
-          <Link to="/chemicals" className="text-[#256D45] text-lg font-medium hover:opacity-80">สารเคมี</Link>
-          <Link to="/others" className="text-[#256D45] text-lg font-medium hover:opacity-80">อื่นๆ</Link>
-        </nav>
+        {/* ฝั่งซ้าย: Logo (และเมนูแนวนอนสำหรับจอใหญ่) */}
+        <div className="flex items-center gap-4">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <img src={logo} alt="Logo" className="w-10 h-10 md:w-14 md:h-14 object-contain shrink-0" />
+            <span className="text-[#256D45] text-lg sm:text-xl md:text-2xl font-bold whitespace-nowrap">ธีรยุทธการเกษตร</span>
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          <div className="hidden lg:flex items-center">
+            {/* เส้นคั่นแนวตั้ง */}
+            <div className="h-10 w-[2px] bg-[#256D45] mx-6"></div>
+            <nav className="flex gap-6 xl:gap-8 items-center">
+              <Link to="/fertilizers" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">ปุ๋ย</Link>
+              <Link to="/tools" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">อุปกรณ์</Link>
+              <Link to="/seeds" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">เมล็ด</Link>
+              <Link to="/chemicals" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">สารเคมี</Link>
+              <Link to="/others" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">อื่นๆ</Link>
+            </nav>
+          </div>
+        </div>
+
+        {/* ฝั่งขวา: Login และ Cart */}
+        <div className="flex items-center gap-4 md:gap-6 text-[#256D45] shrink-0">
+
+          {user ? (
+            <div className="flex items-center gap-2 md:gap-4">
+              <Link to="/profile" className="flex items-center gap-1 md:gap-2 hover:opacity-80">
+                <span className="hidden md:inline text-lg font-bold">{user.name}</span>
+                <UserCircle size={28} className="md:w-8 md:h-8" strokeWidth={1.5} />
+              </Link>
+
+              <button onClick={handleLogout} className="text-red-500 hover:text-red-700 transition-colors flex items-center" title="ออกจากระบบ">
+                <LogOut size={24} className="md:w-7 md:h-7" strokeWidth={1.5} />
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="flex items-center gap-1 md:gap-2 hover:opacity-80">
+              <span className="hidden md:inline text-lg font-medium">เข้าสู่ระบบ</span>
+              <UserCircle size={28} className="md:w-8 md:h-8" strokeWidth={1.5} />
+            </Link>
+          )}
+
+          <Link to="/cart" className="hover:opacity-80 flex items-center">
+            <ShoppingCart size={28} className="md:w-8 md:h-8" strokeWidth={1.5} />
+          </Link>
+        </div>
       </div>
 
-      {/* ฝั่งขวา: Login และ Cart */}
-      <div className="flex items-center gap-6 text-[#256D45]">
-        
-        {/* 🌟 4. จุดที่เปลี่ยน: เช็คเงื่อนไขว่าล็อกอินหรือยัง */}
-        {user ? (
-          <div className="flex items-center gap-4">
-            <Link to="/profile" className="flex items-center gap-2 hover:opacity-80">
-              {/* ถ้ามีชื่อให้โชว์ชื่อ */}
-              <span className="text-lg font-bold">{user.name}</span>
-              <UserCircle size={32} strokeWidth={1.5} />
-            </Link>
-            
-            {/* ปุ่มออกจากระบบ (เพื่อให้คุณเทสได้ง่ายๆ) */}
-            <button onClick={handleLogout} className="text-red-500 hover:text-red-700 transition-colors" title="ออกจากระบบ">
-              <LogOut size={28} strokeWidth={1.5} />
-            </button>
-          </div>
-        ) : (
-          /* ถ้ายังไม่ล็อกอิน โชว์ปุ่มเข้าสู่ระบบปกติ */
-          <Link to="/login" className="flex items-center gap-2 hover:opacity-80">
-            <span className="text-lg font-medium">เข้าสู่ระบบ</span>
-            <UserCircle size={32} strokeWidth={1.5} />
-          </Link>
-        )}
-        
-        <Link to="/cart" className="hover:opacity-80">
-          <ShoppingCart size={32} strokeWidth={1.5} />
-        </Link>
+      {/* แถวล่าง: Navigation Links (ซ่อนในจอใหญ่, แสดงและเลื่อนได้ในจอมือถือ/แท็บเล็ต) */}
+      <div className="lg:hidden w-full px-4 pb-3">
+        <nav className="flex overflow-x-auto gap-6 items-center w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <Link to="/fertilizers" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">ปุ๋ย</Link>
+          <Link to="/tools" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">อุปกรณ์</Link>
+          <Link to="/seeds" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">เมล็ด</Link>
+          <Link to="/chemicals" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">สารเคมี</Link>
+          <Link to="/others" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">อื่นๆ</Link>
+        </nav>
       </div>
 
     </div>
