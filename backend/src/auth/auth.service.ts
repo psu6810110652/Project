@@ -26,12 +26,11 @@ export class AuthService {
 
   //อันนี้ใช้สร้าง JWT token หลังจากที่ตรวจสอบ username และ password ผ่านแล้ว
   async login(user: any) {
-    const payload = { username: user.username, sub: user.id };
+    const payload = { username: user.username, sub: user.id, role: user.role };
     const token = this.jwtService.sign(payload);
     return {
       access_token: token, // เก็บของเดิมไว้เผื่อมีโค้ดส่วนอื่นเรียกใช้
       token: token,        // ส่ง token ไปให้ด้วยเผื่อฝั่ง React เรียกใช้ชื่อนี้
-      // 👇 ส่งก้อน user กลับไปให้ React พร้อม ID ครับ
       user: {
         id: user.id,
         name: user.username,
