@@ -49,3 +49,18 @@ export interface SearchProps {
     placeholder?: string;
     className?: string;
 }
+interface OrderItem {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  products: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  orderDate: string;
+  status: 'pending_confirm' | 'pending_delivery' | 'pending_received';
+  address?: string;
+  phone?: string;
+}

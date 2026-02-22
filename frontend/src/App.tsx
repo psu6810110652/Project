@@ -3,9 +3,6 @@ import './App.css'
 
 import Home from './pages/Home'
 import Category from './pages/Category';
-import PendingConfirm from './pages/PendingConfirm';
-import PendingDelivery from './pages/PendingDelivery';
-import PendingReceived from './pages/PendingReceived';
 import Failed from './components/Failed';
 import Success from './components/Success';
 import Favorites from './pages/Favorites';
@@ -45,9 +42,6 @@ function UserLayout() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/pending-confirm" element={<PendingConfirm />} />
-          <Route path="/pending-delivery" element={<PendingDelivery />} />
-          <Route path="/pending-received" element={<PendingReceived />} />
           <Route path="/failed" element={<Failed />} />
           <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
