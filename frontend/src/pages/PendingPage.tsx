@@ -16,7 +16,7 @@ interface OrderItem {
   }>;
   totalAmount: number;
   orderDate: string;
-  status: 'pending_confirm' | 'pending_delivery' | 'pending_received';
+  status: 'pending_confirm' | 'pending_delivery' | 'pending_received' | 'completed' | 'failed';
   address?: string;
   phone?: string;
 }
@@ -52,6 +52,20 @@ const PendingPage: React.FC = () => {
           status: 'pending_received' as const,
           description: 'รายการที่จัดส่งแล้วและรอให้ลูกค้ารับสินค้า'
         };
+      case 'completed':
+        return {
+          title: 'สำเร็จ',
+          apiEndpoint: '/api/admin/orders/completed',
+          status: 'completed' as const,
+          description: 'รายการที่ดำเนินการเสร็จสิ้นแล้ว'
+        };
+      case 'failed':
+        return {
+          title: 'ไม่สำเร็จ',
+          apiEndpoint: '/api/admin/orders/failed',
+          status: 'failed' as const,
+          description: 'รายการที่ไม่สามารถดำเนินการได้'
+        };
       default:
         return {
           title: 'รายการที่รอดำเนินการ',
@@ -79,9 +93,11 @@ const PendingPage: React.FC = () => {
 
       const data = await response.json();
       setOrders(data);
+      setError(''); // Clear any previous errors
     } catch (error) {
       console.error('Error fetching orders:', error);
       setError('ไม่สามารถโหลดข้อมูลรายการได้ กรุณาลองใหม่');
+      setOrders([]); // Clear orders on error
     } finally {
       setLoading(false);
     }
@@ -93,45 +109,258 @@ const PendingPage: React.FC = () => {
     orderId: `#${order.orderNumber}`,
     productName: order.products.map(p => p.name).join(', '),
     quantity: order.products.reduce((sum, p) => sum + p.quantity, 0),
+    customerName: order.customerName,
+    address: order.address,
+    phone: order.phone,
+    orderDate: order.orderDate,
+    status: order.status,
   }));
 
-  // Table columns configuration matching the image
-  const columns = [
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>รหัสคำสั่งซื้อ</span>
-          <DownOutlined style={{ fontSize: '12px', strokeWidth: 2 }} />
-        </div>
-      ),
-      dataIndex: 'orderId',
-      key: 'orderId',
-      width: '30%',
-      align: 'left' as const,
-      render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
-    },
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>ชื่อสินค้า</span>
-          <DownOutlined style={{ fontSize: '12px' }} />
-        </div>
-      ),
-      dataIndex: 'productName',
-      key: 'productName',
-      width: '40%',
-      align: 'left' as const,
-      render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
-    },
-    {
-      title: 'จำนวน',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      align: 'center' as const,
-      width: '30%',
-      render: (qty: number) => <span style={{ color: '#215A36', fontWeight: 600 }}>{qty.toLocaleString()}</span>,
-    },
-  ];
+  // Table columns configuration based on page type
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        title: (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>รหัสคำสั่งซื้อ</span>
+            <DownOutlined style={{ fontSize: '12px', strokeWidth: 2 }} />
+          </div>
+        ),
+        dataIndex: 'orderId',
+        key: 'orderId',
+        width: '25%',
+        align: 'left' as const,
+        render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
+      },
+      {
+        title: (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>ชื่อสินค้า</span>
+            <DownOutlined style={{ fontSize: '12px' }} />
+          </div>
+        ),
+        dataIndex: 'productName',
+        key: 'productName',
+        width: '45%',
+        align: 'left' as const,
+        render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
+      },
+      {
+        title: 'จำนวน',
+        dataIndex: 'quantity',
+        key: 'quantity',
+        align: 'center' as const,
+        width: '30%',
+        render: (qty: number) => <span style={{ color: '#215A36', fontWeight: 600 }}>{qty.toLocaleString()}</span>,
+      },
+    ];
+
+    // Add specific columns based on page type
+    switch (type) {
+      case 'confirm':
+        return [
+          ...baseColumns,
+          {
+            title: (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>ลูกค้า</span>
+                <DownOutlined style={{ fontSize: '12px' }} />
+              </div>
+            ),
+            dataIndex: 'customerName',
+            key: 'customerName',
+            width: '20%',
+            align: 'left' as const,
+            render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
+          },
+          {
+            title: 'สถานะ',
+            key: 'status',
+            align: 'center' as const,
+            width: '15%',
+            render: () => (
+              <span 
+                style={{ 
+                  backgroundColor: '#52c41a', 
+                  color: 'white', 
+                  padding: '4px 12px', 
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
+                รอยืนยัน
+              </span>
+            ),
+          },
+        ];
+      case 'delivery':
+        return [
+          ...baseColumns,
+          {
+            title: (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>ที่อยู่จัดส่ง</span>
+                <DownOutlined style={{ fontSize: '12px' }} />
+              </div>
+            ),
+            dataIndex: 'address',
+            key: 'address',
+            width: '25%',
+            align: 'left' as const,
+            render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600, fontSize: '12px' }}>{text}</span>,
+          },
+          {
+            title: 'สถานะ',
+            key: 'status',
+            align: 'center' as const,
+            width: '15%',
+            render: () => (
+              <span 
+                style={{ 
+                  backgroundColor: '#1890ff', 
+                  color: 'white', 
+                  padding: '4px 12px', 
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
+                รอจัดส่ง
+              </span>
+            ),
+          },
+        ];
+      case 'received':
+        return [
+          ...baseColumns,
+          {
+            title: (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>เบอร์โทร</span>
+                <DownOutlined style={{ fontSize: '12px' }} />
+              </div>
+            ),
+            dataIndex: 'phone',
+            key: 'phone',
+            width: '20%',
+            align: 'center' as const,
+            render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
+          },
+          {
+            title: (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>วันที่สั่งซื้อ</span>
+                <DownOutlined style={{ fontSize: '12px' }} />
+              </div>
+            ),
+            dataIndex: 'orderDate',
+            key: 'orderDate',
+            width: '15%',
+            align: 'center' as const,
+            render: (date: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{new Date(date).toLocaleDateString('th-TH')}</span>,
+          },
+          {
+            title: 'สถานะ',
+            key: 'status',
+            align: 'center' as const,
+            width: '15%',
+            render: () => (
+              <span 
+                style={{ 
+                  backgroundColor: '#52c41a', 
+                  color: 'white', 
+                  padding: '4px 12px', 
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
+                จัดส่งแล้ว
+              </span>
+            ),
+          },
+        ];
+      case 'completed':
+        return [
+          ...baseColumns,
+          {
+            title: (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>วันที่สำเร็จ</span>
+                <DownOutlined style={{ fontSize: '12px' }} />
+              </div>
+            ),
+            dataIndex: 'orderDate',
+            key: 'completedDate',
+            width: '20%',
+            align: 'center' as const,
+            render: (date: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{new Date(date).toLocaleDateString('th-TH')}</span>,
+          },
+          {
+            title: 'สถานะ',
+            key: 'status',
+            align: 'center' as const,
+            width: '15%',
+            render: () => (
+              <span 
+                style={{ 
+                  backgroundColor: '#52c41a', 
+                  color: 'white', 
+                  padding: '4px 12px', 
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
+                สำเร็จ
+              </span>
+            ),
+          },
+        ];
+      case 'failed':
+        return [
+          ...baseColumns,
+          {
+            title: (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>วันที่ไม่สำเร็จ</span>
+                <DownOutlined style={{ fontSize: '12px' }} />
+              </div>
+            ),
+            dataIndex: 'orderDate',
+            key: 'failedDate',
+            width: '20%',
+            align: 'center' as const,
+            render: (date: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{new Date(date).toLocaleDateString('th-TH')}</span>,
+          },
+          {
+            title: 'สถานะ',
+            key: 'status',
+            align: 'center' as const,
+            width: '15%',
+            render: () => (
+              <span 
+                style={{ 
+                  backgroundColor: '#ff4d4f', 
+                  color: 'white', 
+                  padding: '4px 12px', 
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
+                ไม่สำเร็จ
+              </span>
+            ),
+          },
+        ];
+      default:
+        return baseColumns;
+    }
+  };
+
+  const columns = getColumns();
 
   // Color theme
   const colorPrimaryDark = '#215A36'; // Dark green
