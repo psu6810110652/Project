@@ -33,12 +33,17 @@ export class ProductService {
 
   // ปรับปรุง findAll เดิมให้ดึงจาก DB จริง
   async findAll() {
-    return await this.productRepository.find();
+    return await this.productRepository.find({
+      relations: ['category']
+    });
   }
 
   // Function to find a product by its ID (product code) string
   async findOne(id: string) {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['category']
+    });
     if (!product) throw new NotFoundException(`ไม่พบสินค้าที่มีรหัส ${id}`);
     return product;
   }

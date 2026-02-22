@@ -19,6 +19,7 @@ export interface Product {
     volumeDiscount?: string;
     Category?: string;
     Type?: string;
+    category?: { id: number; name: string; description?: string };
     description?: string;
 
     image?: string;
