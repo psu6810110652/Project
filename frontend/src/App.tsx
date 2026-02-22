@@ -7,7 +7,6 @@ import PendingConfirm from './pages/PendingConfirm';
 import PendingDelivery from './pages/PendingDelivery';
 import PendingReceived from './pages/PendingReceived';
 import Failed from './components/Failed';
-import Success from './components/Success';
 import Favorites from './pages/Favorites';
 
 import Navbar from './components/Navbar';
@@ -49,7 +48,6 @@ function UserLayout() {
           <Route path="/pending-delivery" element={<PendingDelivery />} />
           <Route path="/pending-received" element={<PendingReceived />} />
           <Route path="/failed" element={<Failed />} />
-          <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/login" element={<Loginpage />} />
           <Route path="/register" element={<Register />} />
