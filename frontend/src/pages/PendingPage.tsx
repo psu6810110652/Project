@@ -72,11 +72,11 @@ const PendingPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch(pageConfig.apiEndpoint);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setOrders(data);
     } catch (error) {
@@ -87,44 +87,15 @@ const PendingPage: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
-    try {
-      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        // Refresh orders list
-        fetchOrders();
-        alert('อัพเดทสถานะเรียบร้อยแล้ว');
-      } else {
-        throw new Error('Failed to update status');
-      }
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      alert('ไม่สามารถอัพเดทสถานะได้ กรุณาลองใหม่');
-    }
-  };
-
   // Transform data for Ant Design table
-  const dataSource = orders.map((order, index) => ({
+  const dataSource = orders.map((order) => ({
     key: order.id,
-    orderId: order.orderNumber,
-    productName: order.products.map(p => `${p.name} x${p.quantity}`).join(', '),
+    orderId: `#${order.orderNumber}`,
+    productName: order.products.map(p => p.name).join(', '),
     quantity: order.products.reduce((sum, p) => sum + p.quantity, 0),
-    customerName: order.customerName,
-    totalAmount: order.totalAmount,
-    orderDate: order.orderDate,
-    status: order.status,
-    address: order.address,
-    phone: order.phone,
   }));
 
-  // Table columns configuration
+  // Table columns configuration matching the image
   const columns = [
     {
       title: (
@@ -135,7 +106,9 @@ const PendingPage: React.FC = () => {
       ),
       dataIndex: 'orderId',
       key: 'orderId',
-      width: '15%',
+      width: '30%',
+      align: 'left' as const,
+      render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
     },
     {
       title: (
@@ -146,111 +119,28 @@ const PendingPage: React.FC = () => {
       ),
       dataIndex: 'productName',
       key: 'productName',
-      width: '30%',
+      width: '40%',
+      align: 'left' as const,
+      render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
     },
     {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>จำนวน</span>
-          <DownOutlined style={{ fontSize: '12px' }} />
-        </div>
-      ),
+      title: 'จำนวน',
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'center' as const,
-      width: '10%',
-    },
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>ลูกค้า</span>
-          <DownOutlined style={{ fontSize: '12px' }} />
-        </div>
-      ),
-      dataIndex: 'customerName',
-      key: 'customerName',
-      width: '15%',
-    },
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>ยอดรวม</span>
-          <DownOutlined style={{ fontSize: '12px' }} />
-        </div>
-      ),
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      align: 'center' as const,
-      width: '10%',
-      render: (amount: number) => `฿${amount.toLocaleString()}`,
-    },
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>วันที่</span>
-          <DownOutlined style={{ fontSize: '12px' }} />
-        </div>
-      ),
-      dataIndex: 'orderDate',
-      key: 'orderDate',
-      width: '10%',
-      render: (date: string) => new Date(date).toLocaleDateString('th-TH'),
-    },
-    {
-      title: 'จัดการ',
-      key: 'actions',
-      align: 'center' as const,
-      width: '10%',
-      render: (_: any, record: any) => (
-        <div className="flex gap-2 justify-center">
-          {record.status === 'pending_confirm' && (
-            <>
-              <Button 
-                size="small"
-                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: 'white' }}
-                onClick={() => handleStatusUpdate(record.key, 'confirmed')}
-              >
-                ยืนยัน
-              </Button>
-              <Button 
-                size="small"
-                danger
-                onClick={() => handleStatusUpdate(record.key, 'cancelled')}
-              >
-                ยกเลิก
-              </Button>
-            </>
-          )}
-          {record.status === 'pending_delivery' && (
-            <Button 
-              size="small"
-              style={{ backgroundColor: '#1890ff', borderColor: '#1890ff', color: 'white' }}
-              onClick={() => handleStatusUpdate(record.key, 'shipped')}
-            >
-              จัดส่ง
-            </Button>
-          )}
-          {record.status === 'pending_received' && (
-            <Button 
-              size="small"
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: 'white' }}
-              onClick={() => handleStatusUpdate(record.key, 'delivered')}
-            >
-              ได้รับแล้ว
-            </Button>
-          )}
-        </div>
-      ),
+      width: '30%',
+      render: (qty: number) => <span style={{ color: '#215A36', fontWeight: 600 }}>{qty.toLocaleString()}</span>,
     },
   ];
 
-  // Color theme from your design
+  // Color theme
   const colorPrimaryDark = '#215A36'; // Dark green
   const colorBgCream = '#FDFDF2'; // Cream background
+  const colorBgPage = '#D6E8C3'; // Light green page background
 
   if (loading) {
     return (
-      <div style={{ backgroundColor: '#D6E8C3', minHeight: '100vh', padding: '40px 60px', fontFamily: 'Kanit, sans-serif' }}>
+      <div style={{ backgroundColor: colorBgPage, minHeight: '100vh', padding: '40px 60px', fontFamily: 'Kanit, sans-serif' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#215A36] mx-auto mb-4"></div>
           <p className="text-lg">กำลังโหลดข้อมูล...</p>
@@ -261,30 +151,32 @@ const PendingPage: React.FC = () => {
 
   if (error) {
     return (
-      <div style={{ backgroundColor: '#D6E8C3', minHeight: '100vh', padding: '40px 60px', fontFamily: 'Kanit, sans-serif' }}>
-        <Button 
-          shape="round" 
-          size="large"
-          style={{ 
-            backgroundColor: colorBgCream, 
-            color: colorPrimaryDark, 
-            fontWeight: 'bold',
-            border: 'none',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            marginBottom: '20px',
-            padding: '0 30px'
-          }}
-          onClick={() => navigate(-1)}
-        >
-          กลับ
-        </Button>
-        <div style={{ backgroundColor: colorBgCream, padding: '40px', borderRadius: '12px', textAlign: 'center' }}>
-          <h2 style={{ color: '#ff4d4f', fontSize: '24px', marginBottom: '16px' }}>เกิดข้อผิดพลาด</h2>
+      <div style={{ backgroundColor: colorBgPage, minHeight: '100vh', padding: '40px 60px', fontFamily: 'Kanit, sans-serif' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
+          <Button
+            shape="round"
+            size="large"
+            style={{
+              backgroundColor: colorBgCream,
+              color: colorPrimaryDark,
+              fontWeight: 'bold',
+              border: 'none',
+              padding: '0 30px',
+            }}
+            onClick={() => navigate(-1)}
+          >
+            กลับ
+          </Button>
+          <Title level={1} style={{ color: colorPrimaryDark, margin: 0 }}>
+            เกิดข้อผิดพลาด
+          </Title>
+        </div>
+        <div style={{ backgroundColor: colorBgCream, padding: '40px', borderRadius: '24px', textAlign: 'center' }}>
           <p style={{ color: '#666', marginBottom: '20px' }}>{error}</p>
-          <Button 
+          <Button
             type="primary"
             onClick={fetchOrders}
-            style={{ backgroundColor: '#215A36', borderColor: '#215A36' }}
+            style={{ backgroundColor: colorPrimaryDark, borderColor: colorPrimaryDark }}
           >
             ลองใหม่
           </Button>
@@ -294,104 +186,56 @@ const PendingPage: React.FC = () => {
   }
 
   return (
-    <div style={{ backgroundColor: '#D6E8C3', minHeight: '100vh', padding: '40px 60px', fontFamily: 'Kanit, sans-serif' }}>
-      
-      {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-        <Button 
-          shape="round" 
+    <div style={{ backgroundColor: colorBgPage, minHeight: '100vh', padding: '40px 60px', fontFamily: 'Kanit, sans-serif' }}>
+
+      {/* Top Header Layout: Back button over the title, left-aligned */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '16px' }}>
+        <Button
+          shape="round"
           size="large"
-          style={{ 
-            backgroundColor: type === 'confirm' ? colorPrimaryDark : colorBgCream, 
-            color: type === 'confirm' ? 'white' : colorPrimaryDark, 
+          style={{
+            backgroundColor: colorBgCream,
+            color: colorPrimaryDark,
             fontWeight: 'bold',
             border: 'none',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            padding: '0 30px',
+            marginBottom: '16px'
           }}
-          onClick={() => navigate('/pending/confirm')}
+          onClick={() => navigate(-1)}
         >
-          รอยืนยัน
+          กลับ
         </Button>
-        <Button 
-          shape="round" 
-          size="large"
-          style={{ 
-            backgroundColor: type === 'delivery' ? colorPrimaryDark : colorBgCream, 
-            color: type === 'delivery' ? 'white' : colorPrimaryDark, 
-            fontWeight: 'bold',
-            border: 'none',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        <Title
+          level={1}
+          style={{
+            color: colorPrimaryDark,
+            fontWeight: '900',
+            margin: 0,
+            fontSize: '48px',
+            lineHeight: '1.2',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
           }}
-          onClick={() => navigate('/pending/delivery')}
         >
-          รอจัดส่ง
-        </Button>
-        <Button 
-          shape="round" 
-          size="large"
-          style={{ 
-            backgroundColor: type === 'received' ? colorPrimaryDark : colorBgCream, 
-            color: type === 'received' ? 'white' : colorPrimaryDark, 
-            fontWeight: 'bold',
-            border: 'none',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-          onClick={() => navigate('/pending/received')}
-        >
-          จัดส่งแล้ว
-        </Button>
+          {pageConfig.title}
+        </Title>
       </div>
 
-      {/* Back Button */}
-      <Button 
-        shape="round" 
-        size="large"
-        style={{ 
-          backgroundColor: colorBgCream, 
-          color: colorPrimaryDark, 
-          fontWeight: 'bold',
-          border: 'none',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          marginBottom: '20px',
-          padding: '0 30px'
-        }}
-        onClick={() => navigate(-1)}
-      >
-        กลับ
-      </Button>
-
-      {/* Page Title */}
-      <Title 
-        level={1} 
-        style={{ 
-          color: colorPrimaryDark, 
-          fontWeight: '900', 
-          marginTop: 0,
-          marginBottom: '10px',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
-        }}
-      >
-        {pageConfig.title}
-      </Title>
-
       {/* Divider Line */}
-      <div style={{ height: '3px', backgroundColor: colorPrimaryDark, marginBottom: '20px' }}></div>
+      <div style={{ height: '4px', backgroundColor: colorPrimaryDark, marginBottom: '20px', borderRadius: '2px' }}></div>
 
-      {/* Ant Design Table */}
+      {/* ตั้งค่า Theme สำหรับ Table โดยเฉพาะ */}
       <ConfigProvider
         theme={{
           components: {
             Table: {
-              colorBgContainer: colorBgCream,
-              headerBg: colorBgCream,
-              headerColor: colorPrimaryDark,
-              colorText: colorPrimaryDark,
-              borderColor: colorPrimaryDark,
-              borderRadius: 12,
+              colorBgContainer: 'transparent', // พื้นหลังตารางแบบโปร่งให้เห็นกรอบหรือพื้นหลังกล่อง
+              headerBg: colorBgCream, // พื้นหลังหัวตาราง
+              headerColor: colorPrimaryDark, // สีข้อความหัวตาราง
+              colorText: colorPrimaryDark, // สีข้อความในตาราง
+              borderColor: colorPrimaryDark, // สีเส้นขอบ
+              borderRadius: 12, // ความโค้งมนของขอบตาราง
               headerBorderRadius: 12,
-            },
-            Button: {
-              borderRadius: 8,
             },
           },
           token: {
@@ -400,25 +244,45 @@ const PendingPage: React.FC = () => {
           }
         }}
       >
-        <Table
-          dataSource={dataSource}
-          columns={columns}
-          bordered
-          pagination={{ 
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `แสดง ${range[0]}-${range[1]} จาก ${total} รายการ`,
-          }}
-          scroll={{ x: 1200, y: 500 }}
-          style={{ 
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)', 
-            borderRadius: '12px',
-            overflow: 'hidden' 
-          }}
-        />
+        <div style={{ backgroundColor: colorBgCream, borderRadius: '12px', overflow: 'hidden', padding: '0px' }}>
+          <style>
+            {`
+                .ant-table-wrapper .ant-table {
+                  border: 2px solid ${colorPrimaryDark} !important;
+                }
+                .ant-table-thead > tr > th {
+                  border-bottom: 2px solid ${colorPrimaryDark} !important;
+                  border-inline-end: 2px solid ${colorPrimaryDark} !important;
+                }
+                .ant-table-thead > tr > th:last-child {
+                  border-inline-end: 0px !important;
+                }
+                .ant-table-tbody > tr > td {
+                  border-bottom: 2px solid ${colorPrimaryDark} !important;
+                  border-inline-end: 2px solid ${colorPrimaryDark} !important;
+                  padding: 12px 16px !important;
+                }
+                .ant-table-tbody > tr > td:last-child {
+                  border-inline-end: 0px !important;
+                }
+                /* Hide hover row color to keep styling consistent with image */
+                .ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td, 
+                .ant-table-wrapper .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+                  background: transparent !important;
+                }
+             `}
+          </style>
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            bordered={false}
+            pagination={false}
+            scroll={{ y: 500 }}
+            className="custom-grid-table"
+          />
+        </div>
       </ConfigProvider>
-      
+
     </div>
   );
 };

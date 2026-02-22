@@ -6,6 +6,7 @@ import { CategoryModule } from './category/category.module';
 import { ProductModule } from './product/product.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -18,7 +19,7 @@ import { AuthModule } from './auth/auth.module';
     entities: [],
     autoLoadEntities: true,
     synchronize: true,
-  }), CategoryModule, ProductModule, UsersModule, AuthModule],
+  }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule],
   controllers: [AppController],
   providers: [AppService],
 })

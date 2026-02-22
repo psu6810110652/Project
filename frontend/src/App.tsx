@@ -14,6 +14,7 @@ import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import { ProductDetail } from './pages/ProductDetail';
 import ReviewPage from './pages/ReviewPage';
+import PendingPage from './pages/PendingPage';
 
 // Login/Register
 import Loginpage from './pages/Loginpage';
@@ -43,6 +44,7 @@ function UserLayout() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/failed" element={<Failed />} />
           <Route path="/favorites" element={<Favorites />} />
+          <Route path="/pending/:type" element={<PendingPage />} />
           <Route path="/login" element={<Loginpage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/product/:id" element={<ProductDetail />} />
@@ -82,7 +84,7 @@ function App() {
   return (
     <Router>
       {/* เอา AuthProvider มาครอบไว้ตรงนี้ */}
-      <AuthProvider> 
+      <AuthProvider>
         <Routes>
           <Route path="/*" element={<UserLayout />} />
           <Route path="/admin/*" element={<AdminLayout />} />
@@ -91,6 +93,5 @@ function App() {
     </Router>
   )
 }
-
 
 export default App;
