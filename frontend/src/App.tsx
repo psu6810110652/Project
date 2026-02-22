@@ -4,7 +4,6 @@ import './App.css'
 import Home from './pages/Home'
 import Category from './pages/Category';
 import Failed from './components/Failed';
-import Success from './components/Success';
 import Favorites from './pages/Favorites';
 
 import Navbar from './components/Navbar';
@@ -43,7 +42,6 @@ function UserLayout() {
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/failed" element={<Failed />} />
-          <Route path="/success" element={<Success />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/login" element={<Loginpage />} />
           <Route path="/register" element={<Register />} />
