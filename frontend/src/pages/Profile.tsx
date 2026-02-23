@@ -157,51 +157,51 @@ const Profile = () => {
               </div>
             </div>
 
-{/* การ์ดสถานะคำสั่งซื้อ */}
+            {/* การ์ดสถานะคำสั่งซื้อ */}
             <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-gray-100">
               <h2 className="text-xl font-bold text-[#256D45] mb-6 text-left">สถานะคำสั่งซื้อของฉัน</h2>
               
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 
-                {/* 1. รอยืนยัน -> ไปที่หน้า PendingConfirm */}
+                {/* 1. รอยืนยัน -> ไปที่หน้า PendingPage */}
                 <div 
-                  onClick={() => navigate('/pending-confirm')}
+                  onClick={() => navigate('/pending/confirm')}
                   className="border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center hover:border-[#256D45] hover:shadow-md transition-all cursor-pointer bg-white"
                 >
                   <span className="text-4xl font-bold text-[#256D45] mb-2">7</span>
                   <span className="text-sm font-medium text-gray-600">รอยืนยัน</span>
                 </div>
 
-                {/* 2. รอจัดส่ง -> ไปที่หน้า PendingDelivery */}
+                {/* 2. รอจัดส่ง -> ไปที่หน้า PendingPage */}
                 <div 
-                  onClick={() => navigate('/pending-delivery')}
+                  onClick={() => navigate('/pending/delivery')}
                   className="border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center hover:border-[#256D45] hover:shadow-md transition-all cursor-pointer bg-white"
                 >
                   <span className="text-4xl font-bold text-[#256D45] mb-2">3</span>
                   <span className="text-sm font-medium text-gray-600">รอจัดส่ง</span>
                 </div>
 
-                {/* 3. รอได้รับ -> ไปที่หน้า PendingReceived */}
+                {/* 3. รอได้รับ -> ไปที่หน้า PendingPage */}
                 <div 
-                  onClick={() => navigate('/pending-received')}
+                  onClick={() => navigate('/pending/received')}
                   className="border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center hover:border-[#256D45] hover:shadow-md transition-all cursor-pointer bg-white"
                 >
                   <span className="text-4xl font-bold text-[#256D45] mb-2">5</span>
                   <span className="text-sm font-medium text-gray-600">รอได้รับ</span>
                 </div>
 
-                {/* 4. สำเร็จ -> (แก้ Path ให้ตรงกับหน้าที่คุณมี) */}
+                {/* 4. สำเร็จ -> ไปที่หน้า PendingPage */}
                 <div 
-                  onClick={() => navigate('/completed')}
+                  onClick={() => navigate('/pending/completed')}
                   className="border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center hover:border-[#256D45] hover:shadow-md transition-all cursor-pointer bg-white"
                 >
                   <span className="text-4xl font-bold text-[#256D45] mb-2">12</span>
                   <span className="text-sm font-medium text-gray-600">สำเร็จ</span>
                 </div>
 
-                {/* 5. ไม่สำเร็จ -> (แก้ Path ให้ตรงกับหน้าที่คุณมี) */}
+                {/* 5. ไม่สำเร็จ -> ไปที่หน้า PendingPage */}
                 <div 
-                  onClick={() => navigate('/cancelled')}
+                  onClick={() => navigate('/pending/failed')}
                   className="border border-red-200 rounded-xl p-4 flex flex-col items-center justify-center hover:border-red-500 hover:shadow-md transition-all cursor-pointer bg-red-50"
                 >
                   <span className="text-4xl font-bold text-red-500 mb-2">1</span>

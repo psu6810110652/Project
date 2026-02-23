@@ -7,6 +7,7 @@ async function bootstrap() {
 
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
+  console.log('App restarting to load new Orders module...');
 
   app.enableCors({
     origin: '*',
