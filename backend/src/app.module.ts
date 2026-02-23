@@ -16,7 +16,7 @@ import { OrdersModule } from './orders/orders.module';
     username: process.env.DB_USERNAME || 'admin',
     password: process.env.DB_PASSWORD || 'password123',
     database: process.env.DB_NAME || 'teerayut_dev',
-    entities: [],
+    entities: [__dirname + '/**/*.entity{.ts,.js}'],
     autoLoadEntities: true,
     synchronize: true,
   }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule],
