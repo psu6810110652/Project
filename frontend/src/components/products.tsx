@@ -1,14 +1,40 @@
 import { type ProductCard } from "../types";
 import { useNavigate } from "react-router-dom";
-
-import Heart from "../assets/svgs/heart.svg";
+import { useState, useEffect } from "react";
 
 export const Products = (props: ProductCard) => {
     const navigate = useNavigate();
+    const [isFavorite, setIsFavorite] = useState(false);
+
+    useEffect(() => {
+        // Check if product is in favorites
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        setIsFavorite(favorites.includes(props.id));
+    }, [props.id]);
 
     const handleProductClick = () => {
         if (props.id) {
             navigate(`/product/${props.id}`);
+        }
+    };
+
+    const toggleFavorite = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent product click when clicking heart
+        
+        if (!props.id) return;
+        
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        
+        if (isFavorite) {
+            // Remove from favorites
+            const newFavorites = favorites.filter((favId: string) => favId !== props.id);
+            localStorage.setItem('favorites', JSON.stringify(newFavorites));
+            setIsFavorite(false);
+        } else {
+            // Add to favorites
+            favorites.push(props.id);
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            setIsFavorite(true);
         }
     };
 
@@ -24,11 +50,24 @@ export const Products = (props: ProductCard) => {
                         alt="Icon"
                         src={props.image}
                     />
-                    <img
-                        className="w-10 h-10 object-contain absolute top-2 right-2"
-                        alt="Heart Icon"
-                        src={Heart}
-                    />
+                    <button
+                        onClick={toggleFavorite}
+                        className="w-10 h-10 object-contain absolute top-2 right-2 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors"
+                        title={isFavorite ? "ลบออกจากรายการโปรด" : "เพิ่มไปยังรายการโปรด"}
+                    >
+                        <svg 
+                            className={`w-8 h-8 transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} 
+                            fill={isFavorite ? "currentColor" : "none"}
+                            stroke="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path 
+                                fillRule="evenodd" 
+                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
+                                clipRule="evenodd" 
+                            />
+                        </svg>
+                    </button>
                 </div>
 
                 <div className="absolute w-80 top-90 left-7.5 font-semibold text-[#256d45]">

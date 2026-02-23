@@ -19,6 +19,7 @@ export interface Product {
     volumeDiscount?: string;
     Category?: string;
     Type?: string;
+    category?: { id: number; name: string; description?: string };
     description?: string;
 
     image?: string;
@@ -48,4 +49,19 @@ export interface SearchProps {
     onChange?: (value: string) => void;
     placeholder?: string;
     className?: string;
+}
+interface OrderItem {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  products: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  orderDate: string;
+  status: 'pending_confirm' | 'pending_delivery' | 'pending_received';
+  address?: string;
+  phone?: string;
 }

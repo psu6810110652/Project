@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Upload } from 'lucide-react';
+import { Upload, CheckCircle } from 'lucide-react'; // 🌟 เพิ่ม CheckCircle สำหรับไอคอนตอนสำเร็จ
 
 // สร้าง Interface สำหรับรับข้อมูลที่ส่งมาจาก Cart
 interface CartItem {
@@ -20,6 +20,9 @@ const PaymentPage: React.FC = () => {
 
   // 🌟 State สำหรับเก็บที่อยู่ที่ดึงมา
   const [deliveryAddress, setDeliveryAddress] = useState<string>('กำลังโหลดข้อมูลที่อยู่...');
+  
+  // 🌟 State สำหรับควบคุมการแสดง Overlay สั่งซื้อสำเร็จ
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
   // ดึงข้อมูลจากตะกร้า ถ้าไม่มีให้ใช้ค่าเริ่มต้น
   const cartItems: CartItem[] = location.state?.cartItems || [];
@@ -31,7 +34,7 @@ const PaymentPage: React.FC = () => {
   const finalTotal = totalPrice + shippingFee - discount;
   const qrCodeUrl = 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg';
 
-  // 🌟 ดึงข้อมูลที่อยู่จาก localStorage เมื่อโหลดหน้านี้
+  // ดึงข้อมูลที่อยู่จาก localStorage เมื่อโหลดหน้านี้
   useEffect(() => {
     const savedAddress = localStorage.getItem('shippingAddress');
     
@@ -60,7 +63,7 @@ const PaymentPage: React.FC = () => {
       return;
     }
     
-    // 🌟 เช็คว่ามีที่อยู่หรือยังก่อนให้จ่ายเงิน
+    // เช็คว่ามีที่อยู่หรือยังก่อนให้จ่ายเงิน
     if (deliveryAddress.includes('ไม่พบข้อมูล')) {
       alert("กรุณาระบุที่อยู่จัดส่งในหน้าแก้ไขโปรไฟล์ก่อนยืนยันครับ");
       return;
@@ -71,13 +74,17 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
-    // ส่งข้อมูลไป API สร้างออเดอร์
-    alert("ยืนยันการสั่งซื้อเรียบร้อย!");
-    navigate('/success'); // เปลี่ยนไปหน้าขอบคุณหรือหน้าออเดอร์
+    // 🌟 1. เปิดแสดง Overlay สั่งซื้อสำเร็จ แทนการใช้ alert
+    setShowSuccessOverlay(true);
+
+    // 🌟 2. ตั้งเวลาหน่วง 2.5 วินาที แล้วให้เด้งไปหน้า Profile
+    setTimeout(() => {
+      navigate('/profile');
+    }, 2500); 
   };
 
   return (
-    <div className="min-h-screen p-8 flex flex-col items-center font-['Prompt']">
+    <div className="min-h-screen p-8 flex flex-col items-center font-['Prompt'] relative">
       
       {/* ปุ่มย้อนกลับ */}
       <div className="w-full max-w-4xl flex justify-start mb-4">
@@ -102,7 +109,7 @@ const PaymentPage: React.FC = () => {
           {/* ซ้าย: ข้อมูลสินค้าและที่อยู่ */}
           <div className="flex-1 flex flex-col gap-6">
             
-            {/* 🌟 แสดงรายการสินค้าแบบ Scroll ได้ */}
+            {/* แสดงรายการสินค้าแบบ Scroll ได้ */}
             <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
               <h3 className="text-xl font-bold text-[#256D45] border-b pb-2">รายการสินค้า ({cartItems.length} รายการ)</h3>
               
@@ -227,6 +234,29 @@ const PaymentPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* =========================================
+          🌟 ส่วน Overlay แจ้งเตือนสั่งซื้อสำเร็จ (ไม้ตาย: แยก Element ขาดจากกัน 100%)
+          ========================================= */}
+      {showSuccessOverlay && (
+        <>
+          {/* เลเยอร์ 1: ฉากหลังสีดำเบลอ (เป็นกล่องเดี่ยวๆ วางทับหน้าจอ) */}
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"></div>
+
+          {/* เลเยอร์ 2: ตัวกล่อง Popup สีขาว (เป็นอีกกล่อง ลอยอยู่เหนือฉากหลังดำ) */}
+          <div className="fixed inset-0 flex items-center justify-center z-[110]">
+            <div className="bg-white rounded-3xl p-8 md:p-12 flex flex-col items-center shadow-2xl border border-gray-100 w-[90%] max-w-md">
+              <CheckCircle size={80} className="text-[#256D45] mb-6" />
+              <h2 className="text-2xl md:text-3xl font-bold text-[#256D45] mb-3 text-center">ยืนยันคำสั่งซื้อสำเร็จแล้ว!</h2>
+              <p className="text-gray-500 text-center font-medium">ระบบกำลังพาท่านกลับสู่หน้าโปรไฟล์...</p>
+              
+              {/* โลโก้โหลดหมุนๆ (Spinning loader) */}
+              <div className="mt-6 w-8 h-8 border-4 border-gray-200 border-t-[#256D45] rounded-full animate-spin"></div>
+            </div>
+          </div>
+        </>
+      )}
+      
     </div>
   );
 };
