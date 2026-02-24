@@ -20,8 +20,8 @@ import PendingPage from './pages/PendingPage';
 import Loginpage from './pages/Loginpage';
 import Register from './pages/Register';
 
-// Admin Pages
-{/* Admin Pages */ }
+import { ProtectedRoute } from './components/ProtectedRoute';
+
 import BarAdmin from './components/BarAdmin';
 import Dashboard from './pages/Admin/Dashboard';
 import Order from './pages/Admin/Order';
@@ -49,7 +49,6 @@ function UserLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/review/:productId" element={<ReviewPage />} />
-          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
         </Routes>
       </div>
       <Footer />
@@ -83,11 +82,18 @@ function AdminLayout() {
 function App() {
   return (
     <Router>
-      {/* เอา AuthProvider มาครอบไว้ตรงนี้ */}
-      <AuthProvider>
+      <AuthProvider> 
         <Routes>
           <Route path="/*" element={<UserLayout />} />
-          <Route path="/admin/*" element={<AdminLayout />} />
+          <Route 
+            path="/admin/*" 
+            element={
+              <ProtectedRoute allowedRole="Admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            } 
+          />
+          
         </Routes>
       </AuthProvider>
     </Router>
