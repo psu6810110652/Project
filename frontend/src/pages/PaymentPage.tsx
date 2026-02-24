@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload, CheckCircle } from 'lucide-react'; // 🌟 เพิ่ม CheckCircle สำหรับไอคอนตอนสำเร็จ
+import axios from 'axios';
 
 // สร้าง Interface สำหรับรับข้อมูลที่ส่งมาจาก Cart
 interface CartItem {
@@ -56,14 +57,13 @@ const PaymentPage: React.FC = () => {
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => { // 🌟 เติม async เข้าไปตรงนี้
     if (cartItems.length === 0) {
       alert("ไม่มีสินค้าในตะกร้า กลับไปเลือกสินค้าก่อนนะครับ");
       navigate('/cart');
       return;
     }
     
-    // เช็คว่ามีที่อยู่หรือยังก่อนให้จ่ายเงิน
     if (deliveryAddress.includes('ไม่พบข้อมูล')) {
       alert("กรุณาระบุที่อยู่จัดส่งในหน้าแก้ไขโปรไฟล์ก่อนยืนยันครับ");
       return;
@@ -74,15 +74,40 @@ const PaymentPage: React.FC = () => {
       return;
     }
 
-    // 🌟 1. เปิดแสดง Overlay สั่งซื้อสำเร็จ แทนการใช้ alert
-    setShowSuccessOverlay(true);
+    try {
+      // 🌟 1. ดึงชื่อลูกค้ามาจาก LocalStorage (หรือใช้ชื่อเริ่มต้น)
+      const savedAddress = localStorage.getItem('shippingAddress');
+      const addr = savedAddress ? JSON.parse(savedAddress) : { nameSurname: 'ลูกค้าทั่วไป' };
 
-    // 🌟 2. ตั้งเวลาหน่วง 2.5 วินาที แล้วให้เด้งไปหน้า Profile
-    setTimeout(() => {
-      navigate('/profile');
-    }, 2500); 
+      // 🌟 2. จัดเตรียมข้อมูล (Payload) ให้ตรงกับที่ Backend ต้องการ
+      const orderPayload = {
+        customerName: addr.nameSurname,
+        totalAmount: finalTotal,
+        // แปลงรูปแบบสินค้าในตะกร้า ให้ตรงกับ { name, quantity, price } ใน DB
+        products: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price
+        }))
+      };
+
+      // 🌟 3. ยิงข้อมูลไปที่ Backend ของเรา
+      const response = await axios.post('http://localhost:3000/api/admin/orders', orderPayload);
+      console.log('บันทึกออเดอร์สำเร็จ:', response.data);
+
+      // 🌟 4. เปิดแสดง Overlay สั่งซื้อสำเร็จ เมื่อ API ตอบกลับว่าผ่าน
+      setShowSuccessOverlay(true);
+
+      // 🌟 5. ตั้งเวลาหน่วง 2.5 วินาที แล้วให้เด้งไปหน้า Profile
+      setTimeout(() => {
+        navigate('/profile');
+      }, 2500); 
+
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการสั่งซื้อ:', error);
+      alert('ขออภัยครับ ไม่สามารถบันทึกคำสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง');
+    }
   };
-
   return (
     <div className="min-h-screen p-8 flex flex-col items-center font-['Prompt'] relative">
       
