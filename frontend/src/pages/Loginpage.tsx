@@ -30,7 +30,7 @@ const Login = () => {
       console.log('Backend response:', response.data);
 
       localStorage.setItem('token', response.data.access_token);
-      
+
       // 🌟 เพิ่มบรรทัดนี้: เซฟก้อน User (ที่มี ID) ลง Local Storage ตรงๆ เลย
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -38,6 +38,7 @@ const Login = () => {
 
       if (auth) {
         auth.login({
+          ...response.data.user,
           id: response.data.user?.id,
           name: response.data.user?.name || response.data.username,
           token: response.data.access_token,
@@ -45,11 +46,10 @@ const Login = () => {
         });
       }
 
-      // 🌟 เช็ค Role ตรงนี้ก่อนเปลี่ยนหน้า
-      const userRole = response.data.user?.role; 
+      const userRole = response.data.user?.role;
 
       if (userRole === 'Admin') {
-        navigate('/admin'); // 👈 ใส่ path ของหน้าแอดมิน
+        navigate('/admin');
       } else {
         navigate('/');
       }
@@ -89,8 +89,9 @@ const Login = () => {
       // โยนข้อมูลบอก Context ว่ามีคนล็อกอินแล้วนะ!
       if (auth) {
         auth.login({
-          id: response.data.user?.id, 
-          name: response.data.user?.name || formData.username, 
+          ...response.data.user,
+          id: response.data.user?.id,
+          name: response.data.user?.name || formData.username,
           token: response.data.access_token,
           role: response.data.user?.role // 👈 เก็บ role ไว้ใน context ด้วย (ถ้ามี)
         });
@@ -104,7 +105,6 @@ const Login = () => {
       } else {
         navigate('/'); // ถ้าเป็น user ธรรมดาไปหน้าแรก
       }
-
     } catch (err: any) {
       setError('อีเมล/ชื่อผู้ใช้งาน หรือ รหัสผ่านไม่ถูกต้อง');
     } finally {

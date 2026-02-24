@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { type Category, type Product } from '../../types';
 import { Table, Space, Tooltip, ConfigProvider, Popconfirm, message } from 'antd';
 import { type ColumnsType } from 'antd/es/table';
@@ -16,7 +16,7 @@ const ViewProducts: React.FC = () => {
 
     const handleDelete = async (id: string) => {
         try {
-            await axios.delete(`/api/product/${id}`);
+            await api.delete(`/product/${id}`);
             messageApi.success('ลบสินค้าเรียบร้อยแล้ว');
             setProducts(prev => prev.filter(item => item.id !== id));
         } catch (error) {
@@ -116,8 +116,8 @@ const ViewProducts: React.FC = () => {
             try {
                 setLoading(true);
                 const [catResponse, prodResponse] = await Promise.all([
-                    axios.get(`/api/category/${categoryId}`),
-                    axios.get(`/api/product/category/${categoryId}`)
+                    api.get(`/category/${categoryId}`),
+                    api.get(`/product/category/${categoryId}`)
                 ]);
                 setCategory(catResponse.data);
                 setProducts(prodResponse.data);
@@ -151,20 +151,20 @@ const ViewProducts: React.FC = () => {
                 },
             }}
         >
-            <div className="flex flex-col gap-6 font-['Prompt'] p-8 min-h-screen">
+            <div className="flex flex-col gap-4 md:gap-6 font-['Prompt'] w-full">
                 {contextHolder}
                 {/* Header */}
-                <div className="flex flex-col w-full mx-auto mb-6">
-                    <div className="flex items-end justify-between w-full">
-                        <h1 className="text-5xl font-black text-[#256D45] drop-shadow-sm tracking-tight justify-self-start">
+                <div className="flex flex-col w-full mx-auto mb-4 md:mb-6">
+                    <div className="flex items-center justify-between w-full flex-wrap gap-4">
+                        <h1 className="text-3xl md:text-5xl font-black text-[#256D45] drop-shadow-sm tracking-tight">
                             {category?.name || "จัดการสินค้า"}
                         </h1>
 
                         <button
-                            className="w-50 h-10 bg-[#FFFEF2] rounded-[20px] shadow-2xl hover:border-2 border-[#256D45] transition-colors"
+                            className="w-auto px-4 md:w-50 h-10 bg-[#FFFEF2] rounded-[20px] shadow-2xl hover:border-2 border-[#256D45] transition-colors whitespace-nowrap shrink-0"
                             onClick={() => { navigate(`/admin/products/${categoryId}/new`) }}
                         >
-                            <span className="text-[#256D45] text-xl font-bold">+ เพิ่มสินค้า</span>
+                            <span className="text-[#256D45] text-base md:text-xl font-bold">+ เพิ่มสินค้า</span>
                         </button>
                     </div>
 
@@ -172,13 +172,14 @@ const ViewProducts: React.FC = () => {
                 </div>
 
                 {/* ตารางสินค้า */}
-                <div className="bg-[#FFFEF2] rounded-[40px] shadow-2xl overflow-hidden -mt-1">
+                <div className="bg-[#FFFEF2] rounded-[20px] md:rounded-[40px] shadow-2xl overflow-hidden -mt-1 w-full max-w-[calc(100vw-32px)] md:max-w-full">
                     <Table
                         columns={columns}
                         dataSource={products}
                         rowKey="id"
                         bordered // เปิดเส้นตารางแนวตั้ง
                         loading={loading}
+                        scroll={{ x: 800 }} // เพิ่มตัวนี้เพื่อให้ไถตารางแนวนอนได้ในจอมือถือ
                         pagination={{
                             pageSize: 6,
                             placement: ['bottomCenter'],
@@ -211,7 +212,7 @@ const ViewProducts: React.FC = () => {
                     text-align: center !important;
                 }
                 .custom-admin-table .ant-table-tbody > tr > td {
-                    padding: 20px 16px !important;
+                    padding: 12px 16px !important;
                     /* ถ้าต้องการให้เหลือแค่เส้นนอน ไม่เอาเส้นตั้ง ให้ใส่ border-right: none */
                     border-right: none !important; 
                 }

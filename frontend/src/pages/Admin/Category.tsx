@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { type CategoryStat } from '../../types';
 
 const ManageCategories: React.FC = () => {
-    const [stats, setStats] = useState<CategoryStat[]>([]); 
+    const [stats, setStats] = useState<CategoryStat[]>([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get('/api/category/stats') 
+        axios.get('/api/category/stats')
             .then(res => {
                 setStats(res.data);
             })
@@ -16,7 +16,7 @@ const ManageCategories: React.FC = () => {
     }, []);
 
     return (
-        <div className="flex flex-col gap-10 font-['Prompt'] p-8">
+        <div className="flex flex-col gap-10 font-['Prompt'] w-full">
             <div className="flex flex-col items-center justify-center w-full mx-auto">
                 <h1 className="text-6xl font-semibold text-[#256D45] drop-shadow-md [-webkit-text-stroke:1.75px_#256d45] tracking-[0.05em]">
                     จัดการสินค้า
@@ -30,7 +30,7 @@ const ManageCategories: React.FC = () => {
                     const isEmpty = countNumber === 0;
 
                     return (
-                        <div 
+                        <div
                             key={item.id}
                             onClick={() => navigate(`/admin/products/${item.id}`)}
                             className={`
@@ -46,7 +46,7 @@ const ManageCategories: React.FC = () => {
                                 <span className={`text-9xl font-semibold ${isEmpty ? 'text-gray-300' : 'text-[#256D45]'}`}>
                                     {countNumber}
                                 </span>
-                                
+
                                 {isEmpty && (
                                     <span className="text-gray-400 text-2xl font-['Prompt']">
                                         ยังไม่มีสินค้าในหมวดนี้

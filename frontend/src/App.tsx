@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { Menu, X } from 'lucide-react';
 import './App.css'
 
 import Home from './pages/Home'
@@ -57,14 +59,41 @@ function UserLayout() {
 }
 
 function AdminLayout() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Close mobile menu when navigating
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen relative">
       <Navbar />
-      <div className="flex flex-1">
-        <aside className="fixed left-0 top-20 h-[calc(100vh-80px)] z-20">
+
+      {/* Mobile Sidebar Toggle Button (FAB) */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#256D45] text-[#FFFEF2] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,109,69,0.5)] z-50 hover:bg-[#1E5631] transition-transform active:scale-95 border-2 border-[#FFFEF2]"
+      >
+        {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+      </button>
+
+      <div className="flex flex-1 relative">
+        {/* Backdrop for mobile */}
+        {isMobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-20 md:hidden"
+            style={{ top: '120px' }}
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+
+        <aside className={`fixed left-0 z-30 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:block`} style={{ top: '80px', height: 'calc(100vh - 80px)' }}>
           <BarAdmin />
         </aside>
-        <main className="flex-1 ml-70 p-8 min-h-screen">
+
+        <main className="flex-1 md:ml-70 p-4 md:p-8 min-h-screen min-w-0">
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Order />} />
@@ -82,18 +111,18 @@ function AdminLayout() {
 function App() {
   return (
     <Router>
-      <AuthProvider> 
+      <AuthProvider>
         <Routes>
           <Route path="/*" element={<UserLayout />} />
-          <Route 
-            path="/admin/*" 
+          <Route
+            path="/admin/*"
             element={
               <ProtectedRoute allowedRole="Admin">
                 <AdminLayout />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
         </Routes>
       </AuthProvider>
     </Router>
