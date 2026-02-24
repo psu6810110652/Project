@@ -42,7 +42,7 @@ const PaymentPage: React.FC = () => {
     if (savedAddress) {
       const addr = JSON.parse(savedAddress);
       // จัดรูปแบบให้เหมือนหน้าซองจดหมาย
-      const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} โทร: ${addr.phone || '-'}\n${addr.houseNumber || ''} ${addr.streetSoi || ''}\nต.${addr.subDistrict || ''} อ.${addr.district || ''} จ.${addr.province || ''}\nรหัสไปรษณีย์ ${addr.postalCode || ''}`;
+      const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
       setDeliveryAddress(fullAddress);
     } else {
       setDeliveryAddress('ไม่พบข้อมูลการจัดส่ง กรุณากลับไปเพิ่มที่อยู่ในหน้าโปรไฟล์');

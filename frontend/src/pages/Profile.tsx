@@ -31,12 +31,12 @@ const Profile = () => {
         if (addr.phone) currentPhone = addr.phone;
         
         const parts = [
-          addr.houseNumber,
-          addr.streetSoi,
-          addr.subDistrict ? `ต.${addr.subDistrict}` : '',
-          addr.district ? `อ.${addr.district}` : '',
-          addr.province ? `จ.${addr.province}` : '',
-          addr.postalCode
+          addr.houseNumber ? `เลขที่: ${addr.houseNumber}` : '',
+          addr.streetSoi ? `ถนน/ซอย: ${addr.streetSoi}` : '',
+          addr.subDistrict ? `ตำบล: ${addr.subDistrict}` : '',
+          addr.district ? `อำเภอ: ${addr.district}` : '',
+          addr.province ? `จังหวัด: ${addr.province}` : '',
+          addr.postalCode ? `รหัสไปรษณีย์: ${addr.postalCode}` : ''
         ].filter(Boolean);
         
         if (parts.length > 0) {
