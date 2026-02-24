@@ -101,13 +101,14 @@ const PaymentPage: React.FC = () => {
       // 🌟 5. ตั้งเวลาหน่วง 2.5 วินาที แล้วให้เด้งไปหน้า Profile
       setTimeout(() => {
         navigate('/profile');
-      }, 2500); 
+      }, 1000); 
 
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการสั่งซื้อ:', error);
       alert('ขออภัยครับ ไม่สามารถบันทึกคำสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง');
     }
   };
+
   return (
     <div className="min-h-screen p-8 flex flex-col items-center font-['Prompt'] relative">
       

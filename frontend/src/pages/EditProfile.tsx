@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CheckCircle } from 'lucide-react'; // 🌟 เพิ่มไอคอน CheckCircle
 
 const EditProfile = () => {
   const navigate = useNavigate();
+  
+  // 🌟 เพิ่ม State ควบคุมการแสดง Overlay สั่งซื้อสำเร็จ
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
   const [formData, setFormData] = useState({
     username: '',
     nameSurname: '',
@@ -106,8 +111,13 @@ const EditProfile = () => {
         const updatedUser = await response.json();
         console.log('Update Success:', updatedUser);
         localStorage.setItem('shippingAddress', JSON.stringify(formData));
-        alert('บันทึกข้อมูลเรียบร้อยแล้วครับ');
-        navigate('/profile');
+        
+        // 🌟 เปิด Overlay แจ้งเตือน และหน่วงเวลา 2.5 วิ ก่อนไปหน้า Profile
+        setShowSuccessOverlay(true);
+        setTimeout(() => {
+          navigate('/profile');
+        }, 1000);
+
       } else {
         const errorData = await response.json();
         alert(`เกิดข้อผิดพลาด: ${errorData.message || 'บันทึกไม่ได้'}`);
@@ -123,7 +133,7 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#DCEDC1] font-['Prompt'] text-[#256D45]">
+    <div className="min-h-screen bg-[#DCEDC1] font-['Prompt'] text-[#256D45] relative">
       <div className="relative">
         <button 
           onClick={handleDeleteAccount}
@@ -293,6 +303,29 @@ const EditProfile = () => {
           </div>
         </form>
       </div>
+
+      {/* =========================================
+          🌟 ส่วน Overlay แจ้งเตือนบันทึกข้อมูลสำเร็จ
+          ========================================= */}
+      {showSuccessOverlay && (
+        <>
+          {/* เลเยอร์ 1: ฉากหลังสีดำเบลอ */}
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"></div>
+
+          {/* เลเยอร์ 2: ตัวกล่อง Popup สีขาว */}
+          <div className="fixed inset-0 flex items-center justify-center z-[110]">
+            <div className="bg-white rounded-3xl p-8 md:p-12 flex flex-col items-center shadow-2xl border border-gray-100 w-[90%] max-w-md">
+              <CheckCircle size={80} className="text-[#256D45] mb-6" />
+              <h2 className="text-2xl md:text-3xl font-bold text-[#256D45] mb-3 text-center">บันทึกข้อมูลสำเร็จแล้ว!</h2>
+              <p className="text-gray-500 text-center font-medium">ระบบกำลังพาท่านกลับสู่หน้าโปรไฟล์...</p>
+              
+              {/* โลโก้โหลดหมุนๆ (Spinning loader) */}
+              <div className="mt-6 w-8 h-8 border-4 border-gray-200 border-t-[#256D45] rounded-full animate-spin"></div>
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   );
 };
