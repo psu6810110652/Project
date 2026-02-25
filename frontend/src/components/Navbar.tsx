@@ -78,7 +78,7 @@ function Navbar() {
   // 🟢 2. ถ้าเป็นลูกค้าปกติ (USER) จะมาแสดงส่วนนี้แทน
   // ==========================================
   return (
-    <div className="sticky top-0 z-50 w-full bg-[#FFFEF2] border-b border-gray-100 shadow-sm flex flex-col font-['Prompt']">
+    <div className="sticky top-0 z-50 w-full bg-[#fffef2] border-b border-gray-100 shadow-sm flex flex-col font-['Prompt']">
       {/* แถวบน: Logo และ ไอคอนผู้ใช้/ตะกร้า */}
       <div className="flex w-full items-center justify-between px-4 md:px-10 lg:px-20 h-16 md:h-20">
         

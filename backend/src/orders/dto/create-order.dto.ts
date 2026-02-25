@@ -24,4 +24,8 @@ export class CreateOrderDto {
     @IsString()
     @IsOptional()
     phone?: string;
+
+    @IsString()
+    @IsOptional()
+    paymentSlip?: string;
 }
