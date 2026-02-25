@@ -38,12 +38,22 @@ const Login = () => {
 
       if (auth) {
         auth.login({
-          id: response.data.user?.id, // 👈 เพิ่มการส่ง ID ให้ Context
+          id: response.data.user?.id,
           name: response.data.user?.name || response.data.username,
-          token: response.data.access_token
+          token: response.data.access_token,
+          role: response.data.user?.role
         });
       }
-      navigate('/');
+
+      // 🌟 เช็ค Role ตรงนี้ก่อนเปลี่ยนหน้า
+      const userRole = response.data.user?.role; 
+
+      if (userRole === 'Admin') {
+        navigate('/admin'); // 👈 ใส่ path ของหน้าแอดมิน
+      } else {
+        navigate('/');
+      }
+
     } catch (err: any) {
       console.error('Login error:', err);
       if (err.response) {
@@ -79,13 +89,22 @@ const Login = () => {
       // โยนข้อมูลบอก Context ว่ามีคนล็อกอินแล้วนะ!
       if (auth) {
         auth.login({
-          id: response.data.user?.id, // 👈 เพิ่มการส่ง ID ให้ Context ด้วย
+          id: response.data.user?.id, 
           name: response.data.user?.name || formData.username, 
-          token: response.data.access_token
+          token: response.data.access_token,
+          role: response.data.user?.role // 👈 เก็บ role ไว้ใน context ด้วย (ถ้ามี)
         });
       }
 
-      navigate('/');
+      // 🌟 เช็ค Role ตรงนี้ก่อนเปลี่ยนหน้า
+      const userRole = response.data.user?.role; // หรือ response.data.user?.roles[0] ขึ้นอยู่กับ Backend ของคุณส่งมาแบบไหน
+
+      if (userRole === 'Admin') {
+        navigate('/admin'); // 👈 ใส่ path ของหน้าแอดมินของคุณ (เช่น /admin หรือ /order)
+      } else {
+        navigate('/'); // ถ้าเป็น user ธรรมดาไปหน้าแรก
+      }
+
     } catch (err: any) {
       setError('อีเมล/ชื่อผู้ใช้งาน หรือ รหัสผ่านไม่ถูกต้อง');
     } finally {
