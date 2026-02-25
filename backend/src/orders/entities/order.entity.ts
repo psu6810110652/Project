@@ -41,13 +41,4 @@ export class Order {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
-
-    @Column({ name: 'tracking_number', nullable: true })
-    trackingNumber: string;
-
-    @Column({ name: 'customer_id', nullable: true })
-    customerId: string;
-
-    @Column({ name: 'slip_url', type: 'text', nullable: true })
-    slipUrl: string;
 }
