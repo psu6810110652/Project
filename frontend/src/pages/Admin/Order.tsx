@@ -92,10 +92,10 @@ export default function Order() {
   };
 
   return (
-    <div className="bg-[#F9FCF9] min-h-screen p-8 font-['Prompt'] w-full relative">
+    <div className="bg-[#F9FCF9]/60 min-h-screen p-8 font-['Prompt'] w-full relative">
       <div className="max-w-6xl mx-auto">
         
-        <div className="border-b-2 border-[#256D45] pb-2 mb-10">
+        <div className="mb-8">
           <h1 className="text-4xl font-extrabold text-[#256D45]">จัดการคำสั่งซื้อ</h1>
         </div>
 

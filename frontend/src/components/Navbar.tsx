@@ -61,6 +61,9 @@ function Navbar() {
               <Bell className="w-6 h-6 md:w-7 md:h-7 fill-[#256D45]" strokeWidth={1} />
               <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-[#FFFEF2] rounded-full"></span>
             </button>
+            <button onClick={handleLogout} className="text-red-500 hover:text-red-700 transition-colors flex items-center" title="ออกจากระบบ">
+                <LogOut size={24} className="md:w-7 md:h-7" strokeWidth={1.5} />
+              </button>
             <div className="flex items-center gap-2 md:gap-3 cursor-pointer hover:opacity-80 transition-opacity">
               <span className="hidden md:block text-[#256D45] text-base md:text-lg font-bold">
                 {user?.name || "ชื่อแอดมิน"}
