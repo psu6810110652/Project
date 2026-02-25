@@ -43,7 +43,10 @@ export default function Dashboard() {
 
         // Fetch all users to get the total customers count
         api.get('/users')
-            .then(res => setNewCustomers(res.data.length))
+            .then(res => {
+                const customers = res.data.filter((user: any) => user.role !== 'Admin');
+                setNewCustomers(customers.length);
+            })
             .catch(err => console.error("Error fetching users:", err));
 
         // TODO: Fetch Sales and Orders when the backend APIs are ready

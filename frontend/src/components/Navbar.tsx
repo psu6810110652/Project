@@ -106,6 +106,11 @@ function Navbar() {
         <div className="flex items-center gap-4 md:gap-6 text-[#256D45] shrink-0">
           {user ? (
             <div className="flex items-center gap-2 md:gap-4">
+              {user.role === 'Admin' && (
+                <Link to="/admin" className="text-sm md:text-lg font-bold text-blue-600 hover:opacity-80 bg-blue-100 px-3 py-1 rounded-md">
+                  หลังบ้าน
+                </Link>
+              )}
               <Link to="/profile" className="flex items-center gap-1 md:gap-2 hover:opacity-80">
                 <span className="hidden md:inline text-lg font-bold">{user.name}</span>
                 <UserCircle size={28} className="md:w-8 md:h-8" strokeWidth={1.5} />

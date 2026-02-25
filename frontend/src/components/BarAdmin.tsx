@@ -4,13 +4,15 @@ import { Home, ShoppingCart, ShoppingBag } from "lucide-react";
 
 const adminMenus = [
     { name: 'หน้าหลัก', icon: <Home className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin' },
-    { name: 'คำสั่งซื้อ', icon: <ShoppingCart className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/orders',
+    {
+        name: 'คำสั่งซื้อ', icon: <ShoppingCart className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/orders',
         subMenus: [
             { id: 'pending', name: 'รอยืนยัน' },
             { id: 'shipping', name: 'รอจัดส่ง' }
         ]
     },
-    { name: 'สินค้า', icon: <ShoppingBag className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/products',
+    {
+        name: 'สินค้า', icon: <ShoppingBag className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/products',
         subMenus: [
             { id: 1, name: 'ปุ๋ย' },
             { id: 2, name: 'อุปกรณ์' },
@@ -24,7 +26,7 @@ const adminMenus = [
 
 const BarAdmin: React.FC = () => {
     const location = useLocation();
-    
+
     const [openMenu, setOpenMenu] = useState<string | null>(null);
 
     useEffect(() => {
@@ -38,18 +40,18 @@ const BarAdmin: React.FC = () => {
         <div className="w-70 h-screen bg-[#256D45] flex flex-col py-8 relative">
 
             {/* รายการเมนู (Navigation List) */}
-            <nav className="flex-1 flex flex-col gap-3 pr-2">
+            <nav className="flex-1 flex flex-col gap-3 pr-2 mt-3">
                 {adminMenus.map((menu) => {
-                    const isActive = menu.path === '/admin' 
-                        ? location.pathname === menu.path 
+                    const isActive = menu.path === '/admin'
+                        ? location.pathname === menu.path
                         : location.pathname.startsWith(menu.path);
                     const isOpen = openMenu === menu.name;
 
                     return (
                         <div key={menu.name} className="flex flex-col">
                             {/* เมนูหลัก */}
-                            <Link 
-                                to={menu.path} 
+                            <Link
+                                to={menu.path}
                                 className="no-underline"
                                 onClick={() => {
                                     if (menu.subMenus) {
@@ -62,7 +64,7 @@ const BarAdmin: React.FC = () => {
                                 <div className={`
                                     h-14 flex items-center px-10 gap-3 transition-all self-center duration-300 cursor-pointer
                                     rounded-tr-[20px] rounded-br-[20px]
-                                    ${isActive 
+                                    ${isActive
                                         ? 'w-full bg-[#DCEDC1]'
                                         : 'w-[90%] bg-[#FFFEF2] hover:w-full'
                                     }
@@ -88,11 +90,10 @@ const BarAdmin: React.FC = () => {
 
                                         return (
                                             <React.Fragment key={sub.id}>
-                                                <Link 
+                                                <Link
                                                     to={subPath}
-                                                    className={`pt-2 text-xl font-bold font-['Prompt'] transition-all ${
-                                                        isSubActive ? 'text-[#256D45] scale-110' : 'text-[#256D45]'
-                                                    }`}
+                                                    className={`pt-2 text-xl font-bold font-['Prompt'] transition-all ${isSubActive ? 'text-[#256D45] scale-110' : 'text-[#256D45]'
+                                                        }`}
                                                 >
                                                     {sub.name}
                                                 </Link>
