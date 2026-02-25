@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Upload, CheckCircle } from 'lucide-react'; // 🌟 เพิ่ม CheckCircle สำหรับไอคอนตอนสำเร็จ
-import axios from 'axios';
+import { Upload, CheckCircle } from 'lucide-react';
+import api from '../services/api';
 
 // สร้าง Interface สำหรับรับข้อมูลที่ส่งมาจาก Cart
 interface CartItem {
@@ -21,7 +21,7 @@ const PaymentPage: React.FC = () => {
 
   // 🌟 State สำหรับเก็บที่อยู่ที่ดึงมา
   const [deliveryAddress, setDeliveryAddress] = useState<string>('กำลังโหลดข้อมูลที่อยู่...');
-  
+
   // 🌟 State สำหรับควบคุมการแสดง Overlay สั่งซื้อสำเร็จ
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
@@ -38,7 +38,7 @@ const PaymentPage: React.FC = () => {
   // ดึงข้อมูลที่อยู่จาก localStorage เมื่อโหลดหน้านี้
   useEffect(() => {
     const savedAddress = localStorage.getItem('shippingAddress');
-    
+
     if (savedAddress) {
       const addr = JSON.parse(savedAddress);
       // จัดรูปแบบให้เหมือนหน้าซองจดหมาย
@@ -57,13 +57,13 @@ const PaymentPage: React.FC = () => {
     }
   };
 
-  const handleConfirm = async () => { // 🌟 เติม async เข้าไปตรงนี้
+  const handleConfirm = async () => {
     if (cartItems.length === 0) {
       alert("ไม่มีสินค้าในตะกร้า กลับไปเลือกสินค้าก่อนนะครับ");
       navigate('/cart');
       return;
     }
-    
+
     if (deliveryAddress.includes('ไม่พบข้อมูล')) {
       alert("กรุณาระบุที่อยู่จัดส่งในหน้าแก้ไขโปรไฟล์ก่อนยืนยันครับ");
       return;
@@ -75,33 +75,38 @@ const PaymentPage: React.FC = () => {
     }
 
     try {
-      // 🌟 1. ดึงชื่อลูกค้ามาจาก LocalStorage (หรือใช้ชื่อเริ่มต้น)
       const savedAddress = localStorage.getItem('shippingAddress');
       const addr = savedAddress ? JSON.parse(savedAddress) : { nameSurname: 'ลูกค้าทั่วไป' };
+      const userStr = localStorage.getItem('user');
+      const userId = userStr ? JSON.parse(userStr).id : null;
 
-      // 🌟 2. จัดเตรียมข้อมูล (Payload) ให้ตรงกับที่ Backend ต้องการ
       const orderPayload = {
-        customerName: addr.nameSurname,
+        customerId: userId,
+        customerName: addr.nameSurname || 'ลูกค้าทั่วไป',
+        address: deliveryAddress,
+        phone: addr.phone || '',
+        status: 'pending_confirm',
         totalAmount: finalTotal,
-        // แปลงรูปแบบสินค้าในตะกร้า ให้ตรงกับ { name, quantity, price } ใน DB
+        slipUrl: slipImage,
         products: cartItems.map(item => ({
           name: item.name,
           quantity: item.quantity,
-          price: item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price
+          price: item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price,
+          imageUrl: item.imageUrl
         }))
       };
 
-      // 🌟 3. ยิงข้อมูลไปที่ Backend ของเรา
-      const response = await axios.post('http://localhost:3000/api/admin/orders', orderPayload);
+      const response = await api.post('/api/admin/orders', orderPayload);
       console.log('บันทึกออเดอร์สำเร็จ:', response.data);
 
-      // 🌟 4. เปิดแสดง Overlay สั่งซื้อสำเร็จ เมื่อ API ตอบกลับว่าผ่าน
       setShowSuccessOverlay(true);
 
-      // 🌟 5. ตั้งเวลาหน่วง 2.5 วินาที แล้วให้เด้งไปหน้า Profile
+      // ล้างข้อมูลตะกร้าใน LocalStorage
+      localStorage.removeItem('cart');
+
       setTimeout(() => {
         navigate('/profile');
-      }, 1000); 
+      }, 2500);
 
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการสั่งซื้อ:', error);
@@ -111,7 +116,7 @@ const PaymentPage: React.FC = () => {
 
   return (
     <div className="min-h-screen p-8 flex flex-col items-center font-['Prompt'] relative">
-      
+
       {/* ปุ่มย้อนกลับ */}
       <div className="w-full max-w-4xl flex justify-start mb-4">
         <button
@@ -128,17 +133,17 @@ const PaymentPage: React.FC = () => {
       </h1>
 
       <div className="w-full max-w-4xl flex flex-col gap-6">
-        
+
         {/* === การ์ดที่ 1: สรุปคำสั่งซื้อ === */}
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col md:flex-row gap-8">
-          
+
           {/* ซ้าย: ข้อมูลสินค้าและที่อยู่ */}
           <div className="flex-1 flex flex-col gap-6">
-            
+
             {/* แสดงรายการสินค้าแบบ Scroll ได้ */}
             <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
               <h3 className="text-xl font-bold text-[#256D45] border-b pb-2">รายการสินค้า ({cartItems.length} รายการ)</h3>
-              
+
               {cartItems.length === 0 ? (
                 <p className="text-red-500">ไม่พบข้อมูลสินค้า กรุณากลับไปที่ตะกร้า</p>
               ) : (
@@ -186,7 +191,7 @@ const PaymentPage: React.FC = () => {
           {/* ขวา: สรุปยอดเงิน */}
           <div className="flex-1 flex flex-col justify-between py-2">
             <h3 className="text-xl font-bold text-[#256D45] border-b pb-2 mb-4">สรุปยอด</h3>
-            
+
             <div className="space-y-4 text-lg font-bold text-[#256D45]">
               <div className="flex justify-between">
                 <span>ราคาสินค้ารวม</span>
@@ -203,7 +208,7 @@ const PaymentPage: React.FC = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex justify-between mt-8 text-xl md:text-2xl font-black text-[#256D45] pt-4 border-t-2 border-[#256D45]">
               <span>ยอดชำระสุทธิ</span>
               <span className="text-2xl">฿ {finalTotal}</span>
@@ -236,7 +241,7 @@ const PaymentPage: React.FC = () => {
             <h3 className="text-xl font-bold text-[#256D45] mb-4">อัปโหลดสลิป</h3>
             <label className="w-full max-w-xs h-24 border-2 border-[#256D45] rounded-2xl flex items-center justify-center cursor-pointer hover:bg-[#F0F7F0] transition-colors relative overflow-hidden">
               <input type="file" className="hidden" accept="image/*" onChange={handleUploadSlip} />
-              
+
               {slipImage ? (
                 <img src={slipImage} alt="Slip Preview" className="w-full h-full object-cover" />
               ) : (
@@ -244,14 +249,14 @@ const PaymentPage: React.FC = () => {
               )}
             </label>
             {slipImage && (
-               <p className="text-sm text-[#256D45] mt-2 font-medium">อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)</p>
+              <p className="text-sm text-[#256D45] mt-2 font-medium">อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)</p>
             )}
           </div>
         </div>
 
         {/* ปุ่มยืนยัน */}
         <div className="flex justify-end mt-4">
-          <button 
+          <button
             onClick={handleConfirm}
             className="bg-[#256D45] border-2 border-[#256D45] text-white font-bold text-xl !px-5 !py-2 rounded-full hover:bg-white hover:text-[#256D45] transition-all shadow-md"
           >
@@ -275,14 +280,14 @@ const PaymentPage: React.FC = () => {
               <CheckCircle size={80} className="text-[#256D45] mb-6" />
               <h2 className="text-2xl md:text-3xl font-bold text-[#256D45] mb-3 text-center">ยืนยันคำสั่งซื้อสำเร็จแล้ว!</h2>
               <p className="text-gray-500 text-center font-medium">ระบบกำลังพาท่านกลับสู่หน้าโปรไฟล์...</p>
-              
+
               {/* โลโก้โหลดหมุนๆ (Spinning loader) */}
               <div className="mt-6 w-8 h-8 border-4 border-gray-200 border-t-[#256D45] rounded-full animate-spin"></div>
             </div>
           </div>
         </>
       )}
-      
+
     </div>
   );
 };

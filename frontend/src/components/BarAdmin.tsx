@@ -5,11 +5,7 @@ import { Home, ShoppingCart, ShoppingBag } from "lucide-react";
 const adminMenus = [
     { name: 'หน้าหลัก', icon: <Home className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin' },
     {
-        name: 'คำสั่งซื้อ', icon: <ShoppingCart className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/orders',
-        subMenus: [
-            { id: 'pending', name: 'รอยืนยัน' },
-            { id: 'shipping', name: 'รอจัดส่ง' }
-        ]
+        name: 'คำสั่งซื้อ', icon: <ShoppingCart className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/orders'
     },
     {
         name: 'สินค้า', icon: <ShoppingBag className="w-6 h-6 text-[#256D45] stroke-[2.5px]" />, path: '/admin/products',
@@ -109,15 +105,6 @@ const BarAdmin: React.FC = () => {
                     );
                 })}
             </nav>
-
-            {/* ปุ่มออกจากระบบ */}
-            <div className="px-10 mb-20">
-                <button className="w-full h-15 bg-[#FFFEF2] border-solid border-2 border-[#FF0004] rounded-[1.25rem] shadow-xl flex items-center justify-center group hover:bg-[#FF0004] transition-dissolve">
-                    <span className="text-[#FF0004] text-2xl font-bold font-['Prompt'] group-hover:text-[#FFFEF2] transition-dissolve">
-                        ออกจากระบบ
-                    </span>
-                </button>
-            </div>
         </div>
     );
 };

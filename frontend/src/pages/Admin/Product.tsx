@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
+import { AdminSearchContext } from '../../context/AdminSearchContext';
 import { type Category, type Product } from '../../types';
 import { Table, Space, Tooltip, ConfigProvider, Popconfirm, message } from 'antd';
 import { type ColumnsType } from 'antd/es/table';
@@ -13,6 +14,7 @@ const ViewProducts: React.FC = () => {
     const [category, setCategory] = useState<Category | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const { searchTerm } = useContext(AdminSearchContext);
 
     const handleDelete = async (id: string) => {
         try {
@@ -175,7 +177,7 @@ const ViewProducts: React.FC = () => {
                 <div className="bg-[#FFFEF2] rounded-[20px] md:rounded-[40px] shadow-2xl overflow-hidden -mt-1 w-full max-w-[calc(100vw-32px)] md:max-w-full">
                     <Table
                         columns={columns}
-                        dataSource={products}
+                        dataSource={products.filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.id.toString().toLowerCase().includes(searchTerm.toLowerCase()))}
                         rowKey="id"
                         bordered // เปิดเส้นตารางแนวตั้ง
                         loading={loading}

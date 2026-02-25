@@ -14,7 +14,7 @@ export default function ManagerOrder() {
     const fetchOrder = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/admin/orders/${orderId}`);
+            const res = await api.get(`/api/admin/orders/${orderId}`);
             if (res.data) {
                 setOrder(res.data);
                 if (res.data.trackingNumber) setTrackingNumber(res.data.trackingNumber);
@@ -39,7 +39,7 @@ export default function ManagerOrder() {
                 message.warning('กรุณากรอกเลขแจ้งพัสดุก่อนยืนยันการจัดส่ง');
                 return;
             }
-            await api.put(`/admin/orders/${orderId}/status`, {
+            await api.put(`/api/admin/orders/${orderId}/status`, {
                 status: newStatus,
                 trackingNumber: trackingNumber.trim() || undefined
             });

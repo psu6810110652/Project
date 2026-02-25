@@ -41,4 +41,10 @@ export class Order {
 
     @Column({ name: 'tracking_number', nullable: true })
     trackingNumber: string;
+
+    @Column({ name: 'customer_id', nullable: true })
+    customerId: string;
+
+    @Column({ name: 'slip_url', type: 'text', nullable: true })
+    slipUrl: string;
 }

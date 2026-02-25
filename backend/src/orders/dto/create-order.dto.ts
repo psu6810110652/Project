@@ -24,4 +24,12 @@ export class CreateOrderDto {
     @IsString()
     @IsOptional()
     phone?: string;
+
+    @IsString()
+    @IsOptional()
+    customerId?: string;
+
+    @IsString()
+    @IsOptional()
+    slipUrl?: string;
 }
