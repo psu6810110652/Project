@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { type OrderData } from '../../types';
 import { Table, ConfigProvider } from 'antd';
@@ -6,6 +7,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { AdminSearchContext } from '../../context/AdminSearchContext';
 
 export default function Order() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -56,25 +58,8 @@ export default function Order() {
   const pendingConfirmCount = pendingConfirmOrders.length;
   const pendingDeliveryCount = pendingDeliveryOrders.length;
 
-  // ฟังก์ชันจุดสีสถานะ
-  const renderStatusDot = (status: string) => {
-    if (status === 'completed') {
-      return <div className="w-4 h-4 rounded-full bg-green-500 mx-auto shadow-sm" title="สำเร็จ"></div>;
-    }
-    if (status === 'pending_delivery' || status === 'pending_confirm' || !status) {
-      return <div className="w-4 h-4 rounded-full bg-yellow-400 mx-auto shadow-sm" title="รอยืนยัน / รอจัดส่ง"></div>;
-    }
-    if (status === 'pending_received') {
-      return <div className="w-4 h-4 rounded-full bg-blue-500 mx-auto shadow-sm" title="กำลังจัดส่ง"></div>;
-    }
-    if (status === 'cancelled') {
-      return <div className="w-4 h-4 rounded-full bg-red-500 mx-auto shadow-sm" title="ยกเลิก"></div>;
-    }
-    return <div className="w-4 h-4 rounded-full bg-gray-400 mx-auto shadow-sm"></div>;
-  };
-
-  // คอลัมน์ที่ใช้ร่วมกันสำหรับ Antd Table
-  const commonColumns: ColumnsType<OrderData> = [
+  // คอลัมน์พื้นฐานที่ใช้ร่วมกัน
+  const baseColumns: ColumnsType<OrderData> = [
     {
       title: 'รหัสสั่งซื้อ',
       dataIndex: 'orderNumber',
@@ -146,11 +131,42 @@ export default function Order() {
       align: 'center',
       render: (text) => <span className="font-bold text-[#256D45]">฿ {text}</span>,
     },
+  ];
+
+  // คอลัมน์สำหรับตาราง "รอยืนยัน" และ "รอจัดส่ง" — แสดงปุ่มจัดการ
+  const pendingColumns: ColumnsType<OrderData> = [
+    ...baseColumns,
     {
       title: 'จัดการ',
       key: 'action',
       align: 'center',
-      render: (_, record) => renderStatusDot(record.status),
+      render: (_, record) => (
+        <button
+          onClick={() => navigate(`/admin/orders/${record.id}`)}
+          className="bg-[#256D45] hover:bg-[#1A5434] text-white font-bold px-4 py-1.5 rounded-xl text-sm shadow-sm transition-all hover:scale-105 active:scale-95"
+        >
+          จัดการ
+        </button>
+      ),
+    },
+  ];
+
+  // คอลัมน์สำหรับตาราง "สำเร็จ / ยกเลิก" — แสดงจุดสีบอกสถานะ
+  const finishedColumns: ColumnsType<OrderData> = [
+    ...baseColumns,
+    {
+      title: 'สถานะ',
+      key: 'status',
+      align: 'center',
+      render: (_, record) => {
+        if (record.status === 'completed') {
+          return <div className="w-4 h-4 rounded-full bg-green-500 mx-auto shadow-sm" title="สำเร็จ"></div>;
+        }
+        if (record.status === 'cancelled') {
+          return <div className="w-4 h-4 rounded-full bg-red-500 mx-auto shadow-sm" title="ยกเลิก"></div>;
+        }
+        return <div className="w-4 h-4 rounded-full bg-gray-400 mx-auto shadow-sm"></div>;
+      },
     },
   ];
 
@@ -198,7 +214,7 @@ export default function Order() {
                     <div className="w-full border-t-2 border-gray-100 mb-6"></div>
                     <div className="w-full max-w-full overflow-hidden">
                       <Table
-                        columns={commonColumns}
+                        columns={pendingColumns}
                         dataSource={pendingConfirmOrders}
                         rowKey="id"
                         pagination={{ pageSize: 5 }}
@@ -222,7 +238,7 @@ export default function Order() {
                     <div className="w-full border-t-2 border-gray-100 mb-6"></div>
                     <div className="w-full max-w-full overflow-hidden">
                       <Table
-                        columns={commonColumns}
+                        columns={pendingColumns}
                         dataSource={pendingDeliveryOrders}
                         rowKey="id"
                         pagination={{ pageSize: 5 }}
@@ -244,7 +260,7 @@ export default function Order() {
                 </div>
                 <div className="bg-white rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-md overflow-hidden relative z-0 -mt-1 p-6">
                   <Table
-                    columns={commonColumns}
+                    columns={finishedColumns}
                     dataSource={finishedOrders}
                     rowKey="id"
                     pagination={{ pageSize: 10 }}
