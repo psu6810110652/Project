@@ -50,18 +50,36 @@ export interface SearchProps {
     placeholder?: string;
     className?: string;
 }
+
 interface OrderItem {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  products: Array<{
     name: string;
     quantity: number;
     price: number;
-  }>;
-  totalAmount: number;
-  orderDate: string;
-  status: 'pending_confirm' | 'pending_delivery' | 'pending_received';
-  address?: string;
-  phone?: string;
+    imageUrl?: string;
+}
+
+export interface OrderData {
+    id: string;
+    orderNumber: string;
+    customerId?: string;
+    customerName: string;
+    products: OrderItem[];
+    totalAmount: number;
+    status: 'pending_confirm' | 'pending_delivery' | 'pending_received' | 'completed' | 'cancelled';
+    createdAt: string;
+    address?: string;
+    phone?: string;
+    trackingNumber?: string;
+    slipUrl?: string;
+}
+
+export interface CartItem {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    imageUrl?: string;
+    stockQuantity?: number;
+    isPromotion?: boolean;
+    promotionPrice?: number;
 }

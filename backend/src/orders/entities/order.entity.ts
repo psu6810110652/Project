@@ -38,4 +38,7 @@ export class Order {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    @Column({ name: 'tracking_number', nullable: true })
+    trackingNumber: string;
 }
