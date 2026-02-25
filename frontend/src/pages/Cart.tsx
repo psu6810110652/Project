@@ -1,16 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl?: string;
-  stockQuantity?: number;
-  isPromotion?: boolean;
-  promotionPrice?: number;
-}
+import type { CartItem } from '../types';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -108,7 +98,7 @@ const Cart = () => {
           กลับ
         </button>
       </div>
-      
+
       <div className="container mx-auto px-4 max-w-7xl">
         <h1 className="text-5xl font-bold mb-12 text-left text-[#256D45]">รถเข็น</h1>
 
@@ -135,11 +125,11 @@ const Cart = () => {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex-1">
                           <h3 className="text-2xl font-semibold text-[#256D45]">{item.name}</h3>
                           <p className="text-lg text-[#256D45]">
-                            ราคา: 
+                            ราคา:
                             <span className={item.isPromotion ? 'line-through text-gray-500' : ''}>
                               ฿{item.price}
                             </span>
@@ -195,7 +185,7 @@ const Cart = () => {
             {/* Order Summary */}
             <div className="bg-[#FFFEF2] rounded-2xl shadow-lg p-8 h-fit">
               <h2 className="text-2xl font-bold mb-6 pb-4 border-b-2 border-[#256D45] text-[#256D45]">สรุปคำสั่งสินค้า</h2>
-              
+
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-lg">
                   <span className="text-[#256D45]">รวมสินค้า:</span>
@@ -211,18 +201,18 @@ const Cart = () => {
                 </div>
               </div>
 
-              <button 
-  // 🌟 แก้ไขตรงนี้: แนบ state ข้อมูลตะกร้าและราคารวมไปด้วย
-          onClick={() => navigate('/payment', { 
-            state: { 
-              cartItems: cartItems, 
-              totalPrice: totalPrice 
-            } 
-          })}
-          className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors"
-        >
-          สั่งซื้อ
-        </button>
+              <button
+                // 🌟 แก้ไขตรงนี้: แนบ state ข้อมูลตะกร้าและราคารวมไปด้วย
+                onClick={() => navigate('/payment', {
+                  state: {
+                    cartItems: cartItems,
+                    totalPrice: totalPrice
+                  }
+                })}
+                className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors"
+              >
+                สั่งซื้อ
+              </button>
             </div>
           </div>
         )}
