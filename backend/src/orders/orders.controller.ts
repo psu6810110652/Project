@@ -6,9 +6,9 @@ import { CreateOrderDto } from './dto/create-order.dto';
 @Controller('api/admin/orders')
 export class OrdersController {
     constructor(private readonly ordersService: OrdersService) { }
-@Post()
+    
+    @Post()
     create(@Body() createOrderDto: CreateOrderDto) {
-        // 🌟 ใส่บรรทัดนี้ลงไป เพื่อเช็คว่าข้อมูลมาถึงหลังบ้านไหม!
         console.log('--- ข้อมูลที่มาถึงหลังบ้าน ---');
         console.log('ชื่อลูกค้า:', createOrderDto.customerName);
         console.log('มีสลิปไหม?:', createOrderDto.paymentSlip ? '✅ มีสลิปส่งมา!' : '❌ ไม่มีสลิป (undefined)');
@@ -42,7 +42,11 @@ export class OrdersController {
     }
 
     @Put(':id/status')
-    updateStatus(@Param('id') id: string, @Body('status') status: string) {
-        return this.ordersService.updateStatus(id, status);
+    updateStatus(
+        @Param('id') id: string,
+        @Body('status') status: string,
+        @Body('trackingNumber') trackingNumber?: string
+    ) {
+        return this.ordersService.updateStatus(id, status, trackingNumber);
     }
 }
