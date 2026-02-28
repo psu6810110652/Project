@@ -118,7 +118,7 @@ const PaymentPage: React.FC = () => {
       <div className="w-full max-w-4xl flex justify-start mb-4">
         <button
           onClick={() => navigate('/cart')}
-          className="bg-white text-[#256D45] font-bold !py-2 !px-6 rounded-xl shadow-sm hover:bg-gray-50 border border-gray-200"
+          className="bg-white text-[#256D45] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50 border border-gray-200"
         >
           กลับไปตะกร้า
         </button>
@@ -134,7 +134,7 @@ const PaymentPage: React.FC = () => {
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col md:flex-row gap-8">
           
           <div className="flex-1 flex flex-col gap-6">
-            <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
+            <div className="flex flex-col gap-4 max-h-75 overflow-y-auto pr-2 no-scrollbar">
               <h3 className="text-xl font-bold text-[#256D45] border-b pb-2">รายการสินค้า ({cartItems.length} รายการ)</h3>
               
               {cartItems.length === 0 ? (
@@ -142,7 +142,7 @@ const PaymentPage: React.FC = () => {
               ) : (
                 cartItems.map((item) => (
                   <div key={item.id} className="flex gap-4 items-center bg-gray-50 p-3 rounded-xl">
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    <div className="w-20 h-20 bg-gray-200 rounded-lg shrink-0 overflow-hidden flex items-center justify-center">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
@@ -173,8 +173,8 @@ const PaymentPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="hidden md:block w-[2px] bg-[#256D45]"></div>
-          <div className="md:hidden h-[2px] w-full bg-[#256D45]"></div>
+          <div className="hidden md:block w-0.5 bg-[#256D45]"></div>
+          <div className="md:hidden h-0.5 w-full bg-[#256D45]"></div>
 
           <div className="flex-1 flex flex-col justify-between py-2">
             <h3 className="text-xl font-bold text-[#256D45] border-b pb-2 mb-4">สรุปยอด</h3>
@@ -206,7 +206,7 @@ const PaymentPage: React.FC = () => {
         {/* === การ์ดที่ 2: ช่องทางการชำระเงิน & อัปโหลดสลิป === */}
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col md:flex-row gap-8 items-center">
           <div className="flex-1 flex items-center gap-6 w-full">
-            <div className="w-32 h-32 md:w-40 md:h-40 flex-shrink-0 bg-white border border-gray-200 rounded-xl p-2 shadow-sm">
+            <div className="w-32 h-32 md:w-40 md:h-40 shrink-0 bg-white border border-gray-200 rounded-xl p-2 shadow-sm">
               <img src={qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
             </div>
             <div className="text-[#256D45]">
@@ -218,8 +218,8 @@ const PaymentPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="hidden md:block w-[2px] h-32 bg-[#256D45]"></div>
-          <div className="md:hidden h-[2px] w-full bg-[#256D45]"></div>
+          <div className="hidden md:block w-0.5 h-32 bg-[#256D45]"></div>
+              <div className="md:hidden h-0.5 w-full bg-[#256D45]"></div>
 
           <div className="flex-1 flex flex-col items-center w-full">
             <h3 className="text-xl font-bold text-[#256D45] mb-4">อัปโหลดสลิป</h3>
@@ -233,7 +233,7 @@ const PaymentPage: React.FC = () => {
               )}
             </label>
             {slipImage && (
-               <p className="text-sm text-[#256D45] mt-2 font-medium">อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)</p>
+              <p className="text-sm text-[#256D45] mt-2 font-medium">อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)</p>
             )}
           </div>
         </div>
@@ -241,7 +241,7 @@ const PaymentPage: React.FC = () => {
         <div className="flex justify-end mt-4">
           <button 
             onClick={handleConfirm}
-            className="bg-[#256D45] border-2 border-[#256D45] text-white font-bold text-xl !px-5 !py-2 rounded-full hover:bg-white hover:text-[#256D45] transition-all shadow-md"
+            className="bg-[#256D45] border-2 border-[#256D45] text-white font-bold text-xl px-5! py-2! rounded-full hover:bg-white hover:text-[#256D45] transition-all shadow-md"
           >
             ยืนยันการสั่งซื้อ
           </button>
@@ -251,8 +251,8 @@ const PaymentPage: React.FC = () => {
 
       {showSuccessOverlay && (
         <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"></div>
-          <div className="fixed inset-0 flex items-center justify-center z-[110]">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100"></div>
+          <div className="fixed inset-0 flex items-center justify-center z-110">
             <div className="bg-white rounded-3xl p-8 md:p-12 flex flex-col items-center shadow-2xl border border-gray-100 w-[90%] max-w-md">
               <CheckCircle size={80} className="text-[#256D45] mb-6" />
               <h2 className="text-2xl md:text-3xl font-bold text-[#256D45] mb-3 text-center">ยืนยันคำสั่งซื้อสำเร็จแล้ว!</h2>

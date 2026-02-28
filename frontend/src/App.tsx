@@ -22,6 +22,7 @@ import Loginpage from './pages/Loginpage';
 import Register from './pages/Register';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminSearchProvider } from './context/AdminSearchContext';
 
 import BarAdmin from './components/BarAdmin';
 import Dashboard from './pages/Admin/Dashboard';
@@ -29,6 +30,7 @@ import Order from './pages/Admin/Order';
 import ManageCategories from './pages/Admin/Category';
 import ViewProducts from './pages/Admin/Product';
 import ManageProduct from './pages/Admin/ManagerProduct';
+import ManagerOrder from './pages/Admin/ManagerOrder';
 import PaymentPage from './pages/PaymentPage';
 
 function UserLayout() {
@@ -66,43 +68,46 @@ function AdminLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="flex flex-col min-h-screen relative">
-      <Navbar />
+    <AdminSearchProvider>
+      <div className="flex flex-col min-h-screen relative">
+        <Navbar />
 
-      {/* Mobile Sidebar Toggle Button (FAB) */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#256D45] text-[#FFFEF2] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,109,69,0.5)] z-50 hover:bg-[#1E5631] transition-transform active:scale-95 border-2 border-[#FFFEF2]"
-      >
-        {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-      </button>
+        {/* Mobile Sidebar Toggle Button (FAB) */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#256D45] text-[#FFFEF2] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,109,69,0.5)] z-50 hover:bg-[#1E5631] transition-transform active:scale-95 border-2 border-[#FFFEF2]"
+        >
+          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
 
-      <div className="flex flex-1 relative">
-        {/* Backdrop for mobile */}
-        {isMobileMenuOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-20 md:hidden"
-            style={{ top: '120px' }}
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
+        <div className="flex flex-1 relative">
+          {/* Backdrop for mobile */}
+          {isMobileMenuOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-20 md:hidden"
+              style={{ top: '120px' }}
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+          )}
 
-        <aside className={`fixed left-0 z-30 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:block`} style={{ top: '80px', height: 'calc(100vh - 80px)' }}>
-          <BarAdmin />
-        </aside>
+          <aside className={`fixed left-0 z-30 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:block`} style={{ top: '80px', height: 'calc(100vh - 80px)' }}>
+            <BarAdmin />
+          </aside>
 
-        <main className="flex-1 md:ml-70 p-4 md:p-8 min-h-screen min-w-0">
-          <Routes>
-            <Route index element={<Dashboard />} />
-            <Route path="orders" element={<Order />} />
-            <Route path="products" element={<ManageCategories />} />
-            <Route path="products/:categoryId" element={<ViewProducts />} />
-            <Route path="products/:categoryId/new" element={<ManageProduct />} />
-            <Route path="products/:categoryId/:code" element={<ManageProduct />} />
-          </Routes>
-        </main>
+          <main className="flex-1 md:ml-70 p-4 md:p-8 min-h-screen min-w-0">
+            <Routes>
+              <Route index element={<Dashboard />} />
+              <Route path="orders" element={<Order />} />
+              <Route path="orders/:orderId" element={<ManagerOrder />} />
+              <Route path="products" element={<ManageCategories />} />
+              <Route path="products/:categoryId" element={<ViewProducts />} />
+              <Route path="products/:categoryId/new" element={<ManageProduct />} />
+              <Route path="products/:categoryId/:code" element={<ManageProduct />} />
+            </Routes>
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminSearchProvider>
   );
 }
 

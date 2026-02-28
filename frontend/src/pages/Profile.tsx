@@ -306,7 +306,7 @@ const Profile = () => {
   const tableColumns = getTableColumns();
 
   return (
-    <div className="bg-[#DCEDC1] font-['Prompt'] text-[#256D45] !px-6 !py-15 md:px-6 md:py-10">
+    <div className="bg-[#DCEDC1] font-['Prompt'] text-[#256D45] px-6! py-15! md:px-6 md:py-10">
       <div className="max-w-6xl mx-auto w-full">
 
         {/* 🌟 ย้ายหัวข้อมาตรงกลางด้านบนสุด */}
@@ -330,13 +330,13 @@ const Profile = () => {
               <div className="flex flex-col">
                 <button
                   onClick={() => navigate('/favorites')}
-                  className="flex items-center justify-center gap-2 !py-4 bg-[#256D45] text-white font-medium hover:bg-[#1a5434] transition-colors"
+                  className="flex items-center justify-center gap-2 py-4! bg-[#256D45] text-white font-medium hover:bg-[#1a5434] transition-colors"
                 >
                   <Heart size={20} /> รายการโปรด
                 </button>
                 <button
                   onClick={() => navigate('/edit-profile')}
-                  className="flex items-center justify-center gap-2 !py-4 bg-white text-[#256D45] font-medium hover:bg-gray-50 transition-colors border-b border-gray-200"
+                  className="flex items-center justify-center gap-2 py-4! bg-white text-[#256D45] font-medium hover:bg-gray-50 transition-colors border-b border-gray-200"
                 >
                   <Edit size={20} /> แก้ไขข้อมูล
                 </button>
