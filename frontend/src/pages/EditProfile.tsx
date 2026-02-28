@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle } from 'lucide-react'; // 🌟 เพิ่มไอคอน CheckCircle
+import { CheckCircle } from 'lucide-react';
+import { Select, ConfigProvider } from 'antd';
 
 const EditProfile = () => {
   const navigate = useNavigate();
-  
+
   // 🌟 เพิ่ม State ควบคุมการแสดง Overlay สั่งซื้อสำเร็จ
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
@@ -22,6 +23,9 @@ const EditProfile = () => {
     subDistrict: '',
     postalCode: ''
   });
+
+  // 🌟 State จัดเก็บข้อมูลที่อยู่ในไทย
+  const [addressData, setAddressData] = useState<any[]>([]);
 
   // 🌟 ฟังก์ชันดึงข้อมูลจาก Backend
   const fetchUserData = async () => {
@@ -50,7 +54,7 @@ const EditProfile = () => {
       if (response.ok) {
         const userData = await response.json();
         console.log("ดึงข้อมูลสำเร็จ:", userData);
-        
+
         // Mapping ข้อมูลลง State (ใส่ || '' ป้องกันค่า null จาก DB)
         setFormData({
           username: userData.username || '',
@@ -82,8 +86,53 @@ const EditProfile = () => {
   // 🌟 เรียกใช้ครั้งเดียวตอน Mount
   useEffect(() => {
     fetchUserData();
-  }, []); 
 
+    // โหลดไฟล์ข้อมูลที่อยู่จาก github earthchie
+    fetch('https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/master/jquery.Thailand.js/database/raw_database/raw_database.json')
+      .then(res => res.json())
+      .then(data => setAddressData(data))
+      .catch(err => console.error("ไม่สามารถโหลดฐานข้อมูลที่อยู่จัดส่งได้:", err));
+  }, []);
+
+  // --- Address Computations ---
+  const provinces = Array.from(new Set(addressData.map(item => item.province))).sort();
+
+  const districts = formData.province
+    ? Array.from(new Set(addressData.filter(item => item.province === formData.province).map(item => item.amphoe))).sort()
+    : [];
+
+  const subDistricts = formData.district
+    ? Array.from(new Set(addressData.filter(item => item.province === formData.province && item.amphoe === formData.district).map(item => item.district))).sort()
+    : [];
+
+  const handleProvinceChange = (val: string) => {
+    setFormData(prev => ({
+      ...prev,
+      province: val,
+      district: '',
+      subDistrict: '',
+      postalCode: ''
+    }));
+  };
+
+  const handleDistrictChange = (val: string) => {
+    setFormData(prev => ({
+      ...prev,
+      district: val,
+      subDistrict: '',
+      postalCode: ''
+    }));
+  };
+
+  const handleSubDistrictChange = (val: string) => {
+    const matched = addressData.find(item => item.province === formData.province && item.amphoe === formData.district && item.district === val);
+    setFormData(prev => ({
+      ...prev,
+      subDistrict: val,
+      postalCode: matched ? matched.zipcode.toString() : ''
+    }));
+  };
+  // -----------------------------
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -93,7 +142,7 @@ const EditProfile = () => {
     e.preventDefault();
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
-    
+
     if (!userStr || !token) return;
     const userId = JSON.parse(userStr).id;
 
@@ -111,7 +160,7 @@ const EditProfile = () => {
         const updatedUser = await response.json();
         console.log('Update Success:', updatedUser);
         localStorage.setItem('shippingAddress', JSON.stringify(formData));
-        
+
         // 🌟 เปิด Overlay แจ้งเตือน และหน่วงเวลา 2.5 วิ ก่อนไปหน้า Profile
         setShowSuccessOverlay(true);
         setTimeout(() => {
@@ -135,23 +184,23 @@ const EditProfile = () => {
   return (
     <div className="min-h-screen bg-[#DCEDC1] font-['Prompt'] text-[#256D45] relative">
       <div className="relative">
-        <button 
+        <button
           onClick={handleDeleteAccount}
-          className="absolute top-4 right-8 bg-white border-2 border-red-500 text-red-500 font-bold !py-2 !px-4 rounded-full shadow hover:bg-red-50 transition-colors"
+          className="absolute top-4 right-8 bg-white border-2 border-red-500 text-red-500 font-bold py-2! px-4! rounded-full shadow hover:bg-red-50 transition-colors"
         >
           ลบบัญชี
         </button>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="w-full max-w-4xl mx-auto px-6 md:px-12 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
-          
+
           {/* แก้ไขข้อมูลส่วนตัว */}
           <div className="bg-[#FFFEF2] rounded-xl shadow-lg p-8">
             <h2 className="text-xl font-bold text-[#256D45] mb-6 pb-2 border-b-2 border-[#256D45] text-left">
               แก้ไขข้อมูลส่วนตัว
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-lg font-medium text-left mb-2">ชื่อผู้ใช้</label>
@@ -223,7 +272,7 @@ const EditProfile = () => {
             <h2 className="text-xl font-bold text-[#256D45] mb-6 pb-2 border-b-2 border-[#256D45] text-left">
               ที่อยู่ในการจัดส่ง
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <label className="block text-lg font-medium text-left mb-2">บ้านเลขที่/หอพัก/ห้อง</label>
@@ -249,35 +298,49 @@ const EditProfile = () => {
 
               <div>
                 <label className="block text-lg font-medium text-left mb-2">จังหวัด</label>
-                <input
-                  type="text"
-                  name="province"
-                  value={formData.province}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
-                />
+                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 18, controlHeight: 52 } }}>
+                  <Select
+                    showSearch
+                    value={formData.province || undefined}
+                    onChange={handleProvinceChange}
+                    className="w-full text-lg"
+                    placeholder="เลือก/ค้นหาจังหวัด"
+                    options={provinces.map(p => ({ value: p as string, label: p as string }))}
+                    filterOption={(input, option) => String(option?.label ?? '').includes(input)}
+                  />
+                </ConfigProvider>
               </div>
 
               <div>
-                <label className="block text-lg font-medium text-left mb-2">อำเภอ</label>
-                <input
-                  type="text"
-                  name="district"
-                  value={formData.district}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
-                />
+                <label className="block text-lg font-medium text-left mb-2">อำเภอ/เขต</label>
+                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 18, controlHeight: 52 } }}>
+                  <Select
+                    showSearch
+                    value={formData.district || undefined}
+                    onChange={handleDistrictChange}
+                    className="w-full text-lg"
+                    placeholder={formData.province ? "เลือก/ค้นหาอำเภอ" : "เลือกจังหวัดก่อน"}
+                    disabled={!formData.province}
+                    options={districts.map(d => ({ value: d as string, label: d as string }))}
+                    filterOption={(input, option) => String(option?.label ?? '').includes(input)}
+                  />
+                </ConfigProvider>
               </div>
 
               <div>
-                <label className="block text-lg font-medium text-left mb-2">ตำบล</label>
-                <input
-                  type="text"
-                  name="subDistrict"
-                  value={formData.subDistrict}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
-                />
+                <label className="block text-lg font-medium text-left mb-2">ตำบล/แขวง</label>
+                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 18, controlHeight: 52 } }}>
+                  <Select
+                    showSearch
+                    value={formData.subDistrict || undefined}
+                    onChange={handleSubDistrictChange}
+                    className="w-full text-lg"
+                    placeholder={formData.district ? "เลือก/ค้นหาตำบล" : "เลือกอำเภอก่อน"}
+                    disabled={!formData.district}
+                    options={subDistricts.map(sd => ({ value: sd as string, label: sd as string }))}
+                    filterOption={(input, option) => String(option?.label ?? '').includes(input)}
+                  />
+                </ConfigProvider>
               </div>
 
               <div>
@@ -286,8 +349,9 @@ const EditProfile = () => {
                   type="text"
                   name="postalCode"
                   value={formData.postalCode}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
+                  disabled
+                  readOnly
+                  className="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg shadow-sm text-gray-500 font-semibold focus:outline-none text-lg cursor-not-allowed"
                 />
               </div>
             </div>
@@ -296,7 +360,7 @@ const EditProfile = () => {
           <div className="flex justify-end gap-4">
             <button
               type="submit"
-              className="!px-8 !py-3 bg-[#256D45] text-white font-semibold rounded-lg hover:bg-[#1a5434] transition-colors text-lg shadow-md"
+              className="px-8! py-3! bg-[#256D45] text-white font-semibold rounded-lg hover:bg-[#1a5434] transition-colors text-lg shadow-md"
             >
               บันทึกข้อมูล
             </button>
@@ -310,15 +374,15 @@ const EditProfile = () => {
       {showSuccessOverlay && (
         <>
           {/* เลเยอร์ 1: ฉากหลังสีดำเบลอ */}
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"></div>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100"></div>
 
           {/* เลเยอร์ 2: ตัวกล่อง Popup สีขาว */}
-          <div className="fixed inset-0 flex items-center justify-center z-[110]">
+          <div className="fixed inset-0 flex items-center justify-center z-110">
             <div className="bg-white rounded-3xl p-8 md:p-12 flex flex-col items-center shadow-2xl border border-gray-100 w-[90%] max-w-md">
               <CheckCircle size={80} className="text-[#256D45] mb-6" />
               <h2 className="text-2xl md:text-3xl font-bold text-[#256D45] mb-3 text-center">บันทึกข้อมูลสำเร็จแล้ว!</h2>
               <p className="text-gray-500 text-center font-medium">ระบบกำลังพาท่านกลับสู่หน้าโปรไฟล์...</p>
-              
+
               {/* โลโก้โหลดหมุนๆ (Spinning loader) */}
               <div className="mt-6 w-8 h-8 border-4 border-gray-200 border-t-[#256D45] rounded-full animate-spin"></div>
             </div>

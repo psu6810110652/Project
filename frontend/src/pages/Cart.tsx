@@ -1,16 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl?: string;
-  stockQuantity?: number;
-  isPromotion?: boolean;
-  promotionPrice?: number;
-}
+import type { CartItem } from '../types';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -103,12 +93,12 @@ const Cart = () => {
       <div className="fixed top-24 left-4 z-40">
         <button
           onClick={() => navigate('/')}
-          className="bg-white text-[#256D45] font-bold !py-2 !px-6 rounded-xl shadow-sm hover:bg-gray-50"
+          className="bg-white text-[#256D45] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
         >
           กลับ
         </button>
       </div>
-      
+
       <div className="container mx-auto px-4 max-w-7xl">
         <h1 className="text-5xl font-bold mb-12 text-left text-[#256D45]">รถเข็น</h1>
 
@@ -126,7 +116,7 @@ const Cart = () => {
                     const itemPrice = item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price;
                     return (
                       <div key={item.id} className="flex items-center gap-6 pb-4 border-b border-gray-200 last:border-b-0">
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.name} className="w-20 h-20 object-cover rounded-lg bg-gray-300" />
                           ) : (
@@ -135,11 +125,11 @@ const Cart = () => {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex-1">
                           <h3 className="text-2xl font-semibold text-[#256D45]">{item.name}</h3>
                           <p className="text-lg text-[#256D45]">
-                            ราคา: 
+                            ราคา:
                             <span className={item.isPromotion ? 'line-through text-gray-500' : ''}>
                               ฿{item.price}
                             </span>
@@ -175,7 +165,7 @@ const Cart = () => {
                         </div>
 
                         <div className="flex flex-col items-end gap-2">
-                          <div className="text-2xl font-bold text-[#256D45] min-w-[80px] text-right">
+                          <div className="text-2xl font-bold text-[#256D45] min-w-20 text-right">
                             ฿{itemPrice * item.quantity}
                           </div>
                           <button
@@ -195,7 +185,7 @@ const Cart = () => {
             {/* Order Summary */}
             <div className="bg-[#FFFEF2] rounded-2xl shadow-lg p-8 h-fit">
               <h2 className="text-2xl font-bold mb-6 pb-4 border-b-2 border-[#256D45] text-[#256D45]">สรุปคำสั่งสินค้า</h2>
-              
+
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-lg">
                   <span className="text-[#256D45]">รวมสินค้า:</span>
@@ -211,18 +201,18 @@ const Cart = () => {
                 </div>
               </div>
 
-              <button 
-  // 🌟 แก้ไขตรงนี้: แนบ state ข้อมูลตะกร้าและราคารวมไปด้วย
-          onClick={() => navigate('/payment', { 
-            state: { 
-              cartItems: cartItems, 
-              totalPrice: totalPrice 
-            } 
-          })}
-          className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors"
-        >
-          สั่งซื้อ
-        </button>
+              <button
+                // 🌟 แก้ไขตรงนี้: แนบ state ข้อมูลตะกร้าและราคารวมไปด้วย
+                onClick={() => navigate('/payment', {
+                  state: {
+                    cartItems: cartItems,
+                    totalPrice: totalPrice
+                  }
+                })}
+                className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white font-bold py-3 rounded-lg text-lg transition-colors"
+              >
+                สั่งซื้อ
+              </button>
             </div>
           </div>
         )}

@@ -7,9 +7,6 @@ export class Order {
 
     @Column({ name: 'order_number', unique: true })
     orderNumber: string;
-    
-    @Column({ name: 'payment_slip', type: 'text', nullable: true })
-    paymentSlip: string;
 
     @Column({ name: 'customer_name' })
     customerName: string;
@@ -41,4 +38,13 @@ export class Order {
 
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    @Column({ name: 'tracking_number', nullable: true })
+    trackingNumber: string;
+
+    @Column({ name: 'customer_id', nullable: true })
+    customerId: string;
+
+    @Column({ name: 'payment_slip_url', type: 'text', nullable: true })
+    paymentSlip: string;
 }
