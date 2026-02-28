@@ -46,12 +46,9 @@ export class OrdersService {
         return order;
     }
 
-    async updateStatus(id: string, status: string, trackingNumber?: string): Promise<Order> {
+    async updateStatus(id: string, status: string): Promise<Order> {
         const order = await this.findOne(id);
         order.status = status;
-        if (trackingNumber !== undefined) {
-            order.trackingNumber = trackingNumber;
-        }
         return this.ordersRepository.save(order);
     }
 }
