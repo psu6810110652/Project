@@ -7,6 +7,9 @@ export class Order {
 
     @Column({ name: 'order_number', unique: true })
     orderNumber: string;
+    
+    @Column({ name: 'payment_slip', type: 'text', nullable: true })
+    paymentSlip: string;
 
     @Column({ name: 'customer_name' })
     customerName: string;
