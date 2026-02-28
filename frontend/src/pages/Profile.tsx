@@ -487,6 +487,15 @@ const Profile = () => {
                             .ant-table-thead th.ant-table-column-has-sorters:hover {
                                 background-color: #FFFEF2 !important;
                             }
+                            /* ลบสีพื้นหลังของคอลัมน์ที่ถูกจัดเรียง (Sorting column) ให้เป็นสีครีมปกติ */
+                            .ant-table-wrapper .ant-table-tbody > tr > td.ant-table-column-sort {
+                                background-color: #FDFDF2 !important;
+                            }
+
+                            /* ป้องกันสีพื้นหลังของแถวที่ถูกเลือก (Selected row) ถ้ามี */
+                            .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td {
+                                background-color: #FDFDF2 !important;
+}
                         `}
                     </style>
                     <Table
