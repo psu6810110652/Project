@@ -7,6 +7,20 @@ import { type ProductCard, type Category as CategoryType } from '../types.ts';
 
 import Seeds from '../assets/images/seed.png';
 
+interface PriceRange {
+    label: string;
+    min: number;
+    max: number | null; // null = ไม่จำกัด
+}
+
+const PRICE_RANGES: PriceRange[] = [
+    { label: 'ต่ำกว่า 100 บาท', min: 0, max: 100 },
+    { label: '100 – 500 บาท', min: 100, max: 500 },
+    { label: '500 – 1,000 บาท', min: 500, max: 1000 },
+    { label: '1,000 – 5,000 บาท', min: 1000, max: 5000 },
+    { label: 'มากกว่า 5,000 บาท', min: 5000, max: null },
+];
+
 const Category: React.FC = () => {
 
     const { category: categorySlug } = useParams<{ category: string }>();
@@ -20,20 +34,23 @@ const Category: React.FC = () => {
     const [categoryInfo, setCategoryInfo] = useState<CategoryType | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [selectedRange, setSelectedRange] = useState<PriceRange | null>(null);
 
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const mappedType = product.type || 'อื่นๆ';
-        const matchesType = selectedType ? (mappedType === selectedType) : true;
-        return matchesSearch && matchesType;
+        const matchesPrice = selectedRange
+            ? product.price >= selectedRange.min && (selectedRange.max === null || product.price < selectedRange.max)
+            : true;
+        return matchesSearch && matchesPrice;
     });
 
-    const typeCounts = products.reduce((acc, product) => {
-        const type = product.type || 'อื่นๆ';
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+    // นับจำนวนสินค้าในแต่ละช่วงราคา
+    const rangeCounts = PRICE_RANGES.map(range => ({
+        range,
+        count: products.filter(p =>
+            p.price >= range.min && (range.max === null || p.price < range.max)
+        ).length
+    }));
 
     useEffect(() => {
         const fetchCategoryData = async () => {
@@ -115,58 +132,58 @@ const Category: React.FC = () => {
             {/* --- ส่วนเนื้อหาหลัก (Sidebar + Grid) --- */}
             <div className="container mt-6 md:mt-12 flex flex-col md:flex-row gap-8 w-full">
 
-                {/* Mobile Filter */}
+                {/* Mobile Filter — horizontal scroll chips */}
                 <div className="md:hidden flex overflow-x-auto gap-4 pb-4 snap-x w-full px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <div
                         className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors cursor-pointer snap-start
-                            ${selectedType === null ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
-                        onClick={() => setSelectedType(null)}
+                            ${selectedRange === null ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
+                        onClick={() => setSelectedRange(null)}
                     >
                         <span className="font-semibold whitespace-nowrap">ทั้งหมด ({products.length})</span>
                     </div>
 
-                    {Object.entries(typeCounts).map(([type, count]) => (
+                    {rangeCounts.map(({ range, count }) => (
                         <div
-                            key={type}
+                            key={range.label}
                             className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors cursor-pointer snap-start
-                                ${selectedType === type ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
-                            onClick={() => setSelectedType(type)}
+                                ${selectedRange?.label === range.label ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
+                            onClick={() => setSelectedRange(range)}
                         >
-                            <span className="font-semibold whitespace-nowrap">{type} ({count})</span>
+                            <span className="font-semibold whitespace-nowrap">{range.label} ({count})</span>
                         </div>
                     ))}
 
-                    {/* Spacer to ensure scrolling can reach the very end including pseudo padding */}
+                    {/* Spacer */}
                     <div className="w-1 shrink-0"></div>
                 </div>
 
-                {/* 1. Sidebar (ประเภท) Desktop */}
+                {/* 1. Sidebar (ช่วงราคา) Desktop */}
                 <aside className="hidden md:block w-72 shrink-0">
                     <div className="bg-amber-50 rounded-tr-[20px] rounded-br-[20px] p-8 shadow-lg min-h-125 sticky top-24">
-                        <h2 className="text-4xl font-semibold mb-6">ประเภท</h2>
+                        <h2 className="text-4xl font-semibold mb-6">ช่วงราคา</h2>
                         <div className="w-full h-1 bg-green-800 mb-8"></div>
 
                         {/* All Option */}
                         <div
                             className="flex items-center gap-4 mb-4 cursor-pointer group hover:bg-[#256D45]/10 p-2 rounded-lg transition-colors"
-                            onClick={() => setSelectedType(null)}
+                            onClick={() => setSelectedRange(null)}
                         >
-                            <div className={`w-6 h-6 border-4 border-green-800 rounded-md transition-colors ${selectedType === null ? 'bg-green-800' : 'bg-white'}`}></div>
-                            <span className={`text-xl font-semibold ${selectedType === null ? 'text-green-800' : 'text-gray-600'}`}>
+                            <div className={`w-6 h-6 border-4 border-green-800 rounded-md transition-colors ${selectedRange === null ? 'bg-green-800' : 'bg-white'}`}></div>
+                            <span className={`text-xl font-semibold ${selectedRange === null ? 'text-green-800' : 'text-gray-600'}`}>
                                 ทั้งหมด ({products.length})
                             </span>
                         </div>
 
-                        {/* List of Types */}
-                        {Object.entries(typeCounts).map(([type, count]) => (
+                        {/* Price Range Options */}
+                        {rangeCounts.map(({ range, count }) => (
                             <div
-                                key={type}
+                                key={range.label}
                                 className="flex items-center gap-4 mb-4 cursor-pointer group hover:bg-[#256D45]/10 p-2 rounded-lg transition-colors"
-                                onClick={() => setSelectedType(type)}
+                                onClick={() => setSelectedRange(range)}
                             >
-                                <div className={`w-6 h-6 border-4 border-green-800 rounded-md transition-colors ${selectedType === type ? 'bg-green-800' : 'bg-white'}`}></div>
-                                <span className={`text-xl font-semibold ${selectedType === type ? 'text-green-800' : 'text-gray-600'}`}>
-                                    {type} ({count})
+                                <div className={`w-6 h-6 border-4 border-green-800 rounded-md transition-colors ${selectedRange?.label === range.label ? 'bg-green-800' : 'bg-white'}`}></div>
+                                <span className={`text-xl font-semibold ${selectedRange?.label === range.label ? 'text-green-800' : 'text-gray-600'}`}>
+                                    {range.label} ({count})
                                 </span>
                             </div>
                         ))}

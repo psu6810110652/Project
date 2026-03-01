@@ -7,6 +7,7 @@ import HomeImage from '../assets/images/Home.png';
 
 const Home: React.FC = () => {
   const [promotions, setPromotions] = useState([]);
+  const [featured, setFeatured] = useState([]);
 
   useEffect(() => {
     // Fetch products that are on promotion
@@ -22,6 +23,21 @@ const Home: React.FC = () => {
       })
       .catch(err => {
         console.error("Error fetching promotions:", err);
+      });
+
+    // Fetch products that are featured (สินค้าแนะนำ)
+    axios.get('/api/product/featured')
+      .then(res => {
+        const mappedProducts = res.data.map((p: any) => ({
+          ...p,
+          image: p.thumbnailUrl || p.imageUrl,
+          stock: p.stockQuantity,
+          isRecommend: true
+        }));
+        setFeatured(mappedProducts);
+      })
+      .catch(err => {
+        console.error("Error fetching featured products:", err);
       });
   }, []);
 
@@ -54,7 +70,10 @@ const Home: React.FC = () => {
 
       <div className="h-6" />
 
-      {/* Display promotional products */}
+      {/* สินค้าแนะนำ — products with isFeatured=true */}
+      <Box allProducts={featured} type="recommend" />
+
+      {/* สินค้าโปรโมชั่น — products with isPromotion=true */}
       <Box allProducts={promotions} type="promotion" />
     </div>
   );

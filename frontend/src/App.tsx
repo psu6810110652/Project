@@ -16,6 +16,7 @@ import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import { ProductDetail } from './pages/ProductDetail';
 import ReviewPage from './pages/ReviewPage';
+import EditReviewPage from './pages/EditReviewPage';
 
 // Login/Register
 import Loginpage from './pages/Loginpage';
@@ -51,6 +52,7 @@ function UserLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/review/:productId" element={<ReviewPage />} />
+          <Route path="/review/:productId/edit" element={<EditReviewPage />} />
         </Routes>
       </div>
       <Footer />
