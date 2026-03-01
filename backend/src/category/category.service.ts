@@ -76,4 +76,16 @@ export class CategoryService implements OnModuleInit {
     const updated = Object.assign(category, updateCategoryDto);
     return await this.categoryRepo.save(updated);
   }
+
+  // --- 6. สร้างหมวดหมู่ (Admin) ---
+  async create(createCategoryDto: CreateCategoryDto) {
+    const category = this.categoryRepo.create(createCategoryDto);
+    return await this.categoryRepo.save(category);
+  }
+
+  // --- 7. ลบหมวดหมู่ (Admin) ---
+  async remove(id: number) {
+    const category = await this.findOne(id);
+    return await this.categoryRepo.remove(category);
+  }
 }
