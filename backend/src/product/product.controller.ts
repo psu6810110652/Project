@@ -32,6 +32,7 @@ export class ProductController {
     return this.productService.findFeatured();
   }
 
+
   @Get()
   findAll() {
     return this.productService.findAll();
