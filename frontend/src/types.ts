@@ -59,6 +59,7 @@ interface OrderItem {
 }
 
 export interface OrderData {
+    paymentSlip: any;
     id: string;
     orderNumber: string;
     customerId?: string;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { type OrderData } from '../../types';
-import { message } from 'antd';
+import { message, Modal } from 'antd'; // เพิ่ม Modal ตรงนี้
 
 export default function ManagerOrder() {
     const { orderId } = useParams<{ orderId: string }>();
@@ -10,12 +10,16 @@ export default function ManagerOrder() {
     const [order, setOrder] = useState<OrderData | null>(null);
     const [loading, setLoading] = useState(true);
     const [trackingNumber, setTrackingNumber] = useState('');
+    
+    // State สำหรับเปิด/ปิดรูปสลิปเต็ม
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
     const fetchOrder = async () => {
         try {
             setLoading(true);
             const res = await api.get(`/api/admin/orders/${orderId}`);
             if (res.data) {
+                console.log("👉 ข้อมูลที่ได้จาก API:", res.data);
                 setOrder(res.data);
                 if (res.data.trackingNumber) setTrackingNumber(res.data.trackingNumber);
             }
@@ -89,7 +93,7 @@ export default function ManagerOrder() {
                 <div>
                     <button
                         onClick={() => navigate('/admin/orders')}
-                        className="bg-[#FFFEF2] text-[#256D45] font-bold px-8 py-2 rounded-2xl shadow-md md:text-lg hover:bg-gray-50 flex items-center justify-center transition-transform hover:scale-105"
+                        className="bg-[#FFFEF2] text-[#256D45] font-bold !px-8 !py-2 rounded-2xl shadow-md md:text-lg hover:bg-gray-50 flex items-center justify-center transition-transform hover:scale-105"
                     >
                         กลับ
                     </button>
@@ -141,16 +145,35 @@ export default function ManagerOrder() {
                             ไอดีผู้ใช้: <span className="text-gray-600 font-semibold">{order.customerId || order.customerName}</span>
                         </div>
 
-                        {/* Slip Button directly mapping slip location -> UI mockup slip btn */}
+                        {/* --- ส่วนแสดงรูปสลิป --- */}
                         <div className="w-full">
-                            <a
-                                href={order.slipUrl || '#'}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`border-[2.5px] border-[#256D45] bg-[#FFFEF2] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors font-bold block w-full text-center py-2.5 rounded-2xl text-[#256D45] text-lg md:text-xl shadow-sm ${!order.slipUrl ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''}`}
-                            >
-                                ไฟล์สลิป
-                            </a>
+                            <div className="font-bold text-xl md:text-2xl mb-2 text-[#256D45]">
+                                หลักฐานการโอนเงิน
+                            </div>
+                            {order.paymentSlip ? (
+                                // เปลี่ยนจากแท็ก <a> เป็น <div> และจับ onClick เพื่อเปิด Modal
+                                <div 
+                                    onClick={() => setIsImageModalOpen(true)}
+                                    className="cursor-pointer block border-[2.5px] border-[#256D45] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group relative bg-gray-50 h-48 md:h-64 flex items-center justify-center"
+                                >
+                                    <img 
+                                        src={order.paymentSlip} 
+                                        alt="สลิปโอนเงิน" 
+                                        className="w-full h-full object-contain" 
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = 'https://via.placeholder.com/300x400?text=Slip+Image+Not+Found'; 
+                                        }}
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <span className="text-white font-bold text-lg bg-[#256D45] px-4 py-2 rounded-xl">คลิกเพื่อดูรูปเต็ม</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="border-[2.5px] border-dashed border-gray-400 bg-gray-50 rounded-2xl h-32 md:h-40 flex items-center justify-center text-gray-500 font-medium shadow-inner">
+                                    ไม่มีไฟล์สลิปแนบมา
+                                </div>
+                            )}
                         </div>
 
                         <div className="font-bold text-xl md:text-2xl mt-2">
@@ -165,7 +188,7 @@ export default function ManagerOrder() {
                             </div>
                         </div>
 
-                        {/* บล็อกสำหรับกรอกเลขพัสดุ เมื่อกำลังจะจัดส่ง */}
+                        {/* บล็อกสำหรับกรอกเลขพัสดุ */}
                         {order.status === 'pending_delivery' && (
                             <div className="mt-2 flex flex-col gap-2 relative">
                                 <label className="font-bold text-lg flex items-center gap-2">
@@ -208,7 +231,7 @@ export default function ManagerOrder() {
                 <div className="flex justify-between mt-6 px-2 md:px-0">
                     <button
                         onClick={() => handleUpdateStatus('cancelled')}
-                        className="border-[2.5px] border-red-500 text-red-500 bg-[#FFFEF2] hover:bg-red-50 font-bold px-8 md:px-12 py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-transform hover:scale-105 active:scale-95"
+                        className="border-[2.5px] border-red-500 text-red-500 bg-[#FFFEF2] hover:bg-red-50 font-bold !px-8 md:px-12 !py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-transform hover:scale-105 active:scale-95"
                     >
                         ยกเลิก
                     </button>
@@ -219,13 +242,31 @@ export default function ManagerOrder() {
                             else if (order.status === 'pending_delivery') handleUpdateStatus('pending_received');
                             else handleUpdateStatus('completed');
                         }}
-                        className="bg-[#FFFEF2] border-[2.5px] border-[#256D45] hover:bg-[#256D45] hover:text-[#FFFEF2] text-[#256D45] font-bold px-8 md:px-12 py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-all hover:scale-105 active:scale-95"
+                        className="bg-[#FFFEF2] border-[2.5px] border-[#256D45] hover:bg-[#256D45] hover:text-[#FFFEF2] text-[#256D45] font-bold !px-8 md:px-12 !py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-all hover:scale-105 active:scale-95"
                     >
                         {order.status === 'pending_confirm' ? 'ยืนยันออเดอร์' : order.status === 'pending_delivery' ? 'ยืนยันการจัดส่ง' : 'อัปเดตสถานะ'}
                     </button>
                 </div>
 
             </div>
+
+            {/* --- เพิ่มหน้าต่าง Modal สำหรับดูรูปเต็ม --- */}
+            <Modal
+                open={isImageModalOpen}
+                footer={null}
+                onCancel={() => setIsImageModalOpen(false)}
+                centered
+                width={600}
+                bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
+            >
+                {order?.paymentSlip && (
+                    <img 
+                        src={order.paymentSlip} 
+                        alt="สลิปโอนเงินแบบเต็ม" 
+                        className="w-full h-auto rounded-xl object-contain"
+                    />
+                )}
+            </Modal>
         </div>
     );
 }
