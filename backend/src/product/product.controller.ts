@@ -5,7 +5,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 
 import { AuthGuard } from '@nestjs/passport';
-import { Roles } from '../auth/roles.decorator'; 
+import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
 
@@ -13,7 +13,7 @@ import { UserRole } from '../users/entities/user.entity';
 export class ProductController {
   constructor(private readonly productService: ProductService) { }
 
-  
+
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -21,31 +21,36 @@ export class ProductController {
     return this.productService.create(createProductDto);
   }
 
-  
+
   @Get('promotions')
   findPromotions() {
     return this.productService.findPromotions();
   }
 
-  
+  @Get('featured')
+  findFeatured() {
+    return this.productService.findFeatured();
+  }
+
+
   @Get()
   findAll() {
     return this.productService.findAll();
   }
 
-  
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productService.findOne(id);
   }
 
-  
+
   @Get('category/:categoryId')
   async findByCategory(@Param('categoryId') categoryId: string) {
     return this.productService.findAllByCategory(+categoryId);
   }
 
-  
+
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -53,7 +58,7 @@ export class ProductController {
     return this.productService.update(id, updateProductDto);
   }
 
-  
+
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN)

@@ -17,6 +17,7 @@ const ManagerProduct: React.FC = () => {
         price: 0,
         isPromotion: false,
         promotionPrice: 0,
+        isFeatured: false,
         stock: 0,
         description: '',
         imageUrl: '',
@@ -44,6 +45,7 @@ const ManagerProduct: React.FC = () => {
                     stock: res.data.stockQuantity || 0,
                     isPromotion: res.data.isPromotion || false,
                     promotionPrice: res.data.promotionPrice || 0,
+                    isFeatured: res.data.isFeatured || false,
                     imageUrl: res.data.imageUrl || '',
                     thumbnailUrl: res.data.thumbnailUrl || '',
                     type: res.data.type || ''
@@ -61,6 +63,7 @@ const ManagerProduct: React.FC = () => {
                 price: formData.price,
                 isPromotion: formData.isPromotion,
                 promotionPrice: formData.isPromotion ? formData.promotionPrice : null,
+                isFeatured: formData.isFeatured,
                 stockQuantity: formData.stock,
                 description: formData.description,
                 imageUrl: formData.imageUrl,
@@ -179,22 +182,22 @@ const ManagerProduct: React.FC = () => {
 
                         {/* Type Field: Now Col Span 1 */}
                         <InputBox label="ประเภทสินค้า" icon={<FolderTree size={20} />}>
-                        {/* ใช้ input เดิมของคุณ และเพิ่มคำสั่ง list="type-options" */}
-                        <input
-                            className="input-style"
-                            placeholder="ระบุหรือเลือกประเภทสินค้า"
-                            value={formData.type}
-                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                            list="type-options" // 🌟 ผูกกับ datalist ด้านล่าง
-                        />
+                            {/* ใช้ input เดิมของคุณ และเพิ่มคำสั่ง list="type-options" */}
+                            <input
+                                className="input-style"
+                                placeholder="ระบุหรือเลือกประเภทสินค้า"
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                list="type-options" // 🌟 ผูกกับ datalist ด้านล่าง
+                            />
 
-                        {/* สร้าง datalist เพื่อเป็นตัวเลือก Dropdown */}
-                        <datalist id="type-options">
-                            {existingTypes.map((item, index) => (
-                                <option key={index} value={item.value} />
-                            ))}
-                        </datalist>
-                    </InputBox>
+                            {/* สร้าง datalist เพื่อเป็นตัวเลือก Dropdown */}
+                            <datalist id="type-options">
+                                {existingTypes.map((item, index) => (
+                                    <option key={index} value={item.value} />
+                                ))}
+                            </datalist>
+                        </InputBox>
 
                         {/* Price: Moved next to Type */}
                         <InputBox label="ราคาสินค้าปกติ (บาท)" icon={<Coins size={20} />}>
@@ -241,6 +244,18 @@ const ManagerProduct: React.FC = () => {
                                     </InputBox>
                                 </div>
                             )}
+
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    className="w-6 h-6 accent-[#256D45] cursor-pointer"
+                                    checked={formData.isFeatured}
+                                    onChange={e => setFormData({ ...formData, isFeatured: e.target.checked })}
+                                />
+                                <span className="text-xl font-bold text-[#256D45] group-hover:underline">
+                                    เพิ่มในสินค้าแนะนำ
+                                </span>
+                            </label>
                         </div>
 
                         {/* Description: Col Span 2 (Full Width) */}

@@ -31,6 +31,13 @@ export class ProductService {
     });
   }
 
+  async findFeatured() {
+    return await this.productRepository.find({
+      where: { isFeatured: true },
+      order: { createdAt: 'DESC' }
+    });
+  }
+
   // ปรับปรุง findAll เดิมให้ดึงจาก DB จริง
   async findAll() {
     return await this.productRepository.find({
