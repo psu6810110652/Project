@@ -27,6 +27,10 @@ export class ProductController {
     return this.productService.findPromotions();
   }
 
+  @Get('featured')
+  findFeatured() {
+    return this.productService.findFeatured();
+  }
 
   @Get()
   findAll() {
