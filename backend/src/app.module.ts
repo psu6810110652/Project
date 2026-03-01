@@ -7,6 +7,8 @@ import { ProductModule } from './product/product.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { OrdersModule } from './orders/orders.module';
+import { AddressesModule } from './addresses/addresses.module';
+import { CartsModule } from './carts/carts.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -19,7 +21,7 @@ import { OrdersModule } from './orders/orders.module';
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     autoLoadEntities: true,
     synchronize: true,
-  }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule],
+  }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule, AddressesModule, CartsModule],
   controllers: [AppController],
   providers: [AppService],
 })
