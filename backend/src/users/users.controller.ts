@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, Request, ForbiddenException, InternalServerErrorException, HttpException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -28,13 +28,23 @@ export class UsersController {
   // Protected: Find a user by their username (Admin or self)
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    // IDOR Protection: Determine if user is accessing their own profile or is an Admin
-    if (req.user.sub !== id && req.user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('You can only access your own profile');
+  async findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    try {
+      // IDOR Protection: allow access only for the same user or an Admin
+      // Note: req.user.sub comes from JWT as a number; id is parsed by ParseIntPipe
+      if (Number(req.user.sub) !== id && req.user.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('You can only access your own profile');
+      }
+      const user = await this.usersService.findOneById(id);
+      return user;
+    } catch (error) {
+      // Re-throw known HTTP exceptions (403, 404, etc.) without wrapping them as 500
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error in UsersController.findOne:', error);
+      throw new InternalServerErrorException('เกิดข้อผิดพลาดขณะดึงข้อมูลผู้ใช้ — ตรวจสอบ server logs');
     }
-    // โค้ดนี้จะส่ง id ที่เป็นตัวเลข (เช่น 8) ไปให้ Service ค้นหา
-    return this.usersService.findOneById(id);
   }
 
   // Protected: Update a user
@@ -47,7 +57,7 @@ export class UsersController {
   ) {
     // Explicit IDOR protection check: ensure req.user.sub === id
     // If the IDs do not match, throw a ForbiddenException, unless the user has the 'Admin' role.
-    if (req.user.sub !== id && req.user.role !== UserRole.ADMIN) {
+    if (Number(req.user.sub) !== id && req.user.role !== UserRole.ADMIN) {
       throw new ForbiddenException('You are not allowed to update this profile');
     }
     return this.usersService.update(id, updateUserDto);

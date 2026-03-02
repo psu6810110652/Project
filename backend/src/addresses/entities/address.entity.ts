@@ -5,24 +5,33 @@ import { User } from '../../users/entities/user.entity';
 export class Address {
     @PrimaryGeneratedColumn()
     id: number;
+    
+    @Column({ nullable: true })
+    houseNumber?: string;
 
-    @Column()
-    user_id: number;
+    @Column({ nullable: true })
+    streetSoi?: string;
 
-    @Column()
-    recipient_name: string; // ชื่อผู้รับ
+    @Column({ nullable: true })
+    province?: string;
 
-    @Column()
-    phone_number: string;
+    @Column({ nullable: true })
+    district?: string;
 
-    @Column()
-    full_address: string; // เก็บรายละเอียดที่อยู่
+    @Column({ nullable: true })
+    subDistrict?: string;
+
+    @Column({ nullable: true })
+    postalCode?: string;
+
+    @Column({ type: 'text' })
+    fullAddress: string;
 
     @Column({ default: false })
-    is_default: boolean; //เก็บค่า true/false ว่าเป็นที่อยู่หลักหรือไม่
+    isDefault: boolean;
 
     // ความสัมพันธ์: ที่อยู่หลายอัน เป็นของ User 1 คน
-    @ManyToOne(() => User)
-    @JoinColumn({ name: 'user_id' })
+    @ManyToOne(() => User, (user) => user.addresses, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
     user: User;
 }

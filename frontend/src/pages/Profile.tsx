@@ -56,23 +56,14 @@ const Profile = () => {
       if (userStr) {
         const localUser = JSON.parse(userStr);
 
-        // เซ็ตชื่อจาก localStorage แก้ขัดไปก่อนเผื่อ API โหลดช้า
-        currentUsername = localUser.name || 'ผู้ใช้งาน';
-
         try {
-          // 🌟 ยิง API ไปดึงข้อมูลเต็ม (อ้างอิงจาก Postman ของคุณ)
-          const response = await fetch(`http://localhost:3000/users/${localUser.id}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localUser.token}` // ใส่ Token เพื่อขออนุญาต
-            }
-          });
+          // Use axios instance to ensure correct baseURL and Authorization header
+          console.log('Fetching user via axios api.get:', `/users/${localUser.id}`);
+          const userRes = await api.get(`/users/${localUser.id}`);
+          console.log('User response:', userRes.data);
 
-          if (response.ok) {
-            const apiData = await response.json();
-            console.log("3. ข้อมูลแบบเต็มจาก API:", apiData);
-
+          if (userRes && userRes.data) {
+            const apiData = userRes.data;
             // นำข้อมูลจาก API มาอัปเดตทับ
             currentEmail = apiData.email || currentEmail;
             currentUsername = apiData.username || localUser.name;
@@ -81,20 +72,25 @@ const Profile = () => {
             if (apiData.nameSurname) currentName = apiData.nameSurname;
             if (apiData.phone) currentPhone = apiData.phone;
           } else {
-            console.error("ดึงข้อมูลจาก API ไม่สำเร็จ (อาจจะ Token หมดอายุ)");
+            console.error('ดึงข้อมูลจาก API ไม่สำเร็จ (ไม่มีข้อมูลผู้ใช้)');
           }
 
-          // 🌟 ดึงข้อมูลคำสั่งซื้อทั้งหมดที่เป็นของ user คนนี้
-          const ordersRes = await api.get('/api/admin/orders/all-pending'); // ใช้ endpoint นี้แก้ขัดไปก่อน หรือสร้าง endpoint สำหรับ user โดยเฉพาะ
+          // ดึงคำสั่งซื้อของ user คนนี้
+          console.log('Fetching orders from:', `/api/admin/orders/my-orders`);
+          const ordersRes = await api.get(`/api/admin/orders/my-orders`);
+          console.log('Orders response:', ordersRes.data);
           if (ordersRes.data) {
-            const myOrders = ordersRes.data.filter((o: any) =>
-              String(o.customerId) === String(localUser.id) ||
-              o.customerName === localUser.name
-            );
-            setOrders(myOrders);
+            setOrders(ordersRes.data);
           }
-        } catch (error) {
-          console.error("เกิดข้อผิดพลาดในการเชื่อมต่อ API:", error);
+        } catch (error: any) {
+          console.error("เกิดข้อผิดพลาดในการดึงข้อมูลคำสั่งซื้อ:", {
+            message: error.message,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            url: error.config?.url,
+            method: error.config?.method
+          });
         } finally {
           setLoadingOrders(false);
         }

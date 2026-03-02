@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -25,6 +25,19 @@ export class OrdersController {
     @Roles(UserRole.ADMIN)
     findAllPending() {
         return this.ordersService.findAll(); // Could be refined to only return all types of pending
+    }
+
+    // 👤 User ดึง orders ของตัวเอง (GET /api/admin/orders/my-orders)
+    @Get('my-orders')
+    @UseGuards(AuthGuard('jwt'))
+    async getMyOrders(@Request() req) {
+        try {
+            const userId = String(req.user.sub || req.user.userId);
+            return await this.ordersService.findByCustomerId(userId);
+        } catch (error) {
+            console.error('Error in OrdersController.getMyOrders:', error);
+            throw error; // let the global handler convert to 500
+        }
     }
 
     @Get('pending-confirm')

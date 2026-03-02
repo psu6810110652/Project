@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Exclude } from 'class-transformer'; 
+import { Address } from '../../addresses/entities/address.entity';
 
 export enum UserRole {
   USER = 'User',
@@ -26,7 +27,6 @@ export class User {
 
   @Column({ default: false })
   isGoogleLogin: boolean;
-
   
   @Column({ nullable: true })
   phone?: string; 
@@ -38,29 +38,14 @@ export class User {
   updatedAt: Date;
 
   @Column({ nullable: true })
-  nameSurname?: string;
+  name?: string;
 
   @Column({ nullable: true })
   occupation?: string;
 
-  @Column({ nullable: true })
-  houseNumber?: string;
+  @Column({ type: 'text', nullable: true })
+  addressSummary?: string; // เก็บที่อยู่แบบ String ทีเดียวทั้งหมด
 
-  @Column({ nullable: true })
-  dormRoom?: string;
-
-  @Column({ nullable: true })
-  streetSoi?: string;
-
-  @Column({ nullable: true })
-  province?: string;
-
-  @Column({ nullable: true })
-  district?: string;
-
-  @Column({ nullable: true })
-  subDistrict?: string;
-
-  @Column({ nullable: true })
-  postalCode?: string;
+  @OneToMany(() => Address, (address) => address.user)
+  addresses: Address[];
 }
