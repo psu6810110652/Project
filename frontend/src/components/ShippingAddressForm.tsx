@@ -309,18 +309,18 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
         <>
             {/* ── Toast Notification ─────────────────────────────────── */}
             {toast && (
-                <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-semibold ${toast.type === 'success' ? 'bg-[#256D45]' : 'bg-red-500'
+                <div className={`fixed top-6 right-6 z-9999 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-semibold ${toast.type === 'success' ? 'bg-[#256D45]' : 'bg-red-500'
                     }`}>
                     {toast.type === 'success'
-                        ? <CheckCircle size={20} className="flex-shrink-0" />
-                        : <XCircle size={20} className="flex-shrink-0" />}
+                        ? <CheckCircle size={20} className="shrink-0" />
+                        : <XCircle size={20} className="shrink-0" />}
                     {toast.message}
                 </div>
             )}
 
             {/* ── Delete Confirm Modal ────────────────────────────── */}
             {deleteTargetId !== null && (
-                <div className="fixed inset-0 z-[9998] flex items-center justify-center">
+                <div className="fixed inset-0 z-9998 flex items-center justify-center">
                     {/* Backdrop */}
                     <div
                         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -421,11 +421,11 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
                                     {/* Card Header */}
                                     <div className="flex items-center gap-3 p-4">
                                         {/* Checkbox/tick */}
-                                        <div className="flex-shrink-0">
+                                        <div className="shrink-0">
                                             {addr.isDefault ? (
                                                 <CheckCircle2 size={22} className="text-[#256D45]" />
                                             ) : (
-                                                <div className="w-[22px] h-[22px] rounded-full border-2 border-gray-300" />
+                                                <div className="w-5.5 h-5.5 rounded-full border-2 border-gray-300" />
                                             )}
                                         </div>
 
@@ -442,7 +442,7 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                        <div className="flex items-center gap-2 shrink-0">
                                             {/* เลือกที่อยู่ */}
                                             <button
                                                 type="button"

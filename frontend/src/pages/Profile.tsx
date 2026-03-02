@@ -71,7 +71,7 @@ const Profile = () => {
             currentUsername = apiData.username || localUser.name;
 
             // ถ้าใน API มีชื่อ-นามสกุล หรือเบอร์โทรด้วย จะให้มันเอาจาก API ก็ได้
-            if (apiData.nameSurname) currentName = apiData.nameSurname;
+            if (apiData.name) currentName = apiData.name;
             if (apiData.phone) currentPhone = apiData.phone;
           } else {
             console.error('ดึงข้อมูลจาก API ไม่สำเร็จ (ไม่มีข้อมูลผู้ใช้)');
