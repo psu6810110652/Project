@@ -54,4 +54,11 @@ export class OrdersService {
         }
         return this.ordersRepository.save(order);
     }
+
+    findByCustomerId(customerId: string): Promise<Order[]> {
+        return this.ordersRepository.find({
+            where: { customerId },
+            order: { orderDate: 'DESC' },
+        });
+    }
 }

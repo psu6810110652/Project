@@ -33,7 +33,7 @@ const BarAdmin: React.FC = () => {
     }, [location.pathname]);
 
     return (
-        <div className="w-70 h-screen bg-[#256D45] flex flex-col py-8 relative">
+        <div className="w-64 h-full bg-[#256D45] flex flex-col py-8 relative">
 
             {/* รายการเมนู (Navigation List) */}
             <nav className="flex-1 flex flex-col gap-3 pr-2 mt-3">

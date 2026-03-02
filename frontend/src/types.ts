@@ -84,3 +84,49 @@ export interface CartItem {
     isPromotion?: boolean;
     promotionPrice?: number;
 }
+
+export interface CartItem {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    imageUrl?: string;
+    isPromotion?: boolean;
+    promotionPrice?: number;
+}
+
+export interface ShippingAddressFormProps {
+    formData: {
+        houseNumber?: string;
+        dormRoom?: string;
+        streetSoi?: string;
+        province?: string;
+        district?: string;
+        subDistrict?: string;
+        postalCode?: string;
+    };
+    onFormChange: (field: string, value: string) => void;
+}
+
+export interface Address {
+    id: number;
+    houseNumber?: string;
+    streetSoi?: string;
+    province?: string;
+    district?: string;
+    subDistrict?: string;
+    postalCode?: string;
+    fullAddress: string;
+    isDefault: boolean;
+    recipient_name?: string;
+    phone_number?: string;
+}
+
+export interface AddressFormState {
+    houseNumber: string;
+    streetSoi: string;
+    province: string;
+    district: string;
+    subDistrict: string;
+    postalCode: string;
+}

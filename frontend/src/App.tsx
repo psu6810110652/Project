@@ -71,32 +71,45 @@ function AdminLayout() {
 
   return (
     <AdminSearchProvider>
-      <div className="flex flex-col min-h-screen relative">
-        <Navbar />
+      <div className="flex flex-col min-h-screen">
+        {/* Navbar อยู่บนสุด มี id เพื่อวัด height */}
+        <div id="admin-navbar" className="sticky top-0 z-40">
+          <Navbar />
+        </div>
 
         {/* Mobile Sidebar Toggle Button (FAB) */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#256D45] text-[#FFFEF2] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,109,69,0.5)] z-50 hover:bg-[#1E5631] transition-transform active:scale-95 border-2 border-[#FFFEF2]"
+          aria-label="เมนู"
         >
           {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
 
-        <div className="flex flex-1 relative">
-          {/* Backdrop for mobile */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Backdrop สำหรับมือถือ */}
           {isMobileMenuOpen && (
             <div
-              className="fixed inset-0 bg-black/50 z-20 md:hidden"
-              style={{ top: '120px' }}
+              className="fixed inset-0 bg-black/50 z-30 md:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             />
           )}
 
-          <aside className={`fixed left-0 z-30 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:block`} style={{ top: '80px', height: 'calc(100vh - 80px)' }}>
+          {/* Sidebar: fixed overlay บนมือถือ, sticky บน desktop */}
+          <aside
+            className={`
+              fixed top-0 left-0 h-full z-40
+              transform transition-transform duration-300 ease-in-out
+              md:sticky md:top-0 md:h-screen md:translate-x-0 md:shrink-0 md:overflow-y-auto
+              ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}
+          >
+            {/* spacer ความสูง navbar สำหรับ mobile fixed sidebar */}
+            <div className="md:hidden h-16" />
             <BarAdmin />
           </aside>
 
-          <main className="flex-1 md:ml-70 p-4 md:p-8 min-h-screen min-w-0">
+          <main className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
             <Routes>
               <Route index element={<Dashboard />} />
               <Route path="orders" element={<Order />} />

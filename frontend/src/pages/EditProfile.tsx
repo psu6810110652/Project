@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
-import { Select, ConfigProvider } from 'antd';
+import api from '../services/api';
+import ShippingAddressForm from '../components/ShippingAddressForm';
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const EditProfile = () => {
 
   const [formData, setFormData] = useState({
     username: '',
-    nameSurname: '',
+    name: '',
     phone: '',
     occupation: '',
     email: '',
@@ -23,9 +24,6 @@ const EditProfile = () => {
     subDistrict: '',
     postalCode: ''
   });
-
-  // 🌟 State จัดเก็บข้อมูลที่อยู่ในไทย
-  const [addressData, setAddressData] = useState<any[]>([]);
 
   // 🌟 ฟังก์ชันดึงข้อมูลจาก Backend
   const fetchUserData = async () => {
@@ -43,96 +41,64 @@ const EditProfile = () => {
 
       if (!userId) return;
 
-      const response = await fetch(`http://localhost:3000/users/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.trim()}` // ✅ แก้ปัญหา Bearer ติดกัน
-        },
-      });
+      // 1️⃣ Fetch User Data
+      const response = await api.get(`/users/${userId}`);
 
-      if (response.ok) {
-        const userData = await response.json();
-        console.log("ดึงข้อมูลสำเร็จ:", userData);
+      if (response.status === 200) {
+        const userData = response.data;
+        console.log("ดึงข้อมูลผู้ใช้สำเร็จ:", userData);
 
         // Mapping ข้อมูลลง State (ใส่ || '' ป้องกันค่า null จาก DB)
-        setFormData({
+        setFormData(prev => ({
+          ...prev,
           username: userData.username || '',
-          nameSurname: userData.nameSurname || '',
+          name: userData.name || '',
           phone: userData.phone || '',
           occupation: userData.occupation || '',
-          email: userData.email || '',
-          houseNumber: userData.houseNumber || '',
-          dormRoom: userData.dormRoom || '',
-          streetSoi: userData.streetSoi || '',
-          province: userData.province || '',
-          district: userData.district || '',
-          subDistrict: userData.subDistrict || '',
-          postalCode: userData.postalCode || ''
-        });
+          email: userData.email || ''
+        }));
       } else {
-        const errorText = await response.text();
-        console.error(`❌ ดึงข้อมูลไม่สำเร็จ (${response.status}):`, errorText);
-        if (response.status === 401) {
-          alert('เซสชั่นหมดอายุ กรุณาล็อกอินใหม่');
-          navigate('/login');
+        console.error('❌ ดึงข้อมูลผู้ใช้ไม่สำเร็จ');
+      }
+
+      // 2️⃣ Fetch User's Addresses (separately)
+      try {
+        const addressResponse = await api.get('/addresses');
+        console.log("ดึงข้อมูลที่อยู่สำเร็จ:", addressResponse.data);
+
+        // เลือกที่อยู่แรก (หรือที่อยู่ default) เพื่อแสดงในฟอร์ม
+        if (addressResponse.data && addressResponse.data.length > 0) {
+          const defaultAddr = addressResponse.data.find((a: any) => a.isDefault) || addressResponse.data[0];
+          setFormData(prev => ({
+            ...prev,
+            houseNumber: defaultAddr.houseNumber || '',
+            dormRoom: defaultAddr.dormRoom || '',
+            streetSoi: defaultAddr.streetSoi || '',
+            province: defaultAddr.province || '',
+            district: defaultAddr.district || '',
+            subDistrict: defaultAddr.subDistrict || '',
+            postalCode: defaultAddr.postalCode || ''
+          }));
         }
+      } catch (addrErr) {
+        console.warn("⚠️ ไม่สามารถดึงข้อมูลที่อยู่ได้ (อาจยังไม่มีที่อยู่):", addrErr);
       }
     } catch (error) {
-      console.error("ระบบ Fetch พัง (JSON Input Error):", error);
+      console.error("ระบบ Fetch พัง:", error);
     }
   };
 
   // 🌟 เรียกใช้ครั้งเดียวตอน Mount
   useEffect(() => {
     fetchUserData();
-
-    // โหลดไฟล์ข้อมูลที่อยู่จาก github earthchie
-    fetch('https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/master/jquery.Thailand.js/database/raw_database/raw_database.json')
-      .then(res => res.json())
-      .then(data => setAddressData(data))
-      .catch(err => console.error("ไม่สามารถโหลดฐานข้อมูลที่อยู่จัดส่งได้:", err));
   }, []);
 
-  // --- Address Computations ---
-  const provinces = Array.from(new Set(addressData.map(item => item.province))).sort();
-
-  const districts = formData.province
-    ? Array.from(new Set(addressData.filter(item => item.province === formData.province).map(item => item.amphoe))).sort()
-    : [];
-
-  const subDistricts = formData.district
-    ? Array.from(new Set(addressData.filter(item => item.province === formData.province && item.amphoe === formData.district).map(item => item.district))).sort()
-    : [];
-
-  const handleProvinceChange = (val: string) => {
-    setFormData(prev => ({
-      ...prev,
-      province: val,
-      district: '',
-      subDistrict: '',
-      postalCode: ''
-    }));
+  // Helper function to update formData fields
+  const handleFormFieldChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleDistrictChange = (val: string) => {
-    setFormData(prev => ({
-      ...prev,
-      district: val,
-      subDistrict: '',
-      postalCode: ''
-    }));
-  };
-
-  const handleSubDistrictChange = (val: string) => {
-    const matched = addressData.find(item => item.province === formData.province && item.amphoe === formData.district && item.district === val);
-    setFormData(prev => ({
-      ...prev,
-      subDistrict: val,
-      postalCode: matched ? matched.zipcode.toString() : ''
-    }));
-  };
-  // -----------------------------
+  // Handle basic input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -147,29 +113,31 @@ const EditProfile = () => {
     const userId = JSON.parse(userStr).id;
 
     try {
-      const response = await fetch(`http://localhost:3000/users/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.trim()}`
-        },
-        body: JSON.stringify(formData)
-      });
+      // 1️⃣ Update User profile (only user-specific fields)
+      const userPayload = {
+        username: formData.username,
+        name: formData.name,
+        phone: formData.phone,
+        occupation: formData.occupation,
+        email: formData.email,
+        addressSummary: `${formData.houseNumber} ${formData.streetSoi} ${formData.subDistrict} ${formData.district} ${formData.province} ${formData.postalCode}`
+      };
 
-      if (response.ok) {
-        const updatedUser = await response.json();
-        console.log('Update Success:', updatedUser);
+      const userResponse = await api.patch(`/users/${userId}`, userPayload);
+
+      if (userResponse.status === 200) {
+        console.log('✅ User updated:', userResponse.data);
+
         localStorage.setItem('shippingAddress', JSON.stringify(formData));
 
-        // 🌟 เปิด Overlay แจ้งเตือน และหน่วงเวลา 2.5 วิ ก่อนไปหน้า Profile
+        // 🌟 Show success overlay and redirect
         setShowSuccessOverlay(true);
         setTimeout(() => {
           navigate('/profile');
         }, 1000);
 
       } else {
-        const errorData = await response.json();
-        alert(`เกิดข้อผิดพลาด: ${errorData.message || 'บันทึกไม่ได้'}`);
+        alert('เกิดข้อผิดพลาด: บันทึกข้อมูลไม่สำเร็จ');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -192,7 +160,7 @@ const EditProfile = () => {
         </button>
       </div>
 
-      <div className="w-full max-w-4xl mx-auto px-6 md:px-12 py-8">
+      <div className="w-full max-w-6xl mx-auto px-6 md:px-12 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
 
           {/* แก้ไขข้อมูลส่วนตัว */}
@@ -209,7 +177,7 @@ const EditProfile = () => {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
+                  className="w-full px-4 py-3 h-14 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
                   required
                 />
               </div>
@@ -218,10 +186,10 @@ const EditProfile = () => {
                 <label className="block text-lg font-medium text-left mb-2">ชื่อ - นามสกุล</label>
                 <input
                   type="text"
-                  name="nameSurname"
-                  value={formData.nameSurname}
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
+                  className="w-full px-4 py-3 h-14 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
                 />
               </div>
 
@@ -232,7 +200,7 @@ const EditProfile = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
+                  className="w-full px-4 py-3 h-14 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
                 />
               </div>
 
@@ -242,7 +210,7 @@ const EditProfile = () => {
                   name="occupation"
                   value={formData.occupation}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
+                  className="w-full px-4 py-3 h-14 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
                 >
                   <option value="">เลือกอาชีพ</option>
                   <option value="student">นักเรียน</option>
@@ -260,102 +228,17 @@ const EditProfile = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
+                  className="w-full px-4 py-3 h-14 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
                   required
                 />
               </div>
             </div>
           </div>
 
-          {/* ที่อยู่ในการจัดส่ง */}
-          <div className="bg-[#FFFEF2] rounded-xl shadow-lg p-8">
-            <h2 className="text-xl font-bold text-[#256D45] mb-6 pb-2 border-b-2 border-[#256D45] text-left">
-              ที่อยู่ในการจัดส่ง
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-lg font-medium text-left mb-2">บ้านเลขที่/หอพัก/ห้อง</label>
-                <input
-                  type="text"
-                  name="houseNumber"
-                  value={formData.houseNumber}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-lg font-medium text-left mb-2">ถนน/ซอย</label>
-                <input
-                  type="text"
-                  name="streetSoi"
-                  value={formData.streetSoi}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-green-500 text-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-lg font-medium text-left mb-2">จังหวัด</label>
-                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 18, controlHeight: 52 } }}>
-                  <Select
-                    showSearch
-                    value={formData.province || undefined}
-                    onChange={handleProvinceChange}
-                    className="w-full text-lg"
-                    placeholder="เลือก/ค้นหาจังหวัด"
-                    options={provinces.map(p => ({ value: p as string, label: p as string }))}
-                    filterOption={(input, option) => String(option?.label ?? '').includes(input)}
-                  />
-                </ConfigProvider>
-              </div>
-
-              <div>
-                <label className="block text-lg font-medium text-left mb-2">อำเภอ/เขต</label>
-                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 18, controlHeight: 52 } }}>
-                  <Select
-                    showSearch
-                    value={formData.district || undefined}
-                    onChange={handleDistrictChange}
-                    className="w-full text-lg"
-                    placeholder={formData.province ? "เลือก/ค้นหาอำเภอ" : "เลือกจังหวัดก่อน"}
-                    disabled={!formData.province}
-                    options={districts.map(d => ({ value: d as string, label: d as string }))}
-                    filterOption={(input, option) => String(option?.label ?? '').includes(input)}
-                  />
-                </ConfigProvider>
-              </div>
-
-              <div>
-                <label className="block text-lg font-medium text-left mb-2">ตำบล/แขวง</label>
-                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 18, controlHeight: 52 } }}>
-                  <Select
-                    showSearch
-                    value={formData.subDistrict || undefined}
-                    onChange={handleSubDistrictChange}
-                    className="w-full text-lg"
-                    placeholder={formData.district ? "เลือก/ค้นหาตำบล" : "เลือกอำเภอก่อน"}
-                    disabled={!formData.district}
-                    options={subDistricts.map(sd => ({ value: sd as string, label: sd as string }))}
-                    filterOption={(input, option) => String(option?.label ?? '').includes(input)}
-                  />
-                </ConfigProvider>
-              </div>
-
-              <div>
-                <label className="block text-lg font-medium text-left mb-2">รหัสไปรษณีย์</label>
-                <input
-                  type="text"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  disabled
-                  readOnly
-                  className="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg shadow-sm text-gray-500 font-semibold focus:outline-none text-lg cursor-not-allowed"
-                />
-              </div>
-            </div>
-          </div>
+          <ShippingAddressForm
+            formData={formData}
+            onFormChange={handleFormFieldChange}
+          />
 
           <div className="flex justify-end gap-4">
             <button

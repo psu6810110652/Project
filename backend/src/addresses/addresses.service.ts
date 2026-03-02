@@ -16,7 +16,7 @@ export class AddressesService {
   async create(userId: number, createAddressDto: CreateAddressDto) {
     const newAddress = this.addressRepo.create({
       ...createAddressDto,
-      user_id: userId, // ผูกที่อยู่นี้เข้ากับ ID ของลูกค้าที่ล็อกอินอยู่
+      user: { id: userId }, // ผูกที่อยู่นี้เข้ากับ ID ของลูกค้าที่ล็อกอินอยู่
     });
     return await this.addressRepo.save(newAddress);
   }
@@ -24,7 +24,7 @@ export class AddressesService {
   // 2. ดึงที่อยู่ "เฉพาะของลูกค้าคนนั้น"
   async findAllByUserId(userId: number) {
     return await this.addressRepo.find({
-      where: { user_id: userId },
+      where: { user: { id: userId } },
       // เรียงลำดับเอาที่อยู่ล่าสุดขึ้นก่อน
       order: { id: 'DESC' }
     });
@@ -33,7 +33,7 @@ export class AddressesService {
   // 3. ดึงรายละเอียดที่อยู่ 1 รายการ (ต้องเช็คว่าเป็นของลูกค้าคนนี้จริงไหม)
   async findOne(id: number, userId: number) {
     const address = await this.addressRepo.findOne({
-      where: { id: id, user_id: userId },
+      where: { id: id, user: { id: userId } },
     });
 
     if (!address) {
