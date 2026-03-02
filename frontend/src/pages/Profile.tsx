@@ -55,6 +55,8 @@ const Profile = () => {
       // 2. ดึงข้อมูล User เบื้องต้น และยิง API ไปขอข้อมูลเต็ม
       if (userStr) {
         const localUser = JSON.parse(userStr);
+        console.log('Local user data:', localUser);
+        console.log('User ID for API call:', localUser.id);
 
         try {
           // Use axios instance to ensure correct baseURL and Authorization header
@@ -79,8 +81,11 @@ const Profile = () => {
           console.log('Fetching orders from:', `/api/admin/orders/my-orders`);
           const ordersRes = await api.get(`/api/admin/orders/my-orders`);
           console.log('Orders response:', ordersRes.data);
-          if (ordersRes.data) {
+          if (ordersRes.data && Array.isArray(ordersRes.data)) {
             setOrders(ordersRes.data);
+          } else {
+            console.warn('Orders response is not an array:', ordersRes.data);
+            setOrders([]);
           }
         } catch (error: any) {
           console.error("เกิดข้อผิดพลาดในการดึงข้อมูลคำสั่งซื้อ:", {
@@ -91,6 +96,11 @@ const Profile = () => {
             url: error.config?.url,
             method: error.config?.method
           });
+          // If it's a 401 error, the user might not be logged in properly
+          if (error.response?.status === 401) {
+            console.warn('User not authenticated, clearing orders');
+            setOrders([]);
+          }
         } finally {
           setLoadingOrders(false);
         }
