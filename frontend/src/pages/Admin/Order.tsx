@@ -99,7 +99,7 @@ export default function Order() {
       render: (_, record) => (
         <div className="font-bold text-[#256D45] text-left inline-block">
           {record.products?.map((product, idx) => (
-            <div key={idx} className="mb-1 truncate max-w-[200px]" title={product.name}>{product.name}</div>
+            <div key={idx} className="mb-1 truncate max-w-50" title={product.name}>{product.name}</div>
           ))}
         </div>
       ),
@@ -172,7 +172,7 @@ export default function Order() {
       render: (_, record) => (
         <button
           onClick={() => navigate(`/admin/orders/${record.id}`)}
-          className="bg-[#256D45] hover:bg-[#1A5434] text-white font-bold !px-5 !py-1.5 rounded-xl text-sm shadow-sm transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+          className="bg-[#256D45] hover:bg-[#1A5434] text-white font-bold px-5! py-1.5! rounded-xl text-sm shadow-sm transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
         >
           จัดการ
         </button>
@@ -197,7 +197,7 @@ export default function Order() {
       }}
     >
       <div className="min-h-screen bg-[#DCEDC1] p-6 lg:p-10 font-['Prompt'] w-full">
-        <div className="max-w-[1600px] mx-auto">
+        <div className="max-w-400 mx-auto">
 
           {/* หัวข้อ */}
           <div className="mb-8 text-center md:text-left">

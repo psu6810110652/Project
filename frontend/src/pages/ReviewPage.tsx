@@ -31,7 +31,7 @@ const ReviewPage: React.FC = () => {
 
       try {
         // Fetch product data
-        const response = await fetch(`/api/product/${productId}`);
+        const response = await fetch(`/product/${productId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const productData = await response.json();
         setProductName(productData.name || 'ชื่อสินค้า');
@@ -42,7 +42,7 @@ const ReviewPage: React.FC = () => {
 
       // Fetch existing reviews for this product
       try {
-        const reviewsResponse = await fetch(`/api/product/${productId}/reviews`);
+        const reviewsResponse = await fetch(`/product/${productId}/reviews`);
         if (reviewsResponse.ok) {
           const reviewsData = await reviewsResponse.json();
           setExistingReviews(reviewsData);

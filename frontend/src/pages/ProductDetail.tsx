@@ -40,214 +40,214 @@ export const ProductDetail: React.FC = () => {
   // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!id) {
-        setMessage('ไม่พบ ID สินค้า');
-        setProductLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/product/${id}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (!id) {
+            setMessage('ไม่พบ ID สินค้า');
+            setProductLoading(false);
+            return;
         }
-        
-        const data = await response.json();
-        setProduct(data);
-        
-        // Check if product is in favorites
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        setIsFavorite(favorites.includes(id));
-        
-        // Fetch reviews for this product to calculate average rating
+
         try {
-          const reviewsResponse = await fetch(`/api/product/${id}/reviews`);
-          if (reviewsResponse.ok) {
-            const reviewsData = await reviewsResponse.json();
-            setReviews(reviewsData);
+            const response = await fetch(`/product/${id}`);
             
-            // Calculate average rating
-            if (reviewsData.length > 0) {
-              const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
-              const avgRating = totalRating / reviewsData.length;
-              setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
-              setTotalReviews(reviewsData.length);
-            } else {
-              setAverageRating(0);
-              setTotalReviews(0);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-          } else {
+            
+            const data = await response.json();
+            setProduct(data);
+            
+            // Check if product is in favorites
+            const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+            setIsFavorite(favorites.includes(id));
+            
+            // Fetch reviews for this product to calculate average rating
+            try {
+            const reviewsResponse = await fetch(`/product/${id}/reviews`);
+            if (reviewsResponse.ok) {
+                const reviewsData = await reviewsResponse.json();
+                setReviews(reviewsData);
+                
+                // Calculate average rating
+                if (reviewsData.length > 0) {
+                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+                const avgRating = totalRating / reviewsData.length;
+                setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
+                setTotalReviews(reviewsData.length);
+                } else {
+                setAverageRating(0);
+                setTotalReviews(0);
+                }
+            } else {
+                // Use product's existing rating if API fails
+                setAverageRating(data.rating || 0);
+                setTotalReviews(data.reviewCount || 0);
+            }
+            } catch (error) {
+            console.error('Error fetching reviews:', error);
             // Use product's existing rating if API fails
             setAverageRating(data.rating || 0);
             setTotalReviews(data.reviewCount || 0);
-          }
+            }
         } catch (error) {
-          console.error('Error fetching reviews:', error);
-          // Use product's existing rating if API fails
-          setAverageRating(data.rating || 0);
-          setTotalReviews(data.reviewCount || 0);
+            console.error('Error fetching product:', error);
+            setMessage(`ไม่สามารถโหลดข้อมูลสินค้าได้: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setProductLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        setMessage(`ไม่สามารถโหลดข้อมูลสินค้าได้: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      } finally {
-        setProductLoading(false);
-      }
-    };
+        };
 
-    fetchProduct();
-  }, [id]);
+        fetchProduct();
+    }, [id]);
 
-  const handleAddToCart = async () => {
-    if (!id || !product) {
-      setMessage('ไม่พบข้อมูลสินค้า');
-      return;
-    }
+    const handleAddToCart = async () => {
+        if (!id || !product) {
+        setMessage('ไม่พบข้อมูลสินค้า');
+        return;
+        }
 
     setIsLoading(true);
     setMessage('');
 
     try {
       // Get existing cart from localStorage
-      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-      
-      // Check if product already exists in cart
-      const existingItemIndex = existingCart.findIndex((item: any) => item.id === id);
-      
-      const cartItem = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: quantity,
-        imageUrl: product.imageUrl,
-        stockQuantity: product.stockQuantity,
-        isPromotion: product.isPromotion,
-        promotionPrice: product.promotionPrice
-      };
+        const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if product already exists in cart
+        const existingItemIndex = existingCart.findIndex((item: any) => item.id === id);
+        
+        const cartItem = {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: quantity,
+            imageUrl: product.imageUrl,
+            stockQuantity: product.stockQuantity,
+            isPromotion: product.isPromotion,
+            promotionPrice: product.promotionPrice
+        };
 
-      if (existingItemIndex >= 0) {
-        // Update existing item quantity
-        existingCart[existingItemIndex].quantity += quantity;
-      } else {
-        // Add new item
-        existingCart.push(cartItem);
-      }
+        if (existingItemIndex >= 0) {
+            // Update existing item quantity
+            existingCart[existingItemIndex].quantity += quantity;
+        } else {
+            // Add new item
+            existingCart.push(cartItem);
+        }
 
-      // Save to localStorage
-      localStorage.setItem('cart', JSON.stringify(existingCart));
-      
-      // Trigger storage event for other components
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'cart',
-        newValue: JSON.stringify(existingCart)
-      }));
+        // Save to localStorage
+        localStorage.setItem('cart', JSON.stringify(existingCart));
+        
+        // Trigger storage event for other components
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'cart',
+            newValue: JSON.stringify(existingCart)
+        }));
 
-      setMessage('เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว');
-      setTimeout(() => setMessage(''), 3000);
-      
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      setMessage(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถเพิ่มสินค้าได้'}`);
-      setTimeout(() => setMessage(''), 5000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1 && product && newQuantity <= product.stockQuantity) {
-      setQuantity(newQuantity);
-    }
-  };
-
-  const toggleFavorite = () => {
-    if (!id) return;
-    
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    
-    if (isFavorite) {
-      // Remove from favorites
-      const newFavorites = favorites.filter((favId: string) => favId !== id);
-      localStorage.setItem('favorites', JSON.stringify(newFavorites));
-      setIsFavorite(false);
-      setMessage('ลบออกจากรายการโปรดแล้ว');
-    } else {
-      // Add to favorites
-      favorites.push(id);
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-      setIsFavorite(true);
-      setMessage('เพิ่มไปยังรายการโปรดแล้ว');
-    }
-    
-    setTimeout(() => setMessage(''), 2000);
-  };
+        setMessage('เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว');
+        setTimeout(() => setMessage(''), 3000);
+        
+        } catch (error) {
+        console.error('Error adding to cart:', error);
+        setMessage(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถเพิ่มสินค้าได้'}`);
+        setTimeout(() => setMessage(''), 5000);
+        } finally {
+        setIsLoading(false);
+        }
+    };
 
 
-  const renderStars = (rating: number = 0) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        size={16}
-        className={i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
-      />
-    ));
-  };
+    const handleQuantityChange = (newQuantity: number) => {
+        if (newQuantity >= 1 && product && newQuantity <= product.stockQuantity) {
+        setQuantity(newQuantity);
+        }
+    };
 
-  const currentImages = product?.imageUrl ? [product.imageUrl] : [];
-  // If no images exist, create array with first image repeated 4 times
-  const displayImages = currentImages.length === 0 ? [
-    '/api/placeholder/320/320',
-    '/api/placeholder/320/320',
-    '/api/placeholder/320/320',
-    '/api/placeholder/320/320'
-  ] : currentImages.length === 1 ? [
-    product?.imageUrl,
-    product?.imageUrl,
-    product?.imageUrl,
-    product?.imageUrl
-  ] : currentImages;
-  const currentImage = displayImages[selectedImageIndex] || product?.imageUrl || '/api/placeholder/320/320';
+    const toggleFavorite = () => {
+        if (!id) return;
+        
+        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        
+        if (isFavorite) {
+        // Remove from favorites
+        const newFavorites = favorites.filter((favId: string) => favId !== id);
+        localStorage.setItem('favorites', JSON.stringify(newFavorites));
+        setIsFavorite(false);
+        setMessage('ลบออกจากรายการโปรดแล้ว');
+        } else {
+        // Add to favorites
+        favorites.push(id);
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        setIsFavorite(true);
+        setMessage('เพิ่มไปยังรายการโปรดแล้ว');
+        }
+        
+        setTimeout(() => setMessage(''), 2000);
+    };
 
-  return (
-    <div className="min-h-screen bg-[#DCEDC1] font-['Prompt']">
-      {/* Fixed Back Button */}
-      <div className="fixed top-24 left-4 z-40">
-        <button 
-          onClick={() => navigate(-1)}
-          className="bg-white text-[#2a6b3b] font-bold !py-2 !px-6 rounded-xl shadow-sm hover:bg-gray-50"
-        >
-            กลับ
-        </button>
-      </div>
-      
-      {/* Message Display */}
-      {message && (
-        <div className={`fixed top-24 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
-          message.includes('เรียบร้อย') ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'
-        }`}>
-          {message}
+
+    const renderStars = (rating: number = 0) => {
+        return Array.from({ length: 5 }, (_, i) => (
+        <Star
+            key={i}
+            size={16}
+            className={i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+        />
+        ));
+    };
+
+    const currentImages = product?.imageUrl ? [product.imageUrl] : [];
+    // If no images exist, create array with first image repeated 4 times
+    const displayImages = currentImages.length === 0 ? [
+        '/api/placeholder/320/320',
+        '/api/placeholder/320/320',
+        '/api/placeholder/320/320',
+        '/api/placeholder/320/320'
+    ] : currentImages.length === 1 ? [
+        product?.imageUrl,
+        product?.imageUrl,
+        product?.imageUrl,
+        product?.imageUrl
+    ] : currentImages;
+    const currentImage = displayImages[selectedImageIndex] || product?.imageUrl || '/api/placeholder/320/320';
+
+    return (
+        <div className="min-h-screen bg-[#DCEDC1] font-['Prompt']">
+        {/* Fixed Back Button */}
+        <div className="fixed top-24 left-4 z-40">
+            <button 
+            onClick={() => navigate(-1)}
+            className="bg-white text-[#2a6b3b] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
+            >
+                กลับ
+            </button>
         </div>
-      )}
-      
-      {/* Loading State */}
-      {productLoading && (
-        <div className="pt-24 pb-8">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <div className="text-center py-12">
-                <p className="text-xl text-gray-600">กำลังโหลดข้อมูลสินค้า...</p>
-              </div>
+        
+        {/* Message Display */}
+        {message && (
+            <div className={`fixed top-24 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+            message.includes('เรียบร้อย') ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'
+            }`}>
+            {message}
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Product Content */}
-      {!productLoading && product && (
-        <div className="pt-24 pb-8">
-          <div className="container mx-auto px-4 max-w-6xl">
+        )}
+        
+        {/* Loading State */}
+        {productLoading && (
+            <div className="pt-24 pb-8">
+            <div className="container mx-auto px-4 max-w-6xl">
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                <div className="text-center py-12">
+                    <p className="text-xl text-gray-600">กำลังโหลดข้อมูลสินค้า...</p>
+                </div>
+                </div>
+            </div>
+            </div>
+        )}
+        
+        {/* Product Content */}
+        {!productLoading && product && (
+            <div className="pt-24 pb-8">
+            <div className="container mx-auto px-4 max-w-6xl">
 
             <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
                 
@@ -399,7 +399,7 @@ export const ProductDetail: React.FC = () => {
                 <div className="flex gap-1 p-2">
                     <button 
                         onClick={() => setActiveTab('description')}
-                        className={`font-bold !py-3 !px-8 rounded-t-xl transition-colors ${
+                        className={`font-bold py-3! px-8! rounded-t-xl transition-colors ${
                             activeTab === 'description' 
                                 ? 'bg-[#3a7c50] text-white' 
                                 : 'bg-gray-200 text-gray-600'
@@ -409,7 +409,7 @@ export const ProductDetail: React.FC = () => {
                     </button>
                     <button 
                         onClick={() => setActiveTab('pricing')}
-                        className={`font-bold py-3 !px-8 rounded-t-xl transition-colors ${
+                        className={`font-bold py-3! px-8! rounded-t-xl transition-colors ${
                             activeTab === 'pricing' 
                                 ? 'bg-[#3a7c50] text-white' 
                                 : 'bg-gray-200 text-gray-600'
