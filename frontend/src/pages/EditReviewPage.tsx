@@ -10,8 +10,6 @@ interface ReviewData {
     reviewContent: string;
 }
 
-
-
 const EditReviewPage: React.FC = () => {
     const navigate = useNavigate();
     const { productId } = useParams<{ productId: string }>();
@@ -21,16 +19,11 @@ const EditReviewPage: React.FC = () => {
         productName: '',
         userName: '',
         rating: 5.0,
-        orderDate: new Date().toLocaleString('th-TH', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }),
+        orderDate: new Date().toISOString(),
         reviewContent: ''
     });
 
+    const [existingReviewId, setExistingReviewId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
@@ -45,25 +38,41 @@ const EditReviewPage: React.FC = () => {
             const currentUser = auth?.user;
             const currentUserName = currentUser?.name || currentUser?.username || 'ผู้ใช้ทั่วไป';
 
-            const formatDate = () =>
-                new Date().toLocaleString('th-TH', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+            const formatDate = () => new Date().toISOString();
 
             try {
                 const response = await fetch(`/api/product/${productId}`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const productData = await response.json();
 
+                // Check if user already has a review for this product
+                if (currentUser) {
+                    try {
+                        const reviewsResponse = await fetch(`/api/product/${productId}/reviews`);
+                        if (reviewsResponse.ok) {
+                            const reviewsData = await reviewsResponse.json();
+                            const userReview = reviewsData.find((r: any) => r.user?.id === currentUser.id || r.userId === currentUser.id);
+
+                            if (userReview) {
+                                setExistingReviewId(userReview.id);
+                                setReviewData(prev => ({
+                                    ...prev,
+                                    rating: userReview.rating,
+                                    reviewContent: userReview.reviewContent,
+                                    orderDate: userReview.orderDate || formatDate()
+                                }));
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error loading existing reviews:', err);
+                    }
+                }
+
                 setReviewData(prev => ({
                     ...prev,
                     productName: productData.name || 'ชื่อสินค้า',
                     userName: currentUserName,
-                    orderDate: formatDate()
+                    orderDate: prev.orderDate // Keep if already seeded by existing review
                 }));
             } catch (error) {
                 console.error('Error loading product data:', error);
@@ -113,8 +122,11 @@ const EditReviewPage: React.FC = () => {
                 orderDate: reviewData.orderDate
             };
 
-            const response = await fetch('/api/reviews', {
-                method: 'POST',
+            const url = existingReviewId ? `/api/reviews/${existingReviewId}` : '/api/reviews';
+            const method = existingReviewId ? 'PATCH' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -124,7 +136,7 @@ const EditReviewPage: React.FC = () => {
 
             if (response.ok) {
                 setReviewData(prev => ({ ...prev, reviewContent: '', rating: 5.0 }));
-                setMessage('ส่งรีวิวเรียบร้อยแล้ว');
+                setMessage(existingReviewId ? 'อัปเดตรีวิวเรียบร้อยแล้ว' : 'ส่งรีวิวเรียบร้อยแล้ว');
                 setTimeout(() => {
                     setMessage('');
                     // Navigate back to review page after successful submission
@@ -197,7 +209,13 @@ const EditReviewPage: React.FC = () => {
                     </div>
                     <div className="w-0.5 h-4 bg-[#1f653a]"></div>
                     <div className="text-sm font-medium">
-                        วันที่และเวลาที่สั่งซื้อ {reviewData.orderDate}
+                        วันที่และเวลาที่สั่งซื้อ {reviewData.orderDate ? new Date(reviewData.orderDate).toLocaleString('th-TH', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) : ''}
                     </div>
                 </div>
 
@@ -243,7 +261,7 @@ const EditReviewPage: React.FC = () => {
                             disabled={isSubmitting}
                             className="bg-[#1f653a] hover:bg-[#1a4d2e] text-white font-bold py-3 px-8 rounded-xl text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isSubmitting ? 'กำลังส่ง...' : 'ส่งรีวิว'}
+                            {isSubmitting ? 'กำลังส่ง...' : (existingReviewId ? 'อัปเดตรีวิว' : 'ส่งรีวิว')}
                         </button>
                     </div>
                 </div>
