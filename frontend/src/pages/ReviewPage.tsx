@@ -30,7 +30,6 @@ const ReviewPage: React.FC = () => {
       }
 
       try {
-        // Fetch product data
         const response = await fetch(`/api/product/${productId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const productData = await response.json();
@@ -40,7 +39,6 @@ const ReviewPage: React.FC = () => {
         setProductName('ชื่อสินค้า');
       }
 
-      // Fetch existing reviews for this product
       try {
         const reviewsResponse = await fetch(`/api/product/${productId}/reviews`);
         if (reviewsResponse.ok) {
@@ -68,7 +66,6 @@ const ReviewPage: React.FC = () => {
     ));
   };
 
-  // Filter out the current user's reviews — show only other customers' reviews
   const otherReviews = existingReviews.filter(r => r.userId !== currentUserId);
 
   if (isLoading) {
@@ -135,7 +132,11 @@ const ReviewPage: React.FC = () => {
                         <span className="text-sm text-gray-600 ml-1">({review.rating})</span>
                       </div>
                       <div className="text-sm text-gray-600">
-                        {review.orderDate}
+                        {review.orderDate ? new Date(review.orderDate).toLocaleDateString('th-TH', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        }) : ''}
                       </div>
                     </div>
 
