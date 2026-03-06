@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../services/api';
 import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
 import { Save, ImagePlus, X, Package, Hash, Coins, Database, FileText, Tag, FolderTree } from 'lucide-react';
 import { message } from 'antd';
 
@@ -8,6 +10,9 @@ const ManagerProduct: React.FC = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const { categoryId, code: productId } = useParams();
     const navigate = useNavigate();
+    const auth = useContext(AuthContext);
+    const user = auth?.user;
+    const isAdmin = user?.role === 'Admin';
     const isEditMode = !!productId && productId !== 'new';
     const [loading, setLoading] = useState(false);
 
@@ -28,8 +33,15 @@ const ManagerProduct: React.FC = () => {
     const [existingTypes, setExistingTypes] = useState<{ value: string }[]>([]);
 
     useEffect(() => {
+        // redirect non-admin users away
+        if (!isAdmin) {
+            messageApi.error('คุณไม่มีสิทธิ์แก้ไขข้อมูลสินค้า');
+            navigate('/');
+            return;
+        }
+
         if (categoryId) {
-            axios.get(`/api/product/category/${categoryId}`)
+            api.get(`/product/category/${categoryId}`)
                 .then(res => {
                     const uniqueTypes = [...new Set(res.data.map((p: any) => p.type).filter((t: any) => t))];
                     setExistingTypes(uniqueTypes.map((t: any) => ({ value: t })));
@@ -38,7 +50,7 @@ const ManagerProduct: React.FC = () => {
         }
 
         if (isEditMode) {
-            axios.get(`/api/product/${productId}`).then(res => {
+            api.get(`/product/${productId}`).then(res => {
                 setFormData({
                     ...res.data,
                     code: res.data.id || '',
@@ -52,11 +64,15 @@ const ManagerProduct: React.FC = () => {
                 });
             }).catch(() => messageApi.error("ดึงข้อมูลสินค้าไม่สำเร็จ"));
         }
-    }, [productId, isEditMode, categoryId]);
+    }, [productId, isEditMode, categoryId, isAdmin]);
 
     const handleSave = async () => {
         setLoading(true);
+        console.log('handleSave called', { isAdmin, categoryId, productId, formData });
         try {
+            if (!isAdmin) {
+                throw new Error('Unauthorized');
+            }
             const payload = {
                 name: formData.name,
                 id: formData.code,
@@ -73,18 +89,21 @@ const ManagerProduct: React.FC = () => {
             };
 
             if (isEditMode) {
-                await axios.patch(`/api/product/${productId}`, payload);
+                await api.patch(`/product/${productId}`, payload);
                 messageApi.success("แก้ไขสินค้าเรียบร้อย");
             } else {
-                await axios.post(`/api/product`, payload);
+                await api.post(`/product`, payload);
                 messageApi.success("เพิ่มสินค้าใหม่เรียบร้อย");
             }
             navigate(-1);
         } catch (err: any) {
             if (axios.isAxiosError(err) && err.response?.status === 413) {
                 messageApi.error("ไฟล์ภาพมีขนาดใหญ่เกินไป กรุณาลดขนาดไฟล์");
+            } else if (err.message === 'Unauthorized' || (axios.isAxiosError(err) && [401, 403].includes(err.response?.status || 0))) {
+                messageApi.error('คุณไม่มีสิทธิ์ดำเนินการ โปรดเข้าสู่ระบบใหม่');
             } else {
-                messageApi.error("ไม่สามารถบันทึกข้อมูลได้");
+                const detail = axios.isAxiosError(err) ? err.response?.data?.message || JSON.stringify(err.response?.data) : err.message;
+                messageApi.error(`ไม่สามารถบันทึกข้อมูลได้: ${detail}`);
             }
         } finally {
             setLoading(false);

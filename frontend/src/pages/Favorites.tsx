@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Table, Typography, ConfigProvider } from 'antd';
@@ -45,7 +43,7 @@ const FavoritesPage = () => {
       // Fetch product details for each favorite ID
       const productPromises = favoriteIds.map(async (id: string) => {
         try {
-          const response = await fetch(`/api/product/${id}`);
+          const response = await fetch(`/product/${id}`);
           if (response.ok) {
             return await response.json();
           }

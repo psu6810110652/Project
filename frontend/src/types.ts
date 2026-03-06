@@ -21,6 +21,9 @@ export interface Product {
     Type?: string;
     category?: { id: number; name: string; description?: string };
     description?: string;
+    rating?: number;
+    reviewCount?: number;
+    soldCount?: number;
 
     image?: string;
     imageUrl?: string;

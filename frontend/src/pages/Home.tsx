@@ -11,7 +11,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     // Fetch products that are on promotion
-    axios.get('/api/product/promotions')
+    axios.get('/product/promotions')
       .then(res => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
@@ -26,7 +26,7 @@ const Home: React.FC = () => {
       });
 
     // Fetch products that are featured (สินค้าแนะนำ)
-    axios.get('/api/product/featured')
+    axios.get('/product/featured')
       .then(res => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
@@ -58,7 +58,7 @@ const Home: React.FC = () => {
 
         <div className="absolute top-1/2 -translate-y-1/2 w-full h-16 md:h-24 lg:h-35 bg-[#fffef2bf]" />
 
-        <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-center font-semibold [-webkit-text-stroke:1px_#256d45] md:[-webkit-text-stroke:2.5px_#256d45] lg:[-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal] w-full px-4 break-words">
+        <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-center font-semibold [-webkit-text-stroke:1px_#256d45] md:[-webkit-text-stroke:2.5px_#256d45] lg:[-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal] w-full px-4 wrap-break-words">
           ธีรยุทธการเกษตร
         </h2>
       </section>

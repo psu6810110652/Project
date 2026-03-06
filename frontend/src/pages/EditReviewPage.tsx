@@ -41,7 +41,7 @@ const EditReviewPage: React.FC = () => {
             const formatDate = () => new Date().toISOString();
 
             try {
-                const response = await fetch(`/api/product/${productId}`);
+                const response = await fetch(`/product/${productId}`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const productData = await response.json();
 

@@ -3,23 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 import Search from '../components/search.tsx';
 import { Products } from '../components/products.tsx';
+import PriceFilter from '../components/PriceFilter.tsx';
 import { type ProductCard, type Category as CategoryType } from '../types.ts';
 
 import Seeds from '../assets/images/seed.png';
 
-interface PriceRange {
-    label: string;
-    min: number;
-    max: number | null; // null = ไม่จำกัด
-}
-
-const PRICE_RANGES: PriceRange[] = [
-    { label: 'ต่ำกว่า 100 บาท', min: 0, max: 100 },
-    { label: '100 – 500 บาท', min: 100, max: 500 },
-    { label: '500 – 1,000 บาท', min: 500, max: 1000 },
-    { label: '1,000 – 5,000 บาท', min: 1000, max: 5000 },
-    { label: 'มากกว่า 5,000 บาท', min: 5000, max: null },
-];
 
 const Category: React.FC = () => {
 
@@ -34,23 +22,32 @@ const Category: React.FC = () => {
     const [categoryInfo, setCategoryInfo] = useState<CategoryType | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedRange, setSelectedRange] = useState<PriceRange | null>(null);
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
+    const [maxPriceLimit, setMaxPriceLimit] = useState(0);
+    const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
+    const distinctTypes = products.reduce((acc: Record<string, number>, curr) => {
+        if (curr.type) {
+            acc[curr.type] = (acc[curr.type] || 0) + 1;
+        }
+        return acc;
+    }, {});
+
+    const toggleType = (type: string) => {
+        setSelectedTypes(prev =>
+            prev.includes(type)
+                ? prev.filter(t => t !== type)
+                : [...prev, type]
+        );
+    };
 
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesPrice = selectedRange
-            ? product.price >= selectedRange.min && (selectedRange.max === null || product.price < selectedRange.max)
-            : true;
-        return matchesSearch && matchesPrice;
+        const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+        const matchesType = selectedTypes.length === 0 || (product.type && selectedTypes.includes(product.type));
+        return matchesSearch && matchesPrice && matchesType;
     });
 
-    // นับจำนวนสินค้าในแต่ละช่วงราคา
-    const rangeCounts = PRICE_RANGES.map(range => ({
-        range,
-        count: products.filter(p =>
-            p.price >= range.min && (range.max === null || p.price < range.max)
-        ).length
-    }));
 
     useEffect(() => {
         const fetchCategoryData = async () => {
@@ -87,6 +84,16 @@ const Category: React.FC = () => {
                         type: p.type
                     }));
                     setProducts(mappedProducts);
+
+                    // Find max price to set the limit
+                    if (mappedProducts.length > 0) {
+                        const max = Math.max(...mappedProducts.map((p: any) => p.price || 0));
+                        setMaxPriceLimit(max);
+                        setPriceRange([0, max]);
+                    } else {
+                        setMaxPriceLimit(0);
+                        setPriceRange([0, 0]);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -133,60 +140,92 @@ const Category: React.FC = () => {
             <div className="container mt-6 md:mt-12 flex flex-col md:flex-row gap-8 w-full">
 
                 {/* Mobile Filter — horizontal scroll chips */}
-                <div className="md:hidden flex overflow-x-auto gap-4 pb-4 snap-x w-full px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    <div
-                        className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors cursor-pointer snap-start
-                            ${selectedRange === null ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
-                        onClick={() => setSelectedRange(null)}
-                    >
-                        <span className="font-semibold whitespace-nowrap">ทั้งหมด ({products.length})</span>
+                <div className="md:hidden w-full px-4 mb-4 flex flex-col gap-4">
+                    {/* Mobile Type Filter - Horizontal Scroll with Checkboxes */}
+                    <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
+                        <button
+                            onClick={() => setSelectedTypes([])}
+                            className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-bold border-2 transition-all flex items-center gap-2 ${selectedTypes.length === 0 ? 'bg-[#256D45] text-white border-[#256D45]' : 'bg-white text-[#256D45] border-[#256D45]'}`}
+                        >
+                            <span>ทั้งหมด</span>
+                            <span className="opacity-60 text-xs">({products.length})</span>
+                        </button>
+                        {Object.entries(distinctTypes).map(([type, count]) => (
+                            <button
+                                key={type}
+                                onClick={() => toggleType(type)}
+                                className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-bold border-2 transition-all flex items-center gap-2 ${selectedTypes.includes(type) ? 'bg-[#256D45] text-white border-[#256D45]' : 'bg-white text-[#256D45] border-[#256D45]'}`}
+                            >
+                                <div className={`w-3.5 h-3.5 border-2 rounded-sm flex items-center justify-center ${selectedTypes.includes(type) ? 'border-white bg-white' : 'border-[#256D45]'}`}>
+                                    {selectedTypes.includes(type) && <div className="w-1.5 h-1.5 bg-[#256D45] rounded-sm" />}
+                                </div>
+                                <span>{type}</span>
+                                <span className={`text-xs ${selectedTypes.includes(type) ? 'text-white/80' : 'text-gray-400'}`}>({count})</span>
+                            </button>
+                        ))}
                     </div>
 
-                    {rangeCounts.map(({ range, count }) => (
-                        <div
-                            key={range.label}
-                            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors cursor-pointer snap-start
-                                ${selectedRange?.label === range.label ? 'bg-green-800 text-white border-green-800' : 'bg-white text-green-800 border-green-800'}`}
-                            onClick={() => setSelectedRange(range)}
-                        >
-                            <span className="font-semibold whitespace-nowrap">{range.label} ({count})</span>
-                        </div>
-                    ))}
-
-                    {/* Spacer */}
-                    <div className="w-1 shrink-0"></div>
+                    <PriceFilter
+                        minPrice={priceRange[0]}
+                        maxPrice={priceRange[1]}
+                        onRangeChange={setPriceRange}
+                        absoluteMax={maxPriceLimit}
+                    />
                 </div>
 
                 {/* 1. Sidebar (ช่วงราคา) Desktop */}
                 <aside className="hidden md:block w-72 shrink-0">
-                    <div className="bg-amber-50 rounded-tr-[20px] rounded-br-[20px] p-8 shadow-lg min-h-125 sticky top-24">
-                        <h2 className="text-4xl font-semibold mb-6">ช่วงราคา</h2>
-                        <div className="w-full h-1 bg-green-800 mb-8"></div>
+                    <div className="sticky top-24 flex flex-col gap-6">
+                        {/* Desktop Type Filter - Checkbox style */}
+                        <div className="bg-white p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
+                            <h3 className="text-2xl font-bold text-[#2d3a4b] mb-6">ประเภทสินค้า</h3>
+                            <div className="flex flex-col gap-3">
+                                <label className="flex items-center gap-3 cursor-pointer group p-1">
+                                    <input
+                                        type="checkbox"
+                                        className="hidden"
+                                        checked={selectedTypes.length === 0}
+                                        onChange={() => setSelectedTypes([])}
+                                    />
+                                    <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.length === 0 ? 'bg-[#256D45] border-[#256D45]' : 'border-gray-300 group-hover:border-[#256D45]'}`}>
+                                        {selectedTypes.length === 0 && (
+                                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <span className={`text-lg font-bold transition-all ${selectedTypes.length === 0 ? 'text-[#256D45]' : 'text-gray-500 group-hover:text-[#256D45]'}`}>ทั้งหมด</span>
+                                    <span className="ml-auto text-sm text-gray-400">({products.length})</span>
+                                </label>
 
-                        {/* All Option */}
-                        <div
-                            className="flex items-center gap-4 mb-4 cursor-pointer group hover:bg-[#256D45]/10 p-2 rounded-lg transition-colors"
-                            onClick={() => setSelectedRange(null)}
-                        >
-                            <div className={`w-6 h-6 border-4 border-green-800 rounded-md transition-colors ${selectedRange === null ? 'bg-green-800' : 'bg-white'}`}></div>
-                            <span className={`text-xl font-semibold ${selectedRange === null ? 'text-green-800' : 'text-gray-600'}`}>
-                                ทั้งหมด ({products.length})
-                            </span>
+                                {Object.entries(distinctTypes).map(([type, count]) => (
+                                    <label key={type} className="flex items-center gap-3 cursor-pointer group p-1">
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={selectedTypes.includes(type)}
+                                            onChange={() => toggleType(type)}
+                                        />
+                                        <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.includes(type) ? 'bg-[#256D45] border-[#256D45]' : 'border-gray-300 group-hover:border-[#256D45]'}`}>
+                                            {selectedTypes.includes(type) && (
+                                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                        <span className={`text-lg font-bold transition-all ${selectedTypes.includes(type) ? 'text-[#256D45]' : 'text-gray-500 group-hover:text-[#256D45]'}`}>{type}</span>
+                                        <span className="ml-auto text-sm text-gray-400">({count})</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Price Range Options */}
-                        {rangeCounts.map(({ range, count }) => (
-                            <div
-                                key={range.label}
-                                className="flex items-center gap-4 mb-4 cursor-pointer group hover:bg-[#256D45]/10 p-2 rounded-lg transition-colors"
-                                onClick={() => setSelectedRange(range)}
-                            >
-                                <div className={`w-6 h-6 border-4 border-green-800 rounded-md transition-colors ${selectedRange?.label === range.label ? 'bg-green-800' : 'bg-white'}`}></div>
-                                <span className={`text-xl font-semibold ${selectedRange?.label === range.label ? 'text-green-800' : 'text-gray-600'}`}>
-                                    {range.label} ({count})
-                                </span>
-                            </div>
-                        ))}
+                        <PriceFilter
+                            minPrice={priceRange[0]}
+                            maxPrice={priceRange[1]}
+                            onRangeChange={setPriceRange}
+                            absoluteMax={maxPriceLimit}
+                        />
                     </div>
                 </aside>
 

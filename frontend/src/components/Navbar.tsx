@@ -67,7 +67,7 @@ function Navbar() {
           });
 
           // 2. เช็คคำสั่งซื้อใหม่ / รอจัดส่ง
-          const ordersRes = await api.get('/admin/orders/all-pending');
+          const ordersRes = await api.get('/api/admin/orders/all-pending');
           setAllOrders(ordersRes.data || []);
           const hasPendingOrders = ordersRes.data.some((o: any) =>
             o.status === 'pending_confirm' || o.status === 'pending_delivery' || !o.status
