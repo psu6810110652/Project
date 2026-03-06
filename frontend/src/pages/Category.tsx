@@ -87,7 +87,9 @@ const Category: React.FC = () => {
                         stock: p.stockQuantity,
                         type: p.type,
                         rating: p.rating || 0,
-                        favoriteCount: p.favoriteCount || 0
+                        favoriteCount: p.favoriteCount || 0,
+                        reviewCount: p.reviewCount || 0,
+                        soldCount: p.soldCount || 0
                     }));
                     setProducts(mappedProducts);
 
@@ -190,7 +192,7 @@ const Category: React.FC = () => {
                     <div className="sticky top-24 flex flex-col gap-6">
                         {/* Desktop Type Filter - Checkbox style */}
                         <div className="bg-[var(--color-bg-card)] p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
-                            <h3 className="text-2xl font-bold text-[var(--color-primary)] mb-6">ประเภทสินค้า</h3>
+                            <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-6">ประเภทสินค้า</h3>
                             <div className="flex flex-col gap-3">
                                 <label className="flex items-center gap-3 cursor-pointer group p-1">
                                     <input
@@ -206,7 +208,7 @@ const Category: React.FC = () => {
                                             </svg>
                                         )}
                                     </div>
-                                    <span className={`text-lg font-bold transition-all ${selectedTypes.length === 0 ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>ทั้งหมด</span>
+                                    <span className={`text-lg font-semibold transition-all ${selectedTypes.length === 0 ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>ทั้งหมด</span>
                                     <span className="ml-auto text-sm text-gray-400">({products.length})</span>
                                 </label>
 
@@ -225,7 +227,7 @@ const Category: React.FC = () => {
                                                 </svg>
                                             )}
                                         </div>
-                                        <span className={`text-lg font-bold transition-all ${selectedTypes.includes(type) ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>{type}</span>
+                                        <span className={`text-lg font-semibold transition-all ${selectedTypes.includes(type) ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>{type}</span>
                                         <span className="ml-auto text-sm text-gray-400">({count})</span>
                                     </label>
                                 ))}

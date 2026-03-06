@@ -44,7 +44,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
             }}
         >
             <div className="bg-[var(--color-bg-card)] p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
-                <h3 className="text-2xl font-bold text-[var(--color-primary)] mb-6">ช่วงราคา</h3>
+                <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-6">ช่วงราคา</h3>
 
                 <div className="flex items-center gap-4 mb-8">
                     <InputNumber

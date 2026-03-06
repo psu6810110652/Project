@@ -19,7 +19,7 @@ const RatingFilter: React.FC<RatingFilterProps> = ({ selectedRating, onRatingCha
 
     return (
         <div className="bg-[var(--color-bg-card)] p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
-            <h3 className="text-2xl font-bold text-[var(--color-primary)] mb-4">คะแนนรีวิว</h3>
+            <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-4">คะแนนรีวิว</h3>
             <p className="text-[var(--color-text-muted)] text-sm mb-6">กรองตามคะแนนเฉลี่ย (ขึ้นไป)</p>
 
             <div className="flex flex-col items-center justify-center p-4 bg-[var(--color-bg-white)] rounded-2xl border-2 border-dashed border-[var(--color-accent)]/30">

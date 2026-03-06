@@ -316,7 +316,7 @@ const Profile = () => {
       <div className="max-w-6xl mx-auto w-full">
 
         {/* 🌟 ย้ายหัวข้อมาตรงกลางด้านบนสุด */}
-        <h1 className="text-4xl font-bold text-[#256D45] text-center mb-10 mt-4">โปรไฟล์ลูกค้า</h1>
+        <h1 className="text-4xl font-semibold text-[#256D45] text-center mb-10 mt-4 tracking-wide">โปรไฟล์ลูกค้า</h1>
 
         <div className="flex flex-col md:flex-row gap-8">
 
