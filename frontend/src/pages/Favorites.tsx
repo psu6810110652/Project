@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Table, Typography, ConfigProvider } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { Button, Typography } from 'antd';
+import { Products } from '../components/products';
+import { type ProductCard } from '../types';
+import { FavoritesService } from '../services/favoritesService';
 
 const { Title } = Typography;
 
@@ -10,12 +12,17 @@ interface Product {
   name: string;
   price: number;
   image?: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
   rating?: number;
   reviewCount?: number;
   stockQuantity?: number;
   Category?: string;
   Type?: string;
   description?: string;
+  stock?: number;
+  soldCount?: number;
+  favoriteCount?: number;
 }
 
 const FavoritesPage = () => {
@@ -25,39 +32,37 @@ const FavoritesPage = () => {
 
   useEffect(() => {
     fetchFavorites();
+    
+    // Listen for storage changes (when user navigates between tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'favorites') {
+        fetchFavorites();
+      }
+    };
+    
+    // Listen for custom events (when user clicks favorite button in same tab)
+    const handleFavoriteUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Favorites page received update event:', customEvent.detail);
+      fetchFavorites();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('favoritesUpdated', handleFavoriteUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('favoritesUpdated', handleFavoriteUpdate);
+    };
   }, []);
 
   const fetchFavorites = async () => {
     try {
       setLoading(true);
       
-      // Get favorite product IDs from localStorage
-      const favoriteIds = JSON.parse(localStorage.getItem('favorites') || '[]');
-      
-      if (favoriteIds.length === 0) {
-        setFavorites([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch product details for each favorite ID
-      const productPromises = favoriteIds.map(async (id: string) => {
-        try {
-          const response = await fetch(`/product/${id}`);
-          if (response.ok) {
-            return await response.json();
-          }
-          return null;
-        } catch (error) {
-          console.error(`Error fetching product ${id}:`, error);
-          return null;
-        }
-      });
-
-      const products = await Promise.all(productPromises);
-      const validProducts = products.filter(product => product !== null);
-      
-      setFavorites(validProducts);
+      // Use the service to get favorite products
+      const favoriteProducts = await FavoritesService.getFavoriteProducts();
+      setFavorites(favoriteProducts);
     } catch (error) {
       console.error('Error fetching favorites:', error);
     } finally {
@@ -65,83 +70,19 @@ const FavoritesPage = () => {
     }
   };
 
-  // Transform data for Ant Design table
-  const dataSource = favorites.map((product, index) => ({
-    key: product.id,
-    productId: `#${product.id}`,
-    productName: product.name,
-    price: `฿${product.price.toLocaleString()}`,
-    action: 'ไป',
+  // Transform products to ProductCard format
+  const productCards: ProductCard[] = favorites.map(product => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    image: product.image || product.imageUrl || product.thumbnailUrl,
+    stock: product.stockQuantity || product.stock || 0,
+    rating: product.rating,
+    reviewCount: product.reviewCount,
+    soldCount: product.soldCount,
+    favoriteCount: product.favoriteCount,
+    type: product.Type || product.Category,
   }));
-
-  // Table columns configuration
-  const columns = [
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>รหัสสินค้า</span>
-          <DownOutlined style={{ fontSize: '12px', strokeWidth: 2 }} />
-        </div>
-      ),
-      dataIndex: 'productId',
-      key: 'productId',
-      width: '25%',
-      render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
-    },
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>ชื่อสินค้า</span>
-          <DownOutlined style={{ fontSize: '12px' }} />
-        </div>
-      ),
-      dataIndex: 'productName',
-      key: 'productName',
-      width: '50%',
-      render: (text: string, record: any) => (
-        <span 
-          style={{ color: '#215A36', fontWeight: 600, cursor: 'pointer' }}
-          onClick={() => navigate(`/product/${record.key}`)}
-        >
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>ราคา</span>
-          <DownOutlined style={{ fontSize: '12px' }} />
-        </div>
-      ),
-      dataIndex: 'price',
-      key: 'price',
-      width: '15%',
-      align: 'center' as const,
-      render: (text: string) => <span style={{ color: '#215A36', fontWeight: 600 }}>{text}</span>,
-    },
-    {
-      title: 'ไป',
-      dataIndex: 'action',
-      key: 'action',
-      align: 'center' as const,
-      width: '10%',
-      render: (_: any, record: any) => (
-        <Button 
-          type="primary"
-          size="small"
-          style={{ 
-            backgroundColor: '#215A36', 
-            borderColor: '#215A36',
-            fontWeight: 'bold'
-          }}
-          onClick={() => navigate(`/product/${record.key}`)}
-        >
-          ไป
-        </Button>
-      ),
-    },
-  ];
 
   // โทนสีหลักจากภาพ
   const colorPrimaryDark = '#215A36'; // สีเขียวเข้ม (ตัวหนังสือ/เส้นขอบ)
@@ -213,39 +154,24 @@ const FavoritesPage = () => {
           </Button>
         </div>
       ) : (
-        /* ตั้งค่า Theme สำหรับ Table โดยเฉพาะ */
-        <ConfigProvider
-          theme={{
-            components: {
-              Table: {
-                colorBgContainer: colorBgCream, // พื้นหลังตาราง
-                headerBg: colorBgCream, // พื้นหลังหัวตาราง
-                headerColor: colorPrimaryDark, // สีข้อความหัวตาราง
-                colorText: colorPrimaryDark, // สีข้อความในตาราง
-                borderColor: colorPrimaryDark, // สีเส้นขอบ
-                borderRadius: 12, // ความโค้งมนของขอบตาราง
-                headerBorderRadius: 12,
-              },
-            },
-            token: {
-              fontFamily: 'Kanit, sans-serif',
-              fontWeightStrong: 700,
-            }
-          }}
-        >
-          <Table
-            dataSource={dataSource}
-            columns={columns}
-            bordered // เปิดใช้เส้นขอบตารางแบบ grid
-            pagination={false} // ปิดหน้า pagination เนื่องจากในภาพเป็นตารางยาว
-            scroll={{ y: 400 }} // จำลองพื้นที่ว่างด้านล่างของตารางให้มี scrollbar
-            style={{ 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.05)', 
-              borderRadius: '12px',
-              overflow: 'hidden' 
-            }}
-          />
-        </ConfigProvider>
+        /* Product Cards Grid */
+        <div className="flex flex-wrap gap-6 justify-start">
+          {productCards.map((product) => (
+            <Products
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image}
+              stock={product.stock}
+              rating={product.rating}
+              reviewCount={product.reviewCount}
+              soldCount={product.soldCount}
+              favoriteCount={product.favoriteCount}
+              type={product.type}
+            />
+          ))}
+        </div>
       )}
       
     </div>

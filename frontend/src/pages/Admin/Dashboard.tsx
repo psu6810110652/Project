@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, ChevronUp, Image as ImageIcon } from 'lucide-react';
 import api from '../../services/api';
 import { type Product } from '../../types';
@@ -11,8 +11,8 @@ export default function Dashboard() {
     const [lowStockItems, setLowStockItems] = useState<Product[]>([]);
 
     // Placeholder states for APIs that don't exist in backend yet
-    const [salesToday, setSalesToday] = useState(0);
-    const [pendingOrders, setPendingOrders] = useState(0);
+    const salesToday = 0;
+    const pendingOrders = 0;
     const [newCustomers, setNewCustomers] = useState(0);
 
     useEffect(() => {

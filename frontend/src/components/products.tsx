@@ -1,15 +1,17 @@
 import { type ProductCard } from "../types";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { FavoritesService } from '../services/favoritesService';
 
 export const Products = (props: ProductCard) => {
     const navigate = useNavigate();
     const [isFavorite, setIsFavorite] = useState(false);
 
     useEffect(() => {
-        // Check if product is in favorites
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        setIsFavorite(favorites.includes(props.id));
+        // Check if product is in favorites using the service
+        if (props.id) {
+            setIsFavorite(FavoritesService.isFavorite(props.id));
+        }
     }, [props.id]);
 
     const handleProductClick = () => {
@@ -23,19 +25,9 @@ export const Products = (props: ProductCard) => {
 
         if (!props.id) return;
 
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-
-        if (isFavorite) {
-            // Remove from favorites
-            const newFavorites = favorites.filter((favId: string) => favId !== props.id);
-            localStorage.setItem('favorites', JSON.stringify(newFavorites));
-            setIsFavorite(false);
-        } else {
-            // Add to favorites
-            favorites.push(props.id);
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-            setIsFavorite(true);
-        }
+        // Use the service to toggle favorite
+        const newFavoriteStatus = FavoritesService.toggleFavorite(props.id);
+        setIsFavorite(newFavoriteStatus);
     };
 
     return (
