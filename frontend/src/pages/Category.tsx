@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Search from '../components/search.tsx';
 import { Products } from '../components/products.tsx';
 import PriceFilter from '../components/PriceFilter.tsx';
+import RatingFilter from '../components/RatingFilter.tsx';
 import api from '../services/api';
 import { type ProductCard, type Category as CategoryType } from '../types.ts';
 
@@ -26,6 +27,7 @@ const Category: React.FC = () => {
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
     const [maxPriceLimit, setMaxPriceLimit] = useState(0);
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+    const [selectedRating, setSelectedRating] = useState<number | null>(null);
 
     const distinctTypes = products.reduce((acc: Record<string, number>, curr) => {
         if (curr.type) {
@@ -46,7 +48,8 @@ const Category: React.FC = () => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
         const matchesType = selectedTypes.length === 0 || (product.type && selectedTypes.includes(product.type));
-        return matchesSearch && matchesPrice && matchesType;
+        const matchesRating = selectedRating === null || ((product as any).rating || 0) >= selectedRating;
+        return matchesSearch && matchesPrice && matchesType && matchesRating;
     });
 
 
@@ -82,7 +85,8 @@ const Category: React.FC = () => {
                         ...p,
                         image: p.thumbnailUrl || p.imageUrl,
                         stock: p.stockQuantity,
-                        type: p.type
+                        type: p.type,
+                        rating: p.rating || 0
                     }));
                     setProducts(mappedProducts);
 
@@ -138,7 +142,7 @@ const Category: React.FC = () => {
             </div>
 
             {/* --- ส่วนเนื้อหาหลัก (Sidebar + Grid) --- */}
-            <div className="container mt-6 md:mt-12 flex flex-col md:flex-row gap-8 w-full">
+            <div className="container mx-auto px-6 md:px-10 lg:px-24 mt-6 md:mt-12 flex flex-col md:flex-row gap-8 w-full">
 
                 {/* Mobile Filter — horizontal scroll chips */}
                 <div className="md:hidden w-full px-4 mb-4 flex flex-col gap-4">
@@ -171,6 +175,12 @@ const Category: React.FC = () => {
                         maxPrice={priceRange[1]}
                         onRangeChange={setPriceRange}
                         absoluteMax={maxPriceLimit}
+                    />
+
+                    {/* Mobile Rating Filter */}
+                    <RatingFilter
+                        selectedRating={selectedRating}
+                        onRatingChange={setSelectedRating}
                     />
                 </div>
 
@@ -220,6 +230,12 @@ const Category: React.FC = () => {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Desktop Rating Filter */}
+                        <RatingFilter
+                            selectedRating={selectedRating}
+                            onRatingChange={setSelectedRating}
+                        />
 
                         <PriceFilter
                             minPrice={priceRange[0]}
