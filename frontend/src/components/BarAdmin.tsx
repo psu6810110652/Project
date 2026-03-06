@@ -69,7 +69,7 @@ const BarAdmin: React.FC = () => {
                                         {menu.icon}
                                     </span>
                                     <span className={`
-                                        text-[22px] font-semibold font-['Prompt']
+                                        text-[22px] font-semibold
                                         ${isActive ? 'text-[#256D45]' : 'text-[#256D45]'}
                                     `}>
                                         {menu.name}

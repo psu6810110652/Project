@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { OrdersModule } from './orders/orders.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { CartsModule } from './carts/carts.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -21,7 +22,7 @@ import { CartsModule } from './carts/carts.module';
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     autoLoadEntities: true,
     synchronize: true,
-  }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule, AddressesModule, CartsModule],
+  }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule, AddressesModule, CartsModule, ReviewModule],
   controllers: [AppController],
   providers: [AppService],
 })
