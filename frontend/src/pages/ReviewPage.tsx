@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-
-interface ExistingReview {
-  id: string;
-  userName: string;
-  rating: number;
-  reviewContent: string;
-  orderDate: string;
-  userId: string;
-}
+import type { ExistingReview } from '../types';
+import api from '../services/api';
 
 const ReviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,9 +24,8 @@ const ReviewPage: React.FC = () => {
 
       try {
         // Fetch product data
-        const response = await fetch(`/product/${productId}`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const productData = await response.json();
+        const response = await api.get(`/product/${productId}`);
+        const productData = response.data;
         setProductName(productData.name || 'ชื่อสินค้า');
       } catch (error) {
         console.error('Error loading product data:', error);
@@ -41,13 +33,8 @@ const ReviewPage: React.FC = () => {
       }
 
       try {
-        const reviewsResponse = await fetch(`/product/${productId}/reviews`);
-        if (reviewsResponse.ok) {
-          const reviewsData = await reviewsResponse.json();
-          setExistingReviews(reviewsData);
-        } else {
-          setExistingReviews([]);
-        }
+        const reviewsResponse = await api.get(`/product/${productId}/reviews`);
+        setExistingReviews(reviewsResponse.data || []);
       } catch (error) {
         console.error('Error fetching reviews:', error);
         setExistingReviews([]);

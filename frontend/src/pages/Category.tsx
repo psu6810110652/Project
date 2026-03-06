@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Search from '../components/search.tsx';
 import { Products } from '../components/products.tsx';
 import PriceFilter from '../components/PriceFilter.tsx';
+import api from '../services/api';
 import { type ProductCard, type Category as CategoryType } from '../types.ts';
 
 import Seeds from '../assets/images/seed.png';
@@ -54,8 +55,8 @@ const Category: React.FC = () => {
             try {
                 setLoading(true);
 
-                const response = await fetch(`/api/category`);
-                const allCategories: CategoryType[] = await response.json();
+                const response = await api.get(`/category`);
+                const allCategories: CategoryType[] = response.data;
 
                 console.log("DEBUG -> All Categories:", allCategories);
 
@@ -74,8 +75,8 @@ const Category: React.FC = () => {
                 if (targetCategory) {
                     setCategoryInfo(targetCategory);
 
-                    const detailResponse = await fetch(`/api/category/${targetCategory.id}`);
-                    const detailedData = await detailResponse.json();
+                    const detailResponse = await api.get(`/category/${targetCategory.id}`);
+                    const detailedData = detailResponse.data;
 
                     const mappedProducts = (detailedData.products || []).map((p: any) => ({
                         ...p,

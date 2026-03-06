@@ -15,6 +15,17 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (auth?.user) {
+      if (auth.user?.role === 'Admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [auth?.user, navigate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -136,26 +147,26 @@ const Login = () => {
 
           {/* ใส่ Username/Email */}
           <div className="flex flex-col gap-2">
-            <label className="text-[#256D45] text-xl md:text-2xl font-semibold relative right-30">อีเมล หรือ ชื่อผู้ใช้งาน</label>
+            <label className="text-[#256D45] text-xl font-bold ml-2">อีเมล หรือ ชื่อผู้ใช้งาน</label>
             <input
               type="text"
               name="username"
-              placeholder="อีเมล หรือ ชื่อผู้ใช้งาน"
+              placeholder="กรอกอีเมล หรือ ชื่อผู้ใช้งาน"
               required
-              className="bg-[#EDEDED] w-full h-14.5 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
+              className="bg-[#EDEDED] w-full h-15 rounded-2xl px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none border-2 border-transparent focus:border-[#256D45] transition-all"
               onChange={handleChange}
             />
           </div>
 
           {/* ใส่รหัสผ่าน */}
           <div className="flex flex-col gap-2">
-            <label className="text-[#256D45] text-xl md:text-2xl font-semibold relative right-47">รหัสผ่าน</label>
+            <label className="text-[#256D45] text-xl font-bold ml-2">รหัสผ่าน</label>
             <input
               type="password"
               name="password"
-              placeholder="รหัสผ่าน"
+              placeholder="กรอกรหัสผ่าน"
               required
-              className="bg-[#EDEDED] w-full h-14.5 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
+              className="bg-[#EDEDED] w-full h-15 rounded-2xl px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none border-2 border-transparent focus:border-[#256D45] transition-all"
               onChange={handleChange}
             />
           </div>
@@ -172,13 +183,13 @@ const Login = () => {
           </div>
 
           {/* Button: Login */}
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center mt-6">
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-5xl md:text-2xl font-semibold w-30.25 h-14 rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center"
+              className="group relative bg-white border-2 border-[#256D45] text-[#256D45] text-2xl font-bold w-48 h-14 rounded-2xl shadow-lg hover:bg-[#256D45] hover:text-white transition-all duration-300 flex items-center justify-center active:scale-95"
             >
-              {loading ? '...' : 'ยืนยัน'}
+              <span className="relative z-10">{loading ? 'กำลังโหลด...' : 'ยืนยัน'}</span>
             </button>
           </div>
         </form>

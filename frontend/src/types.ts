@@ -133,3 +133,13 @@ export interface AddressFormState {
     subDistrict: string;
     postalCode: string;
 }
+
+
+export interface ExistingReview {
+    id: string;
+    userName: string;
+    rating: number;
+    reviewContent: string;
+    orderDate: string;
+    userId: string;
+}

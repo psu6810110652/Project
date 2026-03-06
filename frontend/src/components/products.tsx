@@ -20,11 +20,11 @@ export const Products = (props: ProductCard) => {
 
     const toggleFavorite = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent product click when clicking heart
-        
+
         if (!props.id) return;
-        
+
         const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        
+
         if (isFavorite) {
             // Remove from favorites
             const newFavorites = favorites.filter((favId: string) => favId !== props.id);
@@ -41,7 +41,7 @@ export const Products = (props: ProductCard) => {
     return (
         <div className="relative w-95 h-125">
             <div className="absolute w-full h-[90%] top-0 left-0 bg-[#fffef2] rounded-[20px] shadow-[0px_4px_20px_#00000040]">
-                <div 
+                <div
                     className="absolute w-80 h-80 top-7.5 left-1/2 transform -translate-x-1/2 bg-white rounded-[20px] overflow-hidden border-2 border-solid border-[#256d45] shadow-[0px_4px_20px_#00000040] cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={handleProductClick}
                 >
@@ -55,16 +55,16 @@ export const Products = (props: ProductCard) => {
                         className="w-10 h-10 object-contain absolute top-2 right-2 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors"
                         title={isFavorite ? "ลบออกจากรายการโปรด" : "เพิ่มไปยังรายการโปรด"}
                     >
-                        <svg 
-                            className={`w-8 h-8 transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`} 
+                        <svg
+                            className={`w-8 h-8 transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
                             fill={isFavorite ? "currentColor" : "none"}
                             stroke="currentColor"
                             viewBox="0 0 20 20"
                         >
-                            <path 
-                                fillRule="evenodd" 
-                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
-                                clipRule="evenodd" 
+                            <path
+                                fillRule="evenodd"
+                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                                clipRule="evenodd"
                             />
                         </svg>
                     </button>
@@ -81,7 +81,7 @@ export const Products = (props: ProductCard) => {
                         <div className="text-xl font-normal">มีจำนวน {props.stock} ชิ้น</div>
                         <div className="text-xl text-right whitespace-nowrap">{props.price} บาท</div>
                     </div>
-                </div> 
+                </div>
             </div>
         </div>
     );

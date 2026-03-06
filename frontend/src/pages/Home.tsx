@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Box } from '../components/banner';
 import Search from '../components/search';
-import axios from 'axios';
+import api from '../services/api';
 
 import HomeImage from '../assets/images/Home.png';
 
 const Home: React.FC = () => {
   const [promotions, setPromotions] = useState([]);
   const [featured, setFeatured] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
     // Fetch products that are on promotion
-    axios.get('/product/promotions')
+    api.get('/product/promotions')
       .then(res => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
@@ -26,7 +27,7 @@ const Home: React.FC = () => {
       });
 
     // Fetch products that are featured (สินค้าแนะนำ)
-    axios.get('/product/featured')
+    api.get('/product/featured')
       .then(res => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
@@ -38,6 +39,20 @@ const Home: React.FC = () => {
       })
       .catch(err => {
         console.error("Error fetching featured products:", err);
+      });
+
+    // Fetch all products
+    api.get('/product')
+      .then(res => {
+        const mappedProducts = res.data.map((p: any) => ({
+          ...p,
+          image: p.thumbnailUrl || p.imageUrl,
+          stock: p.stockQuantity ?? p.stock ?? 0,
+        }));
+        setAllProducts(mappedProducts);
+      })
+      .catch(err => {
+        console.error("Error fetching all products:", err);
       });
   }, []);
 
@@ -75,6 +90,9 @@ const Home: React.FC = () => {
 
       {/* สินค้าโปรโมชั่น — products with isPromotion=true */}
       <Box allProducts={promotions} type="promotion" />
+
+      {/* สินค้าทั้งหมด */}
+      <Box allProducts={allProducts} type="all" />
     </div>
   );
 };

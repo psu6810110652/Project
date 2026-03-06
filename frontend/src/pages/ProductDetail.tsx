@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import type { Product } from '../types';
+import api from '../services/api';
 
 export const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -28,13 +29,8 @@ export const ProductDetail: React.FC = () => {
             }
 
             try {
-                const response = await fetch(`/product/${id}`);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
+                const response = await api.get(`/product/${id}`);
+                const data = response.data;
                 setProduct(data);
 
                 // Check if product is in favorites
@@ -43,28 +39,22 @@ export const ProductDetail: React.FC = () => {
 
                 // Fetch reviews for this product to calculate average rating
                 try {
-                    const reviewsResponse = await fetch(`/product/${id}/reviews`);
-                    if (reviewsResponse.ok) {
-                        const reviewsData = await reviewsResponse.json();
-                        setReviews(reviewsData);
+                    const reviewsResponse = await api.get(`/product/${id}/reviews`);
+                    const reviewsData = reviewsResponse.data;
+                    setReviews(reviewsData);
 
-                        // Calculate average rating
-                        if (reviewsData.length > 0) {
-                            const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
-                            const avgRating = totalRating / reviewsData.length;
-                            setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
-                            setTotalReviews(reviewsData.length);
-                        } else {
-                            setAverageRating(0);
-                            setTotalReviews(0);
-                        }
+                    // Calculate average rating
+                    if (reviewsData && reviewsData.length > 0) {
+                        const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+                        const avgRating = totalRating / reviewsData.length;
+                        setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
+                        setTotalReviews(reviewsData.length);
                     } else {
-                        // Use product's existing rating if API fails
                         setAverageRating(data.rating || 0);
                         setTotalReviews(data.reviewCount || 0);
                     }
-                } catch (error) {
-                    console.error('Error fetching reviews:', error);
+                } catch (reviewError) {
+                    console.error('Error fetching reviews:', reviewError);
                     // Use product's existing rating if API fails
                     setAverageRating(data.rating || 0);
                     setTotalReviews(data.reviewCount || 0);
