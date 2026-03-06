@@ -85,14 +85,16 @@ const Home: React.FC = () => {
 
       <div className="h-6" />
 
-      {/* สินค้าแนะนำ — products with isFeatured=true */}
-      <Box allProducts={featured} type="recommend" />
+      <div className="flex flex-col gap-y-16 mt-8">
+        {/* สินค้าแนะนำ — products with isFeatured=true */}
+        <Box allProducts={featured} type="recommend" />
 
-      {/* สินค้าโปรโมชั่น — products with isPromotion=true */}
-      <Box allProducts={promotions} type="promotion" />
+        {/* สินค้าโปรโมชั่น — products with isPromotion=true */}
+        <Box allProducts={promotions} type="promotion" />
 
-      {/* สินค้าทั้งหมด */}
-      <Box allProducts={allProducts} type="all" />
+        {/* สินค้าทั้งหมด */}
+        <Box allProducts={allProducts} type="all" />
+      </div>
     </div>
   );
 };

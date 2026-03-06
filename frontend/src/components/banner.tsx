@@ -81,8 +81,8 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
   }, [products]);
 
   return (
-    <section className="w-full h-160 bg-[#fffef2] overflow-hidden py-10">
-      <div className="w-full mx-auto">
+    <section className={`w-full ${type === 'all' ? 'py-10' : 'h-160 py-10 bg-[#fffef2] mb-12'} overflow-hidden`}>
+      <div className="w-full mx-auto px-6 md:px-16 lg:px-32">
 
         {/* Header */}
         <header className="flex flex-col items-center mt-1">
@@ -92,28 +92,13 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
           <div className="w-[80%] h-0.75 bg-[#256d45] mt-2 rounded-full" />
         </header>
 
-        {/* Slider Area */}
-        <div className="relative group">
-          {showLeftBtn && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30 transition-opacity duration-300">
-              <NavButton direction="left" onClick={() => scroll('left')} />
-            </div>
-          )}
-
-          {showRightBtn && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 transition-opacity duration-300">
-              <NavButton direction="right" onClick={() => scroll('right')} />
-            </div>
-          )}
-
-          <div
-            ref={scrollRef}
-            className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth py-4 px-20 mt-2"
-          >
+        {/* Content Area */}
+        {type === 'all' ? (
+          /* Grid Layout for "All Products" */
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-x-4 gap-y-12 mt-12 justify-items-center">
             {products.map((product) => (
-              <div key={product.id} className="shrink-0">
+              <div key={product.id} className="transition-transform hover:scale-105 duration-300">
                 <Products
-                  key={product.id}
                   id={product.id}
                   name={product.name}
                   price={product.price}
@@ -123,7 +108,39 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
               </div>
             ))}
           </div>
-        </div>
+        ) : (
+          /* Slider Layout for Promotions & Recommend */
+          <div className="relative group">
+            {showLeftBtn && (
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30">
+                <NavButton direction="left" onClick={() => scroll('left')} />
+              </div>
+            )}
+
+            {showRightBtn && (
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
+                <NavButton direction="right" onClick={() => scroll('right')} />
+              </div>
+            )}
+
+            <div
+              ref={scrollRef}
+              className="flex gap-8 overflow-x-auto no-scrollbar scroll-smooth py-6 mt-2 px-10"
+            >
+              {products.map((product) => (
+                <div key={product.id} className="shrink-0 transition-transform hover:scale-105 duration-300">
+                  <Products
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                    stock={product.stock}
+                    image={product.image}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
