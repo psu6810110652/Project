@@ -18,11 +18,11 @@ const RatingFilter: React.FC<RatingFilterProps> = ({ selectedRating, onRatingCha
     };
 
     return (
-        <div className="bg-white p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
-            <h3 className="text-2xl font-bold text-[#2d3a4b] mb-4">คะแนนรีวิว</h3>
-            <p className="text-gray-400 text-sm mb-6">กรองตามคะแนนเฉลี่ย (ขึ้นไป)</p>
+        <div className="bg-[var(--color-bg-card)] p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
+            <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-4">คะแนนรีวิว</h3>
+            <p className="text-[var(--color-text-muted)] text-sm mb-6">กรองตามคะแนนเฉลี่ย (ขึ้นไป)</p>
 
-            <div className="flex flex-col items-center justify-center p-4 bg-[#fffef2] rounded-2xl border-2 border-dashed border-[#ffb7b2]/30">
+            <div className="flex flex-col items-center justify-center p-4 bg-[var(--color-bg-white)] rounded-2xl border-2 border-dashed border-[var(--color-accent)]/30">
                 <div className="flex items-center gap-2 mb-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -35,8 +35,8 @@ const RatingFilter: React.FC<RatingFilterProps> = ({ selectedRating, onRatingCha
                         >
                             <span
                                 className={`${star <= (hoverRating || selectedRating || 0)
-                                        ? "text-[#fbbf24] drop-shadow-[0_2px_4px_rgba(251,191,36,0.2)]"
-                                        : "text-gray-200"
+                                    ? "text-[#fbbf24] drop-shadow-[0_2px_4px_rgba(251,191,36,0.2)]"
+                                    : "text-gray-200"
                                     }`}
                             >
                                 {star <= (hoverRating || selectedRating || 0) ? "★" : "☆"}

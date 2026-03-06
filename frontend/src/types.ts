@@ -8,6 +8,10 @@ export interface ProductCard {
 
     isRecommend?: boolean;
     isPromotion?: boolean;
+    rating?: number;
+    favoriteCount?: number;
+    reviewCount?: number;
+    soldCount?: number;
 }
 
 export interface Product {

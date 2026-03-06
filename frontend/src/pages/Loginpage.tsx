@@ -128,8 +128,8 @@ const Login = () => {
 
       {/* เข้าสู่ระบบ */}
       <h1
-        className="text-[#256D45] text-5xl md:text-[80px] font-semibold mb-8 text-center"
-        style={{ textShadow: '0px 4px 20px rgba(0, 0, 0, 0.25)' }}
+        className="text-[#256D45] text-5xl md:text-[80px] font-semibold mb-8 text-center tracking-wider"
+        style={{ textShadow: '0px 2px 10px rgba(0, 0, 0, 0.15)' }}
       >
         เข้าสู่ระบบ
       </h1>
@@ -146,8 +146,8 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
           {/* ใส่ Username/Email */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[#256D45] text-xl font-bold ml-2">อีเมล หรือ ชื่อผู้ใช้งาน</label>
+          <div className="flex flex-col gap-2 text-left">
+            <label className="text-[#256D45] text-xl font-semibold ml-2">อีเมล หรือ ชื่อผู้ใช้งาน</label>
             <input
               type="text"
               name="username"
@@ -159,8 +159,8 @@ const Login = () => {
           </div>
 
           {/* ใส่รหัสผ่าน */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[#256D45] text-xl font-bold ml-2">รหัสผ่าน</label>
+          <div className="flex flex-col gap-2 text-left">
+            <label className="text-[#256D45] text-xl font-semibold ml-2">รหัสผ่าน</label>
             <input
               type="password"
               name="password"
@@ -175,9 +175,9 @@ const Login = () => {
           <div className="flex justify-between items-center mt-2">
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" className="w-5 h-5 md:w-5.5 md:h-5.5 accent-[#256D45]" />
-              <span className="text-[#256D45] text-lg md:text-xl font-semibold">จดจำฉัน</span>
+              <span className="text-[#256D45] text-lg md:text-xl font-medium">จดจำฉัน</span>
             </label>
-            <Link to="/forgot-password" className="text-[#BFBFBF] text-lg md:text-xl font-semibold underline">
+            <Link to="/forgot-password" className="text-[#BFBFBF] text-lg md:text-xl font-medium underline">
               ลืมรหัสผ่าน?
             </Link>
           </div>
@@ -187,7 +187,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative bg-white border-2 border-[#256D45] text-[#256D45] text-2xl font-bold w-48 h-14 rounded-2xl shadow-lg hover:bg-[#256D45] hover:text-white transition-all duration-300 flex items-center justify-center active:scale-95"
+              className="group relative bg-white border-2 border-[#256D45] text-[#256D45] text-2xl font-semibold w-48 h-14 rounded-2xl shadow-lg hover:bg-[#256D45] hover:text-white transition-all duration-300 flex items-center justify-center active:scale-95"
             >
               <span className="relative z-10">{loading ? 'กำลังโหลด...' : 'ยืนยัน'}</span>
             </button>
@@ -196,10 +196,10 @@ const Login = () => {
 
         {/* Footer/Or section */}
         <div className="mt-8 flex flex-col items-center gap-4">
-          <span className="text-[#256D45] text-xl md:text-2xl font-semibold mx-auto">หรือ</span>
+          <span className="text-[#256D45] text-xl md:text-2xl font-medium mx-auto">หรือ</span>
           <div className="flex items-center gap-4 justify-center">
-            <span className="text-[#BFBFBF] text-xl md:text-2xl font-semibold">ยังไม่มีบัญชี?</span>
-            <Link to="/register" className="text-[#256D45] text-xl md:text-2xl font-semibold underline">
+            <span className="text-[#BFBFBF] text-xl md:text-2xl font-medium">ยังไม่มีบัญชี?</span>
+            <Link to="/register" className="text-[#256D45] text-xl md:text-2xl font-medium underline">
               สมัครสมาชิก
             </Link>
           </div>
@@ -216,7 +216,7 @@ const Login = () => {
               alt="Google Logo"
               className="w-7.5 h-7.5"
             />
-            <span className="text-[#256D45] text-xl md:text-2xl font-semibold">
+            <span className="text-[#256D45] text-xl md:text-2xl font-medium">
               {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบผ่าน Google'}
             </span>
           </button>
