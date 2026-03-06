@@ -32,23 +32,19 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
         <ConfigProvider
             theme={{
                 token: {
-                    colorPrimary: '#ffb7b2',
+                    colorPrimary: '#ffb7b2', // Keep for AntD component specifically
                 },
                 components: {
                     Slider: {
                         handleSize: 20,
                         handleSizeHover: 22,
                         handleLineWidth: 2,
-                        handleColor: '#ffb7b2',
-                        handleActiveColor: '#ffb7b2',
-                        trackBg: '#ffb7b2',
-                        trackHoverBg: '#ffb7b2',
                     }
                 }
             }}
         >
-            <div className="bg-white p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
-                <h3 className="text-2xl font-bold text-[#2d3a4b] mb-6">ช่วงราคา</h3>
+            <div className="bg-[var(--color-bg-card)] p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
+                <h3 className="text-2xl font-bold text-[var(--color-primary)] mb-6">ช่วงราคา</h3>
 
                 <div className="flex items-center gap-4 mb-8">
                     <InputNumber

@@ -95,7 +95,7 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
         {/* Content Area */}
         {type === 'all' ? (
           /* Grid Layout for "All Products" */
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-x-4 gap-y-12 mt-12 justify-items-center">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-x-4 gap-y-12 mt-12 justify-items-center">
             {products.map((product) => (
               <div key={product.id} className="transition-transform hover:scale-105 duration-300">
                 <Products

@@ -146,7 +146,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
           {/* ใส่ Username/Email */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 text-left">
             <label className="text-[#256D45] text-xl font-bold ml-2">อีเมล หรือ ชื่อผู้ใช้งาน</label>
             <input
               type="text"
@@ -159,7 +159,7 @@ const Login = () => {
           </div>
 
           {/* ใส่รหัสผ่าน */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 text-left">
             <label className="text-[#256D45] text-xl font-bold ml-2">รหัสผ่าน</label>
             <input
               type="password"

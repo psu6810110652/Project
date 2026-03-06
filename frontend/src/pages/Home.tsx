@@ -18,7 +18,9 @@ const Home: React.FC = () => {
           ...p,
           image: p.thumbnailUrl || p.imageUrl,
           stock: p.stockQuantity,
-          isRecommend: p.isFeatured
+          isRecommend: p.isFeatured,
+          rating: p.rating || 0,
+          favoriteCount: p.favoriteCount || 0
         }));
         setPromotions(mappedProducts);
       })
@@ -33,7 +35,9 @@ const Home: React.FC = () => {
           ...p,
           image: p.thumbnailUrl || p.imageUrl,
           stock: p.stockQuantity,
-          isRecommend: true
+          isRecommend: true,
+          rating: p.rating || 0,
+          favoriteCount: p.favoriteCount || 0
         }));
         setFeatured(mappedProducts);
       })
@@ -48,6 +52,8 @@ const Home: React.FC = () => {
           ...p,
           image: p.thumbnailUrl || p.imageUrl,
           stock: p.stockQuantity ?? p.stock ?? 0,
+          rating: p.rating || 0,
+          favoriteCount: p.favoriteCount || 0
         }));
         setAllProducts(mappedProducts);
       })

@@ -1,16 +1,42 @@
 @import "tailwindcss";
 
 :root {
+  /* Brand Colors */
+  --color-primary: #256D45;
+  --color-primary-hover: #1f5938;
+  --color-accent: #FFB7B2;
+  --color-accent-hover: #ff9e99;
+
+  /* Background Colors */
+  --color-bg-main: #DCEDC1;
+  --color-bg-card: #FFFEF2;
+  --color-bg-white: #FFFFFF;
+
+  /* Text Colors */
+  --color-text-main: #256D45;
+  --color-text-dark: #1a4d31;
+  --color-text-muted: #718096;
+
   font-family: 'Prompt';
   line-height: 1.5;
   font-weight: 400;
 
-  background-color: #DCEDC1;
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
+}
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Allow text selection in inputs and specific areas */
+input,
+textarea,
+[contenteditable="true"] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text;
 }
 
 @font-face {
@@ -45,6 +71,7 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 /* button:hover {
   border-color: #646cff;
 } */
