@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { NavigateFunction } from 'react-router-dom';
+import { type NavigateFunction } from 'react-router-dom';
 
 // Create a configured Axios instance
 const axiosInstance = axios.create({

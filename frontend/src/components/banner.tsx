@@ -81,7 +81,7 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
   }, [products]);
 
   return (
-    <section className={`w-full ${type === 'all' ? 'py-10' : 'h-160 py-10 bg-[#fffef2] mb-12'} overflow-hidden`}>
+    <section className={`w-full ${type === 'all' ? 'py-10 bg-[#fffef2] mb-12' : 'h-160 py-10 bg-[#fffef2] mb-12'} overflow-hidden`}>
       <div className="w-full mx-auto px-4 md:px-10 lg:px-20">
 
         {/* Header */}
