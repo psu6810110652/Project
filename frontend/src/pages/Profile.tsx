@@ -24,6 +24,16 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      
+      // Check if user is authenticated
+      console.log('Profile page - checking auth:', { userStr: !!userStr, token: !!token });
+      
+      if (!token) {
+        console.warn('No token found, redirecting to login');
+        navigate('/login', { replace: true });
+        return;
+      }
       const addressStr = localStorage.getItem('shippingAddress');
 
       let currentEmail = '-';
@@ -96,10 +106,11 @@ const Profile = () => {
             url: error.config?.url,
             method: error.config?.method
           });
-          // If it's a 401 error, the user might not be logged in properly
+          // If it's a 401 error, redirect to login
           if (error.response?.status === 401) {
-            console.warn('User not authenticated, clearing orders');
-            setOrders([]);
+            console.warn('User not authenticated, redirecting to login');
+            navigate('/login', { replace: true });
+            return;
           }
         } finally {
           setLoadingOrders(false);
