@@ -113,6 +113,7 @@ export interface ShippingAddressFormProps {
         postalCode?: string;
     };
     onFormChange: (field: string, value: string) => void;
+    errors?: { [key: string]: string };
 }
 
 export interface Address {
@@ -150,22 +151,22 @@ export interface ExistingReview {
 
 
 export interface LoginRequest {
-  username: string;
-  password: string;
+    username: string;
+    password: string;
 }
 
 
 export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
+    username: string;
+    email: string;
+    password: string;
 }
 
 
 export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  token: string;
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    token: string;
 }
