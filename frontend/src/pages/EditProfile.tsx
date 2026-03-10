@@ -358,6 +358,7 @@ const EditProfile = () => {
           <ShippingAddressForm
             formData={formData}
             onFormChange={handleFormFieldChange}
+            errors={errors}
           />
 
           <div className="flex justify-end gap-4">

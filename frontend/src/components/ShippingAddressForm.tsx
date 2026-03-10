@@ -39,9 +39,10 @@ interface AddressFieldsProps {
     form: AddressFormState;
     addressData: any[];
     onChange: (field: keyof AddressFormState, val: string) => void;
+    errors?: { [key: string]: string };
 }
 
-const AddressFields = ({ form, addressData, onChange }: AddressFieldsProps) => {
+const AddressFields = ({ form, addressData, onChange, errors = {} }: AddressFieldsProps) => {
     const provinces = Array.from(new Set(addressData.map(i => i.province))).sort() as string[];
     const dists = getDistricts(addressData, form.province);
     const subs = getSubDistricts(addressData, form.province, form.district);
@@ -54,9 +55,10 @@ const AddressFields = ({ form, addressData, onChange }: AddressFieldsProps) => {
                     type="text"
                     value={form.houseNumber}
                     onChange={e => onChange('houseNumber', e.target.value)}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:border-[#256D45] text-base text-left"
+                    className={`w-full px-4 py-2.5 bg-gray-50 border ${errors.houseNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:border-[#256D45] text-base text-left`}
                     placeholder="เลขที่บ้าน, หอพัก, ห้อง"
                 />
+                {errors.houseNumber && <p className="text-red-500 text-sm mt-1">{errors.houseNumber}</p>}
             </div>
             <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-[#256D45] mb-1 text-left">ถนน/ซอย</label>
@@ -70,50 +72,59 @@ const AddressFields = ({ form, addressData, onChange }: AddressFieldsProps) => {
             </div>
             <div>
                 <label className="block text-sm font-medium text-[#256D45] mb-1 text-left">จังหวัด</label>
-                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 15, controlHeight: 44 } }}>
-                    <Select
-                        showSearch
-                        value={form.province || undefined}
-                        onChange={val => onChange('province', val)}
-                        className="w-full"
-                        style={{ textAlign: 'left' }}
-                        placeholder="เลือก/ค้นหาจังหวัด"
-                        options={provinces.map(p => ({ value: p, label: p }))}
-                        filterOption={(input, option) => String(option?.label ?? '').includes(input)}
-                    />
-                </ConfigProvider>
+                <div className={errors.province ? 'border border-red-500 rounded-lg p-[1px]' : ''}>
+                    <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 15, controlHeight: 44 } }}>
+                        <Select
+                            showSearch
+                            value={form.province || undefined}
+                            onChange={val => onChange('province', val)}
+                            className="w-full"
+                            style={{ textAlign: 'left' }}
+                            placeholder="เลือก/ค้นหาจังหวัด"
+                            options={provinces.map(p => ({ value: p, label: p }))}
+                            filterOption={(input, option) => String(option?.label ?? '').includes(input)}
+                        />
+                    </ConfigProvider>
+                </div>
+                {errors.province && <p className="text-red-500 text-sm mt-1">{errors.province}</p>}
             </div>
             <div>
                 <label className="block text-sm font-medium text-[#256D45] mb-1 text-left">อำเภอ/เขต</label>
-                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 15, controlHeight: 44 } }}>
-                    <Select
-                        showSearch
-                        value={form.district || undefined}
-                        onChange={val => onChange('district', val)}
-                        className="w-full"
-                        style={{ textAlign: 'left' }}
-                        placeholder={form.province ? 'เลือกอำเภอ' : 'เลือกจังหวัดก่อน'}
-                        disabled={!form.province}
-                        options={dists.map(d => ({ value: d, label: d }))}
-                        filterOption={(input, option) => String(option?.label ?? '').includes(input)}
-                    />
-                </ConfigProvider>
+                <div className={errors.district ? 'border border-red-500 rounded-lg p-[1px]' : ''}>
+                    <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 15, controlHeight: 44 } }}>
+                        <Select
+                            showSearch
+                            value={form.district || undefined}
+                            onChange={val => onChange('district', val)}
+                            className="w-full"
+                            style={{ textAlign: 'left' }}
+                            placeholder={form.province ? 'เลือกอำเภอ' : 'เลือกจังหวัดก่อน'}
+                            disabled={!form.province}
+                            options={dists.map(d => ({ value: d, label: d }))}
+                            filterOption={(input, option) => String(option?.label ?? '').includes(input)}
+                        />
+                    </ConfigProvider>
+                </div>
+                {errors.district && <p className="text-red-500 text-sm mt-1">{errors.district}</p>}
             </div>
             <div>
                 <label className="block text-sm font-medium text-[#256D45] mb-1 text-left">ตำบล/แขวง</label>
-                <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 15, controlHeight: 44 } }}>
-                    <Select
-                        showSearch
-                        value={form.subDistrict || undefined}
-                        onChange={val => onChange('subDistrict', val)}
-                        className="w-full"
-                        style={{ textAlign: 'left' }}
-                        placeholder={form.district ? 'เลือกตำบล' : 'เลือกอำเภอก่อน'}
-                        disabled={!form.district}
-                        options={subs.map(s => ({ value: s, label: s }))}
-                        filterOption={(input, option) => String(option?.label ?? '').includes(input)}
-                    />
-                </ConfigProvider>
+                <div className={errors.subDistrict ? 'border border-red-500 rounded-lg p-[1px]' : ''}>
+                    <ConfigProvider theme={{ token: { fontFamily: 'Prompt', fontSize: 15, controlHeight: 44 } }}>
+                        <Select
+                            showSearch
+                            value={form.subDistrict || undefined}
+                            onChange={val => onChange('subDistrict', val)}
+                            className="w-full"
+                            style={{ textAlign: 'left' }}
+                            placeholder={form.district ? 'เลือกตำบล' : 'เลือกอำเภอก่อน'}
+                            disabled={!form.district}
+                            options={subs.map(s => ({ value: s, label: s }))}
+                            filterOption={(input, option) => String(option?.label ?? '').includes(input)}
+                        />
+                    </ConfigProvider>
+                </div>
+                {errors.subDistrict && <p className="text-red-500 text-sm mt-1">{errors.subDistrict}</p>}
             </div>
             <div>
                 <label className="block text-sm font-medium text-[#256D45] mb-1 text-left">รหัสไปรษณีย์</label>
@@ -122,8 +133,9 @@ const AddressFields = ({ form, addressData, onChange }: AddressFieldsProps) => {
                     value={form.postalCode}
                     readOnly
                     disabled
-                    className="w-full px-4 py-2.5 bg-gray-200 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed text-base text-left"
+                    className={`w-full px-4 py-2.5 bg-gray-200 border ${errors.postalCode ? 'border-red-500' : 'border-gray-300'} rounded-lg text-gray-500 cursor-not-allowed text-base text-left`}
                 />
+                {errors.postalCode && <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>}
             </div>
         </div>
     );
@@ -131,7 +143,7 @@ const AddressFields = ({ form, addressData, onChange }: AddressFieldsProps) => {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
+const ShippingAddressForm = ({ onFormChange, errors = {} }: ShippingAddressFormProps) => {
     const [addressData, setAddressData] = useState<any[]>([]);
     const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
 
@@ -202,7 +214,22 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
     };
 
     const handleAddSubmit = async () => {
-        if (!addForm.houseNumber && !addForm.streetSoi) return;
+        if (!addForm.houseNumber.trim()) {
+            showToast('error', 'กรุณากรอกบ้านเลขที่');
+            return;
+        }
+        if (!addForm.province) {
+            showToast('error', 'กรุณาเลือกจังหวัด');
+            return;
+        }
+        if (!addForm.district) {
+            showToast('error', 'กรุณาเลือกอำเภอ/เขต');
+            return;
+        }
+        if (!addForm.subDistrict) {
+            showToast('error', 'กรุณาเลือกตำบล/แขวง');
+            return;
+        }
         setAddLoading(true);
         try {
             const payload = {
@@ -255,6 +282,13 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
     const handleEditSubmit = async (id: number) => {
         const f = editForms[id];
         if (!f) return;
+
+        // ✅ เพิ่มเช็คก่อน submit
+        if (!f.houseNumber.trim() || !f.province || !f.district || !f.subDistrict) {
+            showToast('error', 'กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วน');
+            return;
+        }
+
         setEditLoading(id);
         try {
             await api.patch(`/addresses/${id}`, {
@@ -370,6 +404,16 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
                     </button>
                 </div>
 
+                {/* ✅ เพิ่ม — แสดง error เมื่อยังไม่มีที่อยู่ หรือที่อยู่ไม่ครบ */}
+                {(errors.houseNumber || errors.province || errors.district || errors.subDistrict || errors.postalCode) && (
+                    <div className="bg-red-50 border border-red-300 rounded-lg p-3 mb-4 flex items-center gap-2">
+                        <AlertTriangle className="text-red-500 w-5 h-5 shrink-0" />
+                        <p className="text-red-500 text-sm font-medium text-left">
+                            กรุณาเพิ่มที่อยู่จัดส่งและกรอกข้อมูลให้ครบถ้วน
+                        </p>
+                    </div>
+                )}
+
                 {/* ฟอร์มเพิ่มที่อยู่ใหม่ */}
                 {showAddForm && (
                     <div className="mb-6 p-5 border-2 border-dashed border-[#256D45]/40 rounded-xl bg-green-50/30">
@@ -380,6 +424,7 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
                             form={addForm}
                             addressData={addressData}
                             onChange={handleAddFieldChange}
+                            errors={errors}
                         />
                         <div className="flex justify-end gap-3 mt-4">
                             <button
@@ -495,6 +540,7 @@ const ShippingAddressForm = ({ onFormChange }: ShippingAddressFormProps) => {
                                                 form={ef}
                                                 addressData={addressData}
                                                 onChange={(field, val) => handleEditFieldChange(addr.id, field, val)}
+                                                errors={errors}
                                             />
                                             <div className="flex justify-end gap-3 mt-4">
                                                 <button
