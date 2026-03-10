@@ -4,6 +4,7 @@ import { Heart, Edit, User } from 'lucide-react';
 import { Table, ConfigProvider } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import api from '../services/api';
+import Swal from 'sweetalert2';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -23,17 +24,32 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const userStr = localStorage.getItem('user');
       const token = localStorage.getItem('token');
-      
-      // Check if user is authenticated
-      console.log('Profile page - checking auth:', { userStr: !!userStr, token: !!token });
-      
+      const userStr = localStorage.getItem('user');
+
+      // ✅ เช็ค token ก่อน
       if (!token) {
-        console.warn('No token found, redirecting to login');
         navigate('/login', { replace: true });
         return;
       }
+
+      // ✅ เช็ค localStorage ว่า parse ได้จริงไหม
+      let localUser;
+      try {
+        localUser = userStr ? JSON.parse(userStr) : null;
+      } catch {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      // ✅ เช็คว่ามี id จริงไหม
+      if (!localUser?.id) {
+        navigate('/login', { replace: true });
+        return;
+      }
+
       const addressStr = localStorage.getItem('shippingAddress');
 
       let currentEmail = '-';
@@ -63,70 +79,72 @@ const Profile = () => {
       }
 
       // 2. ดึงข้อมูล User เบื้องต้น และยิง API ไปขอข้อมูลเต็ม
-      if (userStr) {
-        const localUser = JSON.parse(userStr);
-        console.log('Local user data:', localUser);
-        console.log('User ID for API call:', localUser.id);
+      try {
+        // Use axios instance to ensure correct baseURL and Authorization header
+        const userRes = await api.get(`/users/${localUser.id}`);
 
-        try {
-          // Use axios instance to ensure correct baseURL and Authorization header
-          console.log('Fetching user via axios api.get:', `/users/${localUser.id}`);
-          const userRes = await api.get(`/users/${localUser.id}`);
-          console.log('User response:', userRes.data);
+        if (userRes && userRes.data) {
+          const apiData = userRes.data;
+          // นำข้อมูลจาก API มาอัปเดตทับ
+          currentEmail = apiData.email || currentEmail;
+          currentUsername = apiData.username || localUser.name;
 
-          if (userRes && userRes.data) {
-            const apiData = userRes.data;
-            // นำข้อมูลจาก API มาอัปเดตทับ
-            currentEmail = apiData.email || currentEmail;
-            currentUsername = apiData.username || localUser.name;
-
-            // ถ้าใน API มีชื่อ-นามสกุล หรือเบอร์โทรด้วย จะให้มันเอาจาก API ก็ได้
-            if (apiData.name) currentName = apiData.name;
-            if (apiData.phone) currentPhone = apiData.phone;
-          } else {
-            console.error('ดึงข้อมูลจาก API ไม่สำเร็จ (ไม่มีข้อมูลผู้ใช้)');
-          }
-
-          // ดึงคำสั่งซื้อของ user คนนี้
-          console.log('Fetching orders from:', `/api/admin/orders/my-orders`);
-          const ordersRes = await api.get(`/api/admin/orders/my-orders`);
-          console.log('Orders response:', ordersRes.data);
-          if (ordersRes.data && Array.isArray(ordersRes.data)) {
-            setOrders(ordersRes.data);
-          } else {
-            console.warn('Orders response is not an array:', ordersRes.data);
-            setOrders([]);
-          }
-        } catch (error: any) {
-          console.error("เกิดข้อผิดพลาดในการดึงข้อมูลคำสั่งซื้อ:", {
-            message: error.message,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            url: error.config?.url,
-            method: error.config?.method
-          });
-          // If it's a 401 error, redirect to login
-          if (error.response?.status === 401) {
-            console.warn('User not authenticated, redirecting to login');
-            navigate('/login', { replace: true });
-            return;
-          }
-        } finally {
-          setLoadingOrders(false);
+          // ถ้าใน API มีชื่อ-นามสกุล หรือเบอร์โทรด้วย จะให้มันเอาจาก API ก็ได้
+          if (apiData.name) currentName = apiData.name;
+          if (apiData.phone) currentPhone = apiData.phone;
         }
-      } else {
+
+        // ดึงคำสั่งซื้อของ user คนนี้
+        const ordersRes = await api.get(`/api/admin/orders/my-orders`);
+        if (ordersRes.data && Array.isArray(ordersRes.data)) {
+          setOrders(ordersRes.data);
+        } else {
+          setOrders([]);
+        }
+
+        // 3. อัปเดต State ทีเดียว
+        setUserData({
+          displayUsername: currentUsername,
+          name: currentName,
+          phone: currentPhone,
+          email: currentEmail,
+          address: currentAddress
+        });
+      } catch (error: any) {
+        // ✅ 401 — token หมดอายุ
+        if (error.response?.status === 401) {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          navigate('/login', { replace: true });
+          return;
+        }
+
+        // ✅ 403 — เข้าถึงข้อมูลคนอื่น
+        if (error.response?.status === 403) {
+          Swal.fire({
+            title: 'ไม่มีสิทธิ์เข้าถึง',
+            text: 'คุณไม่มีสิทธิ์ดูข้อมูลนี้',
+            icon: 'error',
+            confirmButtonColor: '#256D45',
+            confirmButtonText: 'ตกลง',
+          });
+          navigate('/', { replace: true });
+          return;
+        }
+
+        // ✅ 500 — server error
+        if (error.response?.status === 500) {
+          Swal.fire({
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+            icon: 'error',
+            confirmButtonColor: '#256D45',
+            confirmButtonText: 'ตกลง',
+          });
+        }
+      } finally {
         setLoadingOrders(false);
       }
-
-      // 3. อัปเดต State ทีเดียว
-      setUserData({
-        displayUsername: currentUsername,
-        name: currentName,
-        phone: currentPhone,
-        email: currentEmail,
-        address: currentAddress
-      });
     };
 
     fetchUserData();

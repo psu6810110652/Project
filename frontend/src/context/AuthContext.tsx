@@ -1,27 +1,52 @@
 import { createContext, useState, useEffect, type ReactNode } from 'react';
 
-// 1. สร้าง Interface เพื่อบอก TypeScript ว่า Context ของเรามีอะไรบ้าง
+// ✅ เพิ่ม interface จริงแทน any
+interface AuthUser {
+  id: string | number;
+  name: string;
+  email?: string;
+  role: string;
+  token: string;
+}
+
 interface AuthContextType {
-  user: any; // ตรงนี้ใช้ any ไปก่อน แต่ถ้าคุณรู้ว่า user มีข้อมูลอะไรบ้าง (เช่น id, name) สามารถเปลี่ยนเป็น type ที่ชัดเจนได้ครับ
-  login: (userData: any) => void;
+  user: AuthUser | null;
+  login: (userData: AuthUser) => void;
   logout: () => void;
 }
 
-// 2. ใส่ค่าเริ่มต้นเป็น null และบอกว่า Context นี้ใช้ type ที่เราสร้างไว้ข้างบน
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-// กำหนด type ให้กับ children ว่าเป็น ReactNode
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    // ✅ เพิ่ม try/catch กัน localStorage เสียหาย
+    try {
+      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('token');
+
+      // ✅ เช็คว่ามีทั้ง user และ token
+      if (storedUser && storedToken) {
+        const parsed = JSON.parse(storedUser);
+
+        // ✅ เช็คว่า user มี id จริงไหม
+        if (parsed?.id) {
+          setUser(parsed);
+        } else {
+          // ข้อมูลไม่ครบ ล้างออก
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+        }
+      }
+    } catch {
+      // localStorage เสียหาย ล้างออกทั้งหมด
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
   }, []);
 
-  const login = (userData: any) => {
+  const login = (userData: AuthUser) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
   };
