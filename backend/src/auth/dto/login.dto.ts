@@ -2,10 +2,10 @@ import { IsString, IsNotEmpty } from 'class-validator';
 
 export class LoginDto {
   @IsString()
-  @IsNotEmpty()
-  username: string; 
+  @IsNotEmpty({ message: 'กรุณากรอกชื่อผู้ใช้' })
+  username: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'กรุณากรอกรหัสผ่าน' })
   password: string;
 }

@@ -83,8 +83,13 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    if (!formData.username.trim() || !formData.password.trim()) {
+    setError('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+    return;
+    }
+    setLoading(true);
 
     try {
       const response = await api.post('/auth/login', formData);
@@ -96,7 +101,6 @@ const Login = () => {
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
-
       // โยนข้อมูลบอก Context ว่ามีคนล็อกอินแล้วนะ!
       if (auth) {
         auth.login({

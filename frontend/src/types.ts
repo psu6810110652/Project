@@ -147,3 +147,25 @@ export interface ExistingReview {
     orderDate: string;
     userId: string;
 }
+
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+}
+
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  token: string;
+}

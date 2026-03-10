@@ -26,9 +26,11 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 401) {
+      if (!window.location.pathname.includes('/login')) {
       console.warn('Token หมดอายุหรือไม่มีสิทธิ์เข้าถึง กำลังนำไปสู่หน้าเข้าสู่ระบบ...');
       localStorage.removeItem('token');
       window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
