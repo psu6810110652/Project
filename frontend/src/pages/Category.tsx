@@ -187,65 +187,76 @@ const Category: React.FC = () => {
                     />
                 </div>
 
-                {/* 1. Sidebar (ช่วงราคา) Desktop */}
+                {/* 1. Sidebar (ตัวกรองทั้งหมดในกล่องเดียว) Desktop */}
                 <aside className="hidden md:block w-72 shrink-0">
-                    <div className="sticky top-24 flex flex-col gap-6">
-                        {/* Desktop Type Filter - Checkbox style */}
+                    <div className="sticky top-24">
                         <div className="bg-[var(--color-bg-card)] p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
-                            <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-6">ประเภทสินค้า</h3>
-                            <div className="flex flex-col gap-3">
-                                <label className="flex items-center gap-3 cursor-pointer group p-1">
-                                    <input
-                                        type="checkbox"
-                                        className="hidden"
-                                        checked={selectedTypes.length === 0}
-                                        onChange={() => setSelectedTypes([])}
-                                    />
-                                    <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.length === 0 ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-gray-300 group-hover:border-[var(--color-primary)]'}`}>
-                                        {selectedTypes.length === 0 && (
-                                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                    <span className={`text-lg font-semibold transition-all ${selectedTypes.length === 0 ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>ทั้งหมด</span>
-                                    <span className="ml-auto text-sm text-gray-400">({products.length})</span>
-                                </label>
-
-                                {Object.entries(distinctTypes).map(([type, count]) => (
-                                    <label key={type} className="flex items-center gap-3 cursor-pointer group p-1">
+                            <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-6">ตัวกรองสินค้า</h3>
+                            
+                            {/* ประเภทสินค้า */}
+                            <div className="mb-8">
+                                <h4 className="text-lg font-semibold text-gray-700 mb-4">ประเภทสินค้า</h4>
+                                <div className="flex flex-col gap-3">
+                                    <label className="flex items-center gap-3 cursor-pointer group p-1">
                                         <input
                                             type="checkbox"
                                             className="hidden"
-                                            checked={selectedTypes.includes(type)}
-                                            onChange={() => toggleType(type)}
+                                            checked={selectedTypes.length === 0}
+                                            onChange={() => setSelectedTypes([])}
                                         />
-                                        <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.includes(type) ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-gray-300 group-hover:border-[var(--color-primary)]'}`}>
-                                            {selectedTypes.includes(type) && (
-                                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                        <div className={`w-5 h-5 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.length === 0 ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-gray-300 group-hover:border-[var(--color-primary)]'}`}>
+                                            {selectedTypes.length === 0 && (
+                                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             )}
                                         </div>
-                                        <span className={`text-lg font-semibold transition-all ${selectedTypes.includes(type) ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>{type}</span>
-                                        <span className="ml-auto text-sm text-gray-400">({count})</span>
+                                        <span className={`text-base font-medium transition-all ${selectedTypes.length === 0 ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>ทั้งหมด</span>
+                                        <span className="ml-auto text-sm text-gray-400">({products.length})</span>
                                     </label>
-                                ))}
+
+                                    {Object.entries(distinctTypes).map(([type, count]) => (
+                                        <label key={type} className="flex items-center gap-3 cursor-pointer group p-1">
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={selectedTypes.includes(type)}
+                                                onChange={() => toggleType(type)}
+                                            />
+                                            <div className={`w-5 h-5 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.includes(type) ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-gray-300 group-hover:border-[var(--color-primary)]'}`}>
+                                                {selectedTypes.includes(type) && (
+                                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <span className={`text-base font-medium transition-all ${selectedTypes.includes(type) ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>{type}</span>
+                                            <span className="ml-auto text-sm text-gray-400">({count})</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* คะแนนรีวิว */}
+                            <div className="mb-8">
+                                <h4 className="text-lg font-semibold text-gray-700 mb-4">คะแนนรีวิว</h4>
+                                <RatingFilter
+                                    selectedRating={selectedRating}
+                                    onRatingChange={setSelectedRating}
+                                />
+                            </div>
+
+                            {/* ช่วงราคา */}
+                            <div>
+                                <h4 className="text-lg font-semibold text-gray-700 mb-4">ช่วงราคา</h4>
+                                <PriceFilter
+                                    minPrice={priceRange[0]}
+                                    maxPrice={priceRange[1]}
+                                    onRangeChange={setPriceRange}
+                                    absoluteMax={maxPriceLimit}
+                                />
                             </div>
                         </div>
-
-                        {/* Desktop Rating Filter */}
-                        <RatingFilter
-                            selectedRating={selectedRating}
-                            onRatingChange={setSelectedRating}
-                        />
-
-                        <PriceFilter
-                            minPrice={priceRange[0]}
-                            maxPrice={priceRange[1]}
-                            onRangeChange={setPriceRange}
-                            absoluteMax={maxPriceLimit}
-                        />
                     </div>
                 </aside>
 
