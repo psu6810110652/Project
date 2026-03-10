@@ -19,6 +19,21 @@ export class UsersService {
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+
+    const existingEmail = await this.usersRepository.findOne({
+    where: { email: createUserDto.email }
+  });
+  if (existingEmail) {
+    throw new ConflictException('อีเมลนี้ถูกใช้งานแล้ว');
+  }
+
+  const existingUsername = await this.usersRepository.findOne({
+    where: { username: createUserDto.username }
+  });
+  if (existingUsername) {
+    throw new ConflictException('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว');
+  }
+  
     let hashedPassword: string | undefined = undefined;
     // ตรวจสอบว่ามีรหัสผ่านส่งมาหรือไม่ (ถ้าเป็น Google Login จะไม่มี)
     if (createUserDto.password) {
