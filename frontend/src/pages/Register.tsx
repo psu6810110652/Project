@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 const Register = () => {
   const navigate = useNavigate();
 
-  // ✅ State ทุกตัวอยู่ระดับ component ไม่ใช่ใน function
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -20,30 +20,50 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✅ validate แยกออกมาต่างหาก
+  
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
 
+    const reservedWords = ['admin', 'administrator', 'support', 'system', 'root', 'staff'];
+    const profanityList = ['fuck', 'shit', 'ass']; // เพิ่มคำหยาบได้เรื่อยๆ
+
     if (!formData.username.trim()) {
       newErrors.username = 'กรุณากรอกชื่อผู้ใช้';
-    } else if (formData.username.trim().length < 2) {
-      newErrors.username = 'ชื่อผู้ใช้ต้องมีอย่างน้อย 2 ตัวอักษร';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร';
+    } else if (formData.username.length > 20) {
+      newErrors.username = 'ชื่อผู้ใช้ต้องไม่เกิน 20 ตัวอักษร';
+    } else if (!/^[a-zA-Zก-๙]/.test(formData.username)) {
+      newErrors.username = 'ชื่อผู้ใช้ต้องขึ้นต้นด้วยตัวอักษรภาษาไทยหรือภาษาอังกฤษเท่านั้น';
+    } else if (!/^[ก-๙a-zA-Z0-9._]+$/.test(formData.username)) {
+      newErrors.username = 'ชื่อผู้ใช้ใช้ได้เฉพาะภาษาไทย ภาษาอังกฤษ ตัวเลข จุด (.) และขีดล่าง (_)';
+    } else if (/[._]{2,}/.test(formData.username)) {
+      newErrors.username = 'ชื่อผู้ใช้ไม่สามารถใช้จุดหรือขีดล่างติดกันได้ (เช่น .. หรือ __)';
+    } else if (reservedWords.includes(formData.username.toLowerCase())) {
+      newErrors.username = 'ชื่อผู้ใช้นี้ไม่สามารถใช้ได้ กรุณาเลือกชื่ออื่น';
+    } else if (profanityList.some(word => formData.username.toLowerCase().includes(word))) {
+      newErrors.username = 'ชื่อผู้ใช้นี้ไม่เหมาะสม กรุณาเลือกชื่ออื่น';
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
       newErrors.email = 'กรุณากรอกอีเมล';
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'กรุณากรอกรูปแบบอีเมลให้ถูกต้อง (เช่น name@example.com)';
+      newErrors.email = 'รูปแบบอีเมลไม่ถูกต้อง (เช่น name@example.com)';
+    } else if (formData.email.length > 100) {
+      newErrors.email = 'อีเมลต้องไม่เกิน 100 ตัวอักษร';
     }
 
-    const passwordRegex = /^(?=.*[0-9!@#$%^&*])/;
     if (!formData.password) {
       newErrors.password = 'กรุณากรอกรหัสผ่าน';
     } else if (formData.password.length < 8) {
-      newErrors.password = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลข';
-    } else if (!passwordRegex.test(formData.password)) {
-      newErrors.password = 'รหัสผ่านต้องมีตัวเลขหรือสัญลักษณ์อย่างน้อย 1 ตัว';
+      newErrors.password = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว (A-Z)';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว (a-z)';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว (0-9)';
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -72,7 +92,7 @@ const Register = () => {
   
       await Swal.fire({
         title: 'สมัครสมาชิกสำเร็จ!',
-        text: 'ยินดีด้วย! คุณสามารถเข้าสู่ระบบได้แล้ว',
+        text: 'คุณสามารถเข้าสู่ระบบได้แล้ว',
         icon: 'success',
         confirmButtonColor: '#256D45',
         confirmButtonText: 'ตกลง',
