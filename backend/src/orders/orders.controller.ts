@@ -12,12 +12,23 @@ export class OrdersController {
     constructor(private readonly ordersService: OrdersService) { }
 
     @Post()
-    create(@Body() createOrderDto: CreateOrderDto) {
+    async create(@Body() createOrderDto: CreateOrderDto) {
         console.log('--- ข้อมูลที่มาถึงหลังบ้าน ---');
         console.log('ชื่อลูกค้า:', createOrderDto.customerName);
-        console.log('มีสลิปไหม?:', createOrderDto.paymentSlip ? '✅ มีสลิปส่งมา!' : '❌ ไม่มีสลิป (undefined)');
+        console.log('ที่อยู่:', createOrderDto.address);
+        console.log('เบอร์โทร:', createOrderDto.phone);
+        console.log('ราคารวม:', createOrderDto.totalAmount);
+        console.log('จำนวนสินค้า:', createOrderDto.products?.length);
+        console.log('มีสลิปไหม?:', createOrderDto.paymentSlip ? `✅ มีสลิปส่งมา! (ยาว ${createOrderDto.paymentSlip.length} ตัวอักษร)` : '❌ ไม่มีสลิป (undefined)');
 
-        return this.ordersService.create(createOrderDto);
+        try {
+            const result = await this.ordersService.create(createOrderDto);
+            console.log('บันทึกออเดอร์สำเร็จ:', result.id);
+            return result;
+        } catch (error) {
+            console.error('❌ เกิดข้อผิดพลาดใน Backend (create order):', error);
+            throw error;
+        }
     }
 
     @Get('all-pending')

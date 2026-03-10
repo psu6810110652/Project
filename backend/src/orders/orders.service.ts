@@ -12,7 +12,11 @@ export class OrdersService {
     ) { }
 
     async create(createOrderDto: CreateOrderDto): Promise<Order> {
-        const orderNumber = Math.floor(100000 + Math.random() * 900000).toString(); // Generate random 6 digit order number
+        // สร้างเลขออเดอร์ให้มีความเฉพาะเจาะจงมากขึ้นเพื่อเลี่ยงปัญหาเลขซ้ำ (Unique Constraint)
+        const datePart = new Date().toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
+        const randomPart = Math.floor(1000 + Math.random() * 9000).toString();  // 4 random digits
+        const orderNumber = `ORD${datePart}${randomPart}`;
+
         const newOrder = this.ordersRepository.create({
             ...createOrderDto,
             orderNumber,

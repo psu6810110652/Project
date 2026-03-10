@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { type OrderData } from '../../types';
 import { Table, ConfigProvider } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -15,7 +15,7 @@ export default function Order() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/admin/orders/all-pending'); 
+      const response = await api.get('/api/admin/orders/all-pending');
       setOrders(response.data);
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์:', error);
@@ -36,7 +36,7 @@ export default function Order() {
     const lowerTerm = searchTerm.toLowerCase();
 
     const customerName = o.customerName || '';
-    const customerId = o.customerId || ''; 
+    const customerId = o.customerId || '';
     const id = o.id || '';
     const orderNumber = o.orderNumber || '';
     const productsNameStr = o.products?.map(p => p.name).join(' ') || '';
@@ -143,10 +143,11 @@ export default function Order() {
         return status === value;
       },
       // --- เปลี่ยนเป็นจุดสี ---
+      // --- เปลี่ยนเป็นจุดสี ---
       render: (_, record) => {
         const status = record.status || 'pending_confirm';
         let dotClass = "w-4 h-4 rounded-full inline-block shadow-sm ";
-        
+
         if (status === 'pending_confirm') {
           dotClass += "bg-orange-500";
         } else if (status === 'pending_delivery') {

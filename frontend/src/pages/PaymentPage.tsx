@@ -74,7 +74,7 @@ const PaymentPage: React.FC = () => {
 
     try {
       const savedAddress = localStorage.getItem('shippingAddress');
-      const addr = savedAddress ? JSON.parse(savedAddress) : { nameSurname: 'ลูกค้าทั่วไป' };
+      const addr = savedAddress ? JSON.parse(savedAddress) : { nameSurname: 'ลูกค้าทั่วไป', phone: '-' };
 
       // ดึง userId จาก localStorage เพื่อเชื่อมโยง order กับ user
       const userStr = localStorage.getItem('user');
@@ -82,12 +82,16 @@ const PaymentPage: React.FC = () => {
       const customerId = localUser?.id ? String(localUser.id) : undefined;
 
       const orderPayload = {
-        customerName: addr.nameSurname,
+        customerName: addr.name,
+        address: deliveryAddress, // ✅ ส่งที่อยู่จัดส่งแบบเต็มที่โชว์ใน UI
+        phone: addr.phone,         // ✅ ส่งเบอร์โทรศัพท์
         totalAmount: finalTotal,
         products: cartItems.map(item => ({
+          productId: item.id, // ✅ เก็บ ID สินค้าไว้เผื่อเรียกดูภายหลัง
           name: item.name,
           quantity: item.quantity,
-          price: item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price
+          price: item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price,
+          imageUrl: item.imageUrl // ✅ เก็บรูปสินค้าไว้ในประวัติออเดอร์
         })),
         paymentSlip: slipImageBase64,
         customerId, // ✅ เชื่อม order กับ user เพื่อให้ my-orders ดึงได้
@@ -96,6 +100,9 @@ const PaymentPage: React.FC = () => {
       // ใช้ api instance (มี JWT token) แทน axios ตรงๆ
       const response = await api.post('/api/admin/orders', orderPayload);
       console.log('บันทึกออเดอร์สำเร็จ:', response.data);
+
+      // ✅ ล้างตะกร้าสินค้าหลังจากสั่งซื้อสำเร็จ
+      localStorage.removeItem('cart');
 
       setShowSuccessOverlay(true);
 
