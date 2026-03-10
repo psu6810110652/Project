@@ -52,7 +52,7 @@ function UserLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/review/:productId" element={<ReviewPage />} />
-          <Route path="/review/:productId/edit" element={<EditReviewPage />} />
+          <Route path="/profile/review/:orderId" element={<EditReviewPage />} />
         </Routes>
       </div>
       <Footer />

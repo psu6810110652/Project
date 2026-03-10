@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Star, Share2 } from 'lucide-react';
 import type { Product } from '../types';
 import api from '../services/api';
 
@@ -156,6 +156,27 @@ export const ProductDetail: React.FC = () => {
         setTimeout(() => setMessage(''), 2000);
     };
 
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: product?.name || 'ธีรยุทธการเกษตร',
+                    text: product?.description || 'เช็คสินค้าเกษตรคุณภาพดีที่นี่',
+                    url: window.location.href,
+                });
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                }
+            }
+        } else {
+            // Fallback: Copy to clipboard
+            navigator.clipboard.writeText(window.location.href);
+            setMessage('คัดลอกลิงก์แล้วเป๊ะ!');
+            setTimeout(() => setMessage(''), 2000);
+        }
+    };
+
 
     const renderStars = (rating: number = 0) => {
         return Array.from({ length: 5 }, (_, i) => (
@@ -183,17 +204,7 @@ export const ProductDetail: React.FC = () => {
     const currentImage = displayImages[selectedImageIndex] || product?.imageUrl || '/api/placeholder/320/320';
 
     return (
-        <div className="min-h-screen bg-[#DCEDC1] font-['Prompt']">
-            {/* Fixed Back Button */}
-            <div className="fixed top-24 left-4 z-40">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="bg-white text-[#2a6b3b] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
-                >
-                    กลับ
-                </button>
-            </div>
-
+        <div className="min-h-screen bg-[#DCEDC1]">
             {/* Message Display */}
             {message && (
                 <div className={`fixed top-24 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${message.includes('เรียบร้อย') ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'
@@ -206,10 +217,8 @@ export const ProductDetail: React.FC = () => {
             {productLoading && (
                 <div className="pt-24 pb-8">
                     <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="bg-white rounded-xl shadow-lg p-8">
-                            <div className="text-center py-12">
-                                <p className="text-xl text-gray-600">กำลังโหลดข้อมูลสินค้า...</p>
-                            </div>
+                        <div className="text-center py-12">
+                            <p className="text-xl text-gray-600">กำลังโหลดข้อมูลสินค้า...</p>
                         </div>
                     </div>
                 </div>
@@ -217,11 +226,17 @@ export const ProductDetail: React.FC = () => {
 
             {/* Product Content */}
             {!productLoading && product && (
-                <div className="pt-24 pb-8">
+                <div className="pt-4 pb-8 flex flex-col gap-6">
+                    <div className="container mx-auto px-4 max-w-6xl text-left flex justify-start">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="bg-[#fdfcf6] text-[#2a6b3b] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
+                        >
+                            กลับ
+                        </button>
+                    </div>
                     <div className="container mx-auto px-4 max-w-6xl">
-
                         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-
                             <div className="flex flex-col md:flex-row gap-8">
                                 <div className="flex gap-4">
                                     <div className="flex flex-col gap-3">
@@ -257,24 +272,33 @@ export const ProductDetail: React.FC = () => {
                                 <div className="flex-1 text-left">
                                     <div className="flex justify-between items-start mb-2">
                                         <h1 className="text-3xl font-bold text-[#1f502c]">{product.name}</h1>
-                                        <button
-                                            onClick={toggleFavorite}
-                                            className="p-3 rounded-full hover:bg-gray-100 transition-colors"
-                                            title={isFavorite ? "ลบออกจากรายการโปรด" : "เพิ่มไปยังรายการโปรด"}
-                                        >
-                                            <svg
-                                                className={`w-8 h-8 transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
-                                                fill={isFavorite ? "currentColor" : "none"}
-                                                stroke="currentColor"
-                                                viewBox="0 0 20 20"
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={toggleFavorite}
+                                                className="p-3 rounded-full hover:bg-gray-100 transition-colors"
+                                                title={isFavorite ? "ลบออกจากรายการโปรด" : "เพิ่มไปยังรายการโปรด"}
                                             >
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
-                                        </button>
+                                                <svg
+                                                    className={`w-8 h-8 transition-colors ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
+                                                    fill={isFavorite ? "currentColor" : "none"}
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                                                        clipRule="evenodd"
+                                                    />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={handleShare}
+                                                className="p-3 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-[#2a6b3b]"
+                                                title="แชร์สินค้านี้"
+                                            >
+                                                <Share2 size={24} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="flex items-center gap-3 mb-6">
@@ -284,9 +308,9 @@ export const ProductDetail: React.FC = () => {
                                         <span className="text-lg font-semibold text-[#1f502c]">
                                             {(averageRating || product.rating || 5.0).toFixed(1)}/5.0
                                         </span>
-                                        <span className="text-gray-600">
+                                        <Link to={`/review/${id}`} className="text-gray-600 underline hover:text-[#1f502c] transition-colors">
                                             ({totalReviews || product.reviewCount || 0} รีวิว)
-                                        </span>
+                                        </Link>
                                     </div>
 
                                     <div className="mb-6">
@@ -345,19 +369,10 @@ export const ProductDetail: React.FC = () => {
                                         </span>
                                     </div>
 
-                                    <div className="flex flex-col gap-3 mb-6">
-                                        <button
-                                            onClick={() => navigate(`/review/${id}`)}
-                                            className="px-6 py-3 border border-[#2a6b3b] text-[#2a6b3b] rounded-lg hover:bg-[#2a6b3b] hover:text-white transition-colors font-medium"
-                                        >
-                                            เขียนรีวิว
-                                        </button>
-                                    </div>
-
                                     <button
                                         onClick={handleAddToCart}
                                         disabled={isLoading}
-                                        className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-4 rounded-xl hover:bg-[#cbe6a8] transition flex justify-center items-center gap-2 shadow-sm"
+                                        className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-2! rounded-xl hover:bg-[#cbe6a8] transition flex justify-center items-center gap-2 shadow-sm"
                                     >
                                         🛒 {isLoading ? 'กำลังเพิ่ม...' : 'เพิ่มไปยังรถเข็น'}
                                     </button>
@@ -366,8 +381,8 @@ export const ProductDetail: React.FC = () => {
                         </div>
 
                         {/* Tabs Section */}
-                        <div className="bg-white rounded-2xl shadow-sm">
-                            <div className="flex gap-1 p-2">
+                        <div>
+                            <div className="flex gap-1">
                                 <button
                                     onClick={() => setActiveTab('description')}
                                     className={`font-bold py-3! px-8! rounded-t-xl transition-colors ${activeTab === 'description'
@@ -387,10 +402,9 @@ export const ProductDetail: React.FC = () => {
                                     เงื่อนไขราคาส่ง
                                 </button>
                             </div>
-                            <div className="bg-[#fdfcf6] border-t-4 border-[#3a7c50] min-h-64 rounded-b-xl shadow-sm p-6">
+                            <div className="bg-[#fdfcf6] border-t-4 border-[#3a7c50] rounded-b-xl shadow-sm p-6 text-left">
                                 {activeTab === 'description' ? (
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">รายละเอียดสินค้า</h3>
                                         <p className="text-gray-600 leading-relaxed">
                                             {product.description || 'ไม่มีคำอธิบายสินค้า'}
                                         </p>

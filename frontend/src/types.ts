@@ -144,6 +144,23 @@ export interface ExistingReview {
     userName: string;
     rating: number;
     reviewContent: string;
-    orderDate: string;
+    orderID?: string;
+    orderDate?: string;
     userId: string;
+}
+
+export interface ReviewItem {
+    productId: string;
+    productName: string;
+    productImage?: string;
+    rating: number;
+    reviewContent: string;
+    existingReviewId?: string | null;
+}
+
+export interface OrderInfo {
+    id: string;
+    orderNumber: string;
+    orderDate: string;
+    products: any[];
 }

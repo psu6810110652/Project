@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import type { ExistingReview } from '../types';
 import api from '../services/api';
+import { Star } from 'lucide-react';
 
 const ReviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,8 +13,10 @@ const ReviewPage: React.FC = () => {
   const [productName, setProductName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [existingReviews, setExistingReviews] = useState<ExistingReview[]>([]);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
 
-  const currentUserId = auth?.user?.id || 'guest';
+  // No longer filtering currentUserId, but keeping auth for potential future use
+  // const currentUserId = auth?.user?.id || 'guest'; 
 
   useEffect(() => {
     const loadReviewData = async () => {
@@ -46,15 +49,26 @@ const ReviewPage: React.FC = () => {
     loadReviewData();
   }, [productId]);
 
-  const renderStars = (rating: number = 0) => {
+  const averageRating = existingReviews.length > 0
+    ? existingReviews.reduce((sum, r) => sum + r.rating, 0) / existingReviews.length
+    : 0;
+
+  // Show all reviews including our own on this page
+  const allReviews = existingReviews;
+
+  const filteredReviews = selectedRating === null
+    ? allReviews
+    : allReviews.filter(r => Math.floor(r.rating) === selectedRating);
+
+  const renderStarsUI = (rating: number, size = 16) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className="text-[#1f653a] text-sm">
-        {i < Math.floor(rating) ? '★' : '☆'}
-      </span>
+      <Star
+        key={i}
+        size={size}
+        className={i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+      />
     ));
   };
-
-  const otherReviews = existingReviews.filter(r => r.userId !== currentUserId);
 
   if (isLoading) {
     return (
@@ -65,84 +79,127 @@ const ReviewPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#dcedc2] text-[#1f653a] flex flex-col" style={{ fontFamily: 'Kanit, sans-serif' }}>
+    <div className="min-h-screen bg-[#DCEDC1] text-[#1f653a] flex flex-col">
 
       {/* Main Content */}
-      <main className="flex-1 px-12 py-8">
+      <main className="flex-1 pt-4 pb-8">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-left flex justify-start mb-8">
+            <button
+              onClick={() => navigate(-1)}
+              className="bg-[#fdfcf6] text-[#2a6b3b] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
+            >
+              กลับ
+            </button>
+          </div>
 
-        <div className="flex justify-between items-start mb-8">
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate(-1);
-            }}
-            className="bg-white text-[#1f653a] border-none px-10 py-2.5 rounded-full text-xl font-semibold cursor-pointer shadow-md inline-block no-underline"
-          >
-            กลับ
-          </a>
-          {/* Button to go to edit/write review page */}
-          <button
-            onClick={() => navigate(`/review/${productId}/edit`)}
-            className="bg-[#1f653a] hover:bg-[#1a4d2e] text-white font-bold px-8 py-2.5 rounded-full text-xl transition-colors shadow-md"
-          >
-            เขียนรีวิว
-          </button>
-        </div>
+          <div className="flex justify-between items-end border-b-3 border-[#1f653a] pb-2.5 mb-5">
+            <h1 className="text-5xl font-bold">รีวิว</h1>
+            <h2 className="text-2xl font-semibold">{productName}</h2>
+          </div>
 
-        <div className="flex justify-between items-end border-b-3 border-[#1f653a] pb-2.5 mb-5">
-          <h1 className="text-5xl font-bold">รีวิว</h1>
-          <h2 className="text-2xl font-semibold">{productName}</h2>
-        </div>
+          {/* Average Rating and Filter */}
+          <div className="bg-white rounded-2xl shadow-sm p-8 mb-8 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex flex-col md:flex-row items-center gap-8 w-full">
+              <div className="text-center min-w-32">
+                <div className="text-5xl font-bold text-[#1f653a]">{averageRating.toFixed(1)}</div>
+                <div className="flex justify-center my-1">
+                  {renderStarsUI(averageRating, 24)}
+                </div>
+                <div className="text-gray-500 text-sm">{allReviews.length} รีวิว</div>
+              </div>
 
-        {/* Reviews from other users */}
-        <div className="mt-4">
-          <h3 className="text-2xl font-semibold mb-6">รีวิวจากผู้ใช้งานท่านอื่น</h3>
-          {otherReviews.length > 0 ? (
-            <div className="space-y-4">
-              {otherReviews.map((review) => (
-                <div key={review.id} className="bg-[#fdfef9] rounded-lg shadow-lg p-6">
-                  <div className="flex gap-6">
-                    {/* Left side - User info and rating */}
-                    <div className="flex-shrink-0 w-48">
-                      <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigate(`/user/${review.userId}`);
-                        }}
-                        className="text-lg font-semibold text-[#1f653a] hover:underline no-underline block mb-2"
-                      >
-                        {review.userName}
-                      </a>
-                      <div className="flex items-center gap-1 mb-2">
-                        {renderStars(review.rating)}
-                        <span className="text-sm text-gray-600 ml-1">({review.rating})</span>
+              <div className="h-16 w-px bg-gray-200 hidden md:block"></div>
+
+              <div className="flex flex-wrap gap-3 justify-start flex-1 ml-0 md:ml-4">
+                <button
+                  onClick={() => setSelectedRating(null)}
+                  className={`px-5! py-3! rounded-2xl border-2 transition-all font-semibold flex items-center gap-3 ${selectedRating === null
+                    ? 'bg-[#1f653a] border-[#1f653a] text-white shadow-md'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-[#1f653a] hover:text-[#1f653a]'
+                    }`}
+                >
+                  ทั้งหมด ({allReviews.length})
+                </button>
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = allReviews.filter((r: any) => Math.floor(r.rating) === star).length;
+                  return (
+                    <button
+                      key={star}
+                      onClick={() => setSelectedRating(star)}
+                      className={`px-5! py-3! rounded-2xl border-2 transition-all flex items-center gap-3 font-semibold ${selectedRating === star
+                        ? 'bg-[#1f653a] border-[#1f653a] text-white shadow-md'
+                        : 'bg-white border-gray-200 text-gray-600 hover:border-[#1f653a] hover:text-[#1f653a]'
+                        }`}
+                    >
+                      {star} <Star size={16} className={selectedRating === star ? 'fill-white' : 'fill-yellow-400 text-yellow-400'} />
+                      <span className="text-sm opacity-80">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Reviews from other users */}
+          <div className="mt-4">
+            {filteredReviews.length > 0 ? (
+              <div className="space-y-4">
+                {filteredReviews.map((review: any) => (
+                  <div key={review.id} className="bg-[#fdfef9] rounded-lg shadow-lg p-6">
+                    <div className="flex gap-6">
+                      <div className="flex-shrink-0 w-full">
+                        <div className="flex justify-between items-start">
+                          <a
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (review.userId) navigate(`/user/${review.userId}`);
+                            }}
+                            className="text-lg font-semibold text-[#1f653a] text-left hover:underline no-underline block"
+                          >
+                            {review.userName || review.customerName || 'ผู้ใช้ทั่วไป'}
+                          </a>
+                          <div className="text-sm text-gray-500 flex flex-col items-end">
+                            {review.orderDate && (
+                              <div className="font-medium">
+                                สั่งซื้อเมื่อ: {new Date(review.orderDate).toLocaleString('th-TH', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
+                            )}
+                            {review.orderID && <div className="text-xs opacity-75">เลขที่ออเดอร์: #{review.orderID}</div>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1 mb-2">
+                          {renderStarsUI(review.rating)}
+                          <span className="text-sm text-gray-600 ml-1">({review.rating})</span>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed text-left mt-2 border-t pt-2">
+                          {review.reviewContent || <span className="text-gray-400 italic">ไม่มีข้อความรีวิว</span>}
+                        </p>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {review.orderDate ? new Date(review.orderDate).toLocaleDateString('th-TH', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        }) : ''}
-                      </div>
-                    </div>
-
-                    {/* Right side - Review content */}
-                    <div className="flex-1">
-                      <p className="text-gray-700 leading-relaxed">
-                        {review.reviewContent}
-                      </p>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-[#fdfef9] rounded-lg shadow-lg p-8 text-center">
-              <p className="text-gray-600">ยังไม่มีรีวิวจากผู้ใช้ท่านอื่นสำหรับสินค้านี้</p>
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#fdfef9] rounded-lg shadow-lg p-12 text-center">
+                <Star size={48} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-600 text-lg font-medium">ไม่พบรีวิวที่ตรงตามเงื่อนไข</p>
+                <button
+                  onClick={() => setSelectedRating(null)}
+                  className="mt-4 text-[#1f653a] font-semibold hover:underline"
+                >
+                  ดูรีวิวทั้งหมด
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
