@@ -16,6 +16,9 @@ const PaymentPage: React.FC = () => {
 
   const [deliveryAddress, setDeliveryAddress] = useState<string>('กำลังโหลดข้อมูลที่อยู่...');
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false);
 
   const cartItems: CartItem[] = location.state?.cartItems || [];
   const totalPrice: number = location.state?.totalPrice || 0;
@@ -25,16 +28,63 @@ const PaymentPage: React.FC = () => {
   const finalTotal = totalPrice + shippingFee - discount;
   const qrCodeUrl = 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg';
 
-  useEffect(() => {
-    const savedAddress = localStorage.getItem('shippingAddress');
-
-    if (savedAddress) {
-      const addr = JSON.parse(savedAddress);
-      const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
-      setDeliveryAddress(fullAddress);
-    } else {
-      setDeliveryAddress('ไม่พบข้อมูลการจัดส่ง กรุณากลับไปเพิ่มที่อยู่ในหน้าโปรไฟล์');
+  // 🌟 ฟังก์ชันสำหรับดึงข้อมูลที่อยู่ทั้งหมดของผู้ใช้
+  const fetchUserAddresses = async () => {
+    try {
+      const response = await api.get('/addresses');
+      const addresses = response.data;
+      setSavedAddresses(addresses);
+      
+      if (addresses.length > 0) {
+        // หาที่อยู่ที่เป็น default หรือใช้ที่อยู่แรก
+        const defaultAddress = addresses.find((addr: any) => addr.isDefault) || addresses[0];
+        setSelectedAddressId(defaultAddress.id);
+        
+        // สร้างข้อความที่อยู่แบบเต็ม
+        const fullAddress = `${defaultAddress.name || 'ไม่ระบุชื่อ'} เบอร์โทร: ${defaultAddress.phone || '-'}\nเลขที่: ${defaultAddress.houseNumber || ''} ถนน/ซอย: ${defaultAddress.streetSoi || ''}\nตำบล: ${defaultAddress.subDistrict || ''} อำเภอ: ${defaultAddress.district || ''}\nจังหวัด: ${defaultAddress.province || ''} รหัสไปรษณีย์ ${defaultAddress.postalCode || ''}`;
+        setDeliveryAddress(fullAddress);
+      } else {
+        // ถ้าไม่มีที่อยู่ในระบบ ลองดึงจาก localStorage เดิม
+        const savedAddress = localStorage.getItem('shippingAddress');
+        if (savedAddress) {
+          const addr = JSON.parse(savedAddress);
+          const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
+          setDeliveryAddress(fullAddress);
+        } else {
+          setDeliveryAddress('ไม่พบข้อมูลการจัดส่ง กรุณากลับไปเพิ่มที่อยู่ในหน้าโปรไฟล์');
+        }
+      }
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการดึงข้อมูลที่อยู่:', error);
+      // ถ้า API ล้มเหลว ใช้วิธีเดิม (localStorage)
+      const savedAddress = localStorage.getItem('shippingAddress');
+      if (savedAddress) {
+        const addr = JSON.parse(savedAddress);
+        const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
+        setDeliveryAddress(fullAddress);
+      } else {
+        setDeliveryAddress('ไม่พบข้อมูลการจัดส่ง กรุณากลับไปเพิ่มที่อยู่ในหน้าโปรไฟล์');
+      }
     }
+  };
+
+  // 🌟 ฟังก์ชันสำหรับเลือกที่อยู่
+  const handleAddressSelect = (address: any) => {
+    setSelectedAddressId(address.id);
+    const fullAddress = `${address.name || 'ไม่ระบุชื่อ'} เบอร์โทร: ${address.phone || '-'}\nเลขที่: ${address.houseNumber || ''} ถนน/ซอย: ${address.streetSoi || ''}\nตำบล: ${address.subDistrict || ''} อำเภอ: ${address.district || ''}\nจังหวัด: ${address.province || ''} รหัสไปรษณีย์ ${address.postalCode || ''}`;
+    setDeliveryAddress(fullAddress);
+    setShowAddressDropdown(false);
+  };
+
+  // 🌟 ฟังก์ชันสำหรับสลับการแสดง dropdown
+  const toggleAddressDropdown = () => {
+    if (savedAddresses.length > 1) {
+      setShowAddressDropdown(!showAddressDropdown);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserAddresses();
   }, []);
 
   // 🌟 แก้ไขฟังก์ชันตอนอัปโหลดรูป ให้มีการแปลงเป็น Base64 ด้วย
@@ -73,8 +123,26 @@ const PaymentPage: React.FC = () => {
     }
 
     try {
-      const savedAddress = localStorage.getItem('shippingAddress');
-      const addr = savedAddress ? JSON.parse(savedAddress) : { nameSurname: 'ลูกค้าทั่วไป', phone: '-' };
+      // ใช้ที่อยู่ที่เลือกจาก API แทน localStorage
+      let selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
+      let addr;
+
+      if (selectedAddress) {
+        // ถ้าเจอที่อยู่ที่เลือกจาก API ให้ใช้ที่อยู่นั้น
+        addr = selectedAddress;
+      } else if (savedAddresses.length > 0) {
+        // ถ้ามีที่อยู่ใน API แต่ไม่มีการเลือก ให้ใช้ที่อยู่แรก
+        addr = savedAddresses[0];
+      } else {
+        // ถ้าไม่มีที่อยู่ใน API ให้ใช้วิธีเดิมจาก localStorage
+        const savedAddress = localStorage.getItem('shippingAddress');
+        addr = savedAddress ? JSON.parse(savedAddress) : { nameSurname: 'ลูกค้าทั่วไป', phone: '-' };
+        // แปลงชื่อฟิลด์ให้ตรงกับที่ API ใช้
+        addr = {
+          name: addr.nameSurname || addr.name || 'ลูกค้าทั่วไป',
+          phone: addr.phone || '-'
+        };
+      }
 
       // ดึง userId จาก localStorage เพื่อเชื่อมโยง order กับ user
       const userStr = localStorage.getItem('user');
@@ -82,9 +150,9 @@ const PaymentPage: React.FC = () => {
       const customerId = localUser?.id ? String(localUser.id) : undefined;
 
       const orderPayload = {
-        customerName: addr.name,
+        customerName: addr.name || 'ลูกค้าทั่วไป', // ✅ ตรวจสอบให้แน่ใจว่าไม่เป็นค่าว่าง
         address: deliveryAddress, // ✅ ส่งที่อยู่จัดส่งแบบเต็มที่โชว์ใน UI
-        phone: addr.phone,         // ✅ ส่งเบอร์โทรศัพท์
+        phone: addr.phone || '-', // ✅ ตรวจสอบให้แน่ใจว่าไม่เป็นค่าว่าง
         totalAmount: finalTotal,
         products: cartItems.map(item => ({
           productId: item.id, // ✅ เก็บ ID สินค้าไว้เผื่อเรียกดูภายหลัง
@@ -97,7 +165,24 @@ const PaymentPage: React.FC = () => {
         customerId, // ✅ เชื่อม order กับ user เพื่อให้ my-orders ดึงได้
       };
 
+      // ✅ ตรวจสอบข้อมูลที่จำเป็นก่อนส่ง
+      if (!orderPayload.customerName || orderPayload.customerName.trim() === '') {
+        alert('กรุณาระบุชื่อลูกค้าให้ถูกต้อง');
+        return;
+      }
+
+      if (!orderPayload.products || orderPayload.products.length === 0) {
+        alert('ไม่พบสินค้าในคำสั่งซื้อ กรุณาลองใหม่');
+        return;
+      }
+
+      if (!orderPayload.totalAmount || orderPayload.totalAmount <= 0) {
+        alert('ราคาสินค้าไม่ถูกต้อง กรุณาลองใหม่');
+        return;
+      }
+
       // ใช้ api instance (มี JWT token) แทน axios ตรงๆ
+      console.log('กำลังส่งออเดอร์:', orderPayload);
       const response = await api.post('/api/admin/orders', orderPayload);
       console.log('บันทึกออเดอร์สำเร็จ:', response.data);
 
@@ -110,9 +195,24 @@ const PaymentPage: React.FC = () => {
         navigate('/profile');
       }, 1000);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการสั่งซื้อ:', error);
-      alert('ขออภัยครับ ไม่สามารถบันทึกคำสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง');
+      
+      // แสดงข้อมูลข้อผิดพลาดเพิ่มเติมเพื่อการ debug
+      if (error.response) {
+        console.error('Response error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        });
+        alert(`ข้อผิดพลาดจากเซิร์ฟเวอร์: ${error.response.status} - ${error.response.data?.message || error.response.statusText}`);
+      } else if (error.request) {
+        console.error('Request error:', error.request);
+        alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+      } else {
+        console.error('Other error:', error.message);
+        alert(`เกิดข้อผิดพลาด: ${error.message}`);
+      }
     }
   };
 
@@ -169,10 +269,49 @@ const PaymentPage: React.FC = () => {
 
             <div className="mt-4">
               <h3 className="text-xl font-bold text-[#256D45] mb-2">สถานที่จัดส่ง</h3>
-              <div className="border-2 border-[#256D45]/30 rounded-2xl p-4 bg-[#F8FBF8]">
-                <p className="text-[#256D45] whitespace-pre-line text-sm md:text-base leading-relaxed font-medium">
-                  {deliveryAddress}
-                </p>
+              <div className="relative">
+                <div 
+                  className={`border-2 border-[#256D45]/30 rounded-2xl p-4 bg-[#F8FBF8] ${savedAddresses.length > 1 ? 'cursor-pointer hover:border-[#256D45]/60 transition-colors' : ''}`}
+                  onClick={toggleAddressDropdown}
+                >
+                  <p className="text-[#256D45] whitespace-pre-line text-sm md:text-base leading-relaxed font-medium">
+                    {deliveryAddress}
+                  </p>
+                  {savedAddresses.length > 1 && (
+                    <div className="absolute top-2 right-2 text-[#256D45] text-xs font-medium">
+                      {showAddressDropdown ? '▲' : '▼'} เลือกที่อยู่อื่น
+                    </div>
+                  )}
+                </div>
+
+                {/* 🌟 Dropdown สำหรับเลือกที่อยู่ */}
+                {showAddressDropdown && savedAddresses.length > 1 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-[#256D45]/30 rounded-2xl shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {savedAddresses.map((address) => (
+                      <div
+                        key={address.id}
+                        className={`p-3 cursor-pointer hover:bg-[#F8FBF8] border-b border-gray-100 last:border-b-0 ${selectedAddressId === address.id ? 'bg-[#F0F7F0] border-l-4 border-l-[#256D45]' : ''}`}
+                        onClick={() => handleAddressSelect(address)}
+                      >
+                        <div className="text-sm text-[#256D45] font-medium">
+                          <div className="font-bold">{address.name || 'ไม่ระบุชื่อ'}</div>
+                          <div className="text-xs mt-1">
+                            เบอร์โทร: {address.phone || '-'}
+                          </div>
+                          <div className="text-xs mt-1">
+                            เลขที่: {address.houseNumber || ''} {address.streetSoi ? `ถนน/ซอย: ${address.streetSoi}` : ''}
+                          </div>
+                          <div className="text-xs">
+                            ตำบล: {address.subDistrict || ''} อำเภอ: {address.district || ''} จังหวัด: {address.province || ''} {address.postalCode ? `รหัสไปรษณีย์ ${address.postalCode}` : ''}
+                          </div>
+                          {address.isDefault && (
+                            <div className="text-xs font-bold text-[#256D45] mt-1">✓ ที่อยู่หลัก</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
