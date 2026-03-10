@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
+import Swal from 'sweetalert2';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -33,20 +34,20 @@ const Register = () => {
     if (!formData.email.trim()) {
       newErrors.email = 'กรุณากรอกอีเมล';
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'รูปแบบอีเมลไม่ถูกต้อง';
+      newErrors.email = 'กรุณากรอกรูปแบบอีเมลให้ถูกต้อง (เช่น name@example.com)';
     }
 
     const passwordRegex = /^(?=.*[0-9!@#$%^&*])/;
     if (!formData.password) {
       newErrors.password = 'กรุณากรอกรหัสผ่าน';
     } else if (formData.password.length < 8) {
-      newErrors.password = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+      newErrors.password = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลข';
     } else if (!passwordRegex.test(formData.password)) {
       newErrors.password = 'รหัสผ่านต้องมีตัวเลขหรือสัญลักษณ์อย่างน้อย 1 ตัว';
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน';
+      newErrors.confirmPassword = 'รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
     }
 
     return newErrors;
@@ -55,6 +56,7 @@ const Register = () => {
   // ✅ handleSubmit อันเดียว สะอาด
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -66,15 +68,35 @@ const Register = () => {
     try {
       const { confirmPassword, ...dataToSend } = formData;
       await api.post('/users', dataToSend);
-      alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
-      navigate('/login');
-    } catch (err: any) {
-      setErrors({
-        general: err.response?.data?.message || 'เกิดข้อผิดพลาดในการสมัครบัญชี',
+
+  
+      await Swal.fire({
+        title: 'สมัครสมาชิกสำเร็จ!',
+        text: 'ยินดีด้วย! คุณสามารถเข้าสู่ระบบได้แล้ว',
+        icon: 'success',
+        confirmButtonColor: '#256D45',
+        confirmButtonText: 'ตกลง',
       });
+
+      navigate('/login'); //รอให้กด OK ก่อน
+
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'เกิดข้อผิดพลาดในการสมัครบัญชี';
+      Swal.fire({
+        title: 'เกิดข้อผิดพลาด',
+        text: message,
+        icon: 'error',
+        confirmButtonColor: '#e74c3c',
+        confirmButtonText: 'ตกลง',
+      });
+
+  // ยังเก็บ errors.general ไว้แสดงใน form ด้วย
+      setErrors({ general: message });
+
     } finally {
       setLoading(false);
     }
+
   };
 
   return (
@@ -102,8 +124,8 @@ const Register = () => {
             <input
               type="text"
               name="username"
+              value={formData.username}
               placeholder="ชื่อผู้ใช้"
-              required
               className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
@@ -113,10 +135,10 @@ const Register = () => {
           <div className="flex flex-col gap-1.5">
             <label className="text-[#256D45] text-xl font-semibold relative right-52">อีเมล</label>
             <input
-              type="email"
+              type="text"
               name="email"
+              value={formData.email}
               placeholder="อีเมล"
-              required
               className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
@@ -128,8 +150,8 @@ const Register = () => {
             <input
               type="password"
               name="password"
+              value={formData.password}
               placeholder="รหัสผ่าน"
-              required
               className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
@@ -141,8 +163,8 @@ const Register = () => {
             <input
               type="password"
               name="confirmPassword"
+              value={formData.confirmPassword}
               placeholder="รหัสผ่าน"
-              required
               className="bg-[#EDEDED] w-full h-14 rounded-[20px] px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none focus:ring-2 focus:ring-[#256D45]"
               onChange={handleChange}
             />
