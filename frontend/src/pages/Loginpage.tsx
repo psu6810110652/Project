@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
+import Swal from 'sweetalert2';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,7 +13,6 @@ const Login = () => {
     username: '',
     password: '',
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Redirect if already logged in
@@ -31,18 +31,13 @@ const Login = () => {
   };
 
   const handleGoogleLoginSuccess = async (tokenResponse: any) => {
-    console.log('Google Login Success Callback:', tokenResponse);
     setLoading(true);
     try {
-      console.log('Sending token to backend:', tokenResponse.access_token);
       const response = await api.post('/auth/google', {
         token: tokenResponse.access_token,
       });
-      console.log('Backend response:', response.data);
 
       localStorage.setItem('token', response.data.access_token);
-
-      // 🌟 เพิ่มบรรทัดนี้: เซฟก้อน User (ที่มี ID) ลง Local Storage ตรงๆ เลย
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
@@ -53,12 +48,11 @@ const Login = () => {
           id: response.data.user?.id,
           name: response.data.user?.name || response.data.username,
           token: response.data.access_token,
-          role: response.data.user?.role
+          role: response.data.user?.role,
         });
       }
 
       const userRole = response.data.user?.role;
-
       if (userRole === 'Admin') {
         navigate('/admin');
       } else {
@@ -67,10 +61,13 @@ const Login = () => {
 
     } catch (err: any) {
       console.error('Login error:', err);
-      if (err.response) {
-        console.error('Error response:', err.response.data);
-      }
-      setError('ไม่สามารถเข้าสู่ระบบผ่าน Google ได้');
+      Swal.fire({
+        title: 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ',
+        text: 'ไม่สามารถเข้าสู่ระบบผ่าน Google ได้ กรุณาลองใหม่อีกครั้ง',
+        icon: 'error',
+        confirmButtonColor: '#256D45',
+        confirmButtonText: 'ตกลง',
+      });
     } finally {
       setLoading(false);
     }
@@ -78,50 +75,65 @@ const Login = () => {
 
   const loginWithGoogle = useGoogleLogin({
     onSuccess: handleGoogleLoginSuccess,
-    onError: () => setError('Google Login Failed'),
+    onError: () => Swal.fire({
+      title: 'เกิดข้อผิดพลาด',
+      text: 'Google Login ล้มเหลว กรุณาลองใหม่อีกครั้ง',
+      icon: 'error',
+      confirmButtonColor: '#256D45',
+      confirmButtonText: 'ตกลง',
+    }),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
+    // ✅ Validate ก่อน submit
     if (!formData.username.trim() || !formData.password.trim()) {
-    setError('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
-    return;
+      Swal.fire({
+        title: 'กรุณากรอกข้อมูล',
+        text: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน',
+        icon: 'warning',
+        confirmButtonColor: '#256D45',
+        confirmButtonText: 'ตกลง',
+      });
+      return;
     }
+
     setLoading(true);
 
     try {
       const response = await api.post('/auth/login', formData);
 
-      // เก็บ Token ลง localStorage
       localStorage.setItem('token', response.data.access_token);
-
-      // 🌟 เพิ่มบรรทัดนี้: เซฟก้อน User (ที่มี ID) ลง Local Storage ตรงๆ เลย
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
-      // โยนข้อมูลบอก Context ว่ามีคนล็อกอินแล้วนะ!
+
       if (auth) {
         auth.login({
           ...response.data.user,
           id: response.data.user?.id,
           name: response.data.user?.name || formData.username,
           token: response.data.access_token,
-          role: response.data.user?.role // 👈 เก็บ role ไว้ใน context ด้วย (ถ้ามี)
+          role: response.data.user?.role,
         });
       }
 
-      // 🌟 เช็ค Role ตรงนี้ก่อนเปลี่ยนหน้า
-      const userRole = response.data.user?.role; // หรือ response.data.user?.roles[0] ขึ้นอยู่กับ Backend ของคุณส่งมาแบบไหน
-
+      const userRole = response.data.user?.role;
       if (userRole === 'Admin') {
-        navigate('/admin'); // 👈 ใส่ path ของหน้าแอดมินของคุณ (เช่น /admin หรือ /order)
+        navigate('/admin');
       } else {
-        navigate('/'); // ถ้าเป็น user ธรรมดาไปหน้าแรก
+        navigate('/');
       }
+
     } catch (err: any) {
-      setError('อีเมล/ชื่อผู้ใช้งาน หรือ รหัสผ่านไม่ถูกต้อง');
+      Swal.fire({
+        title: 'เข้าสู่ระบบไม่สำเร็จ',
+        text: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง',
+        icon: 'error',
+        confirmButtonColor: '#256D45',
+        confirmButtonText: 'ตกลง',
+      });
     } finally {
       setLoading(false);
     }
@@ -140,12 +152,6 @@ const Login = () => {
 
       {/* Card สีครีม */}
       <div className="bg-[#FFFEF2] w-full max-w-140.75 rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] p-8 md:p-12 relative">
-
-        {error && (
-          <div className="bg-red-100 text-red-600 p-3 rounded-lg mb-6 text-center font-medium">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 

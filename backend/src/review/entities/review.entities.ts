@@ -13,13 +13,11 @@ export class Review {
     @Column('text')
     reviewContent: string;
 
-    @Column()
+    @Column({ default: '' })
     userName: string; // เก็บชื่อตอนที่รีวิว
 
-    @Column({ name: 'orderDate', type: 'timestamp', nullable: true })
+    @Column({name: 'orderDate', type: 'timestamp', nullable: true})
     orderDate: Date; // วันที่สั่งซื้อ เพื่อยืนยันว่าผู้ใช้เคยซื้อสินค้านี้จริง
-
-
 
     @ManyToOne(() => Product, (product) => (product as any).reviews, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'productId' })
