@@ -145,10 +145,10 @@ export interface ExistingReview {
     userName: string;
     rating: number;
     reviewContent: string;
-    orderDate: string;
+    orderID?: string;
+    orderDate?: string;
     userId: string;
 }
-
 
 export interface LoginRequest {
     username: string;
@@ -164,9 +164,26 @@ export interface RegisterRequest {
 
 
 export interface AuthUser {
-    id: string;
+    id: string | number;
     name: string;
+    username?: string;
     email: string;
     role: string;
     token: string;
+}
+
+export interface ReviewItem {
+    productId: string;
+    productName: string;
+    productImage?: string;
+    rating: number;
+    reviewContent: string;
+    existingReviewId?: string | null;
+}
+
+export interface OrderInfo {
+    id: string;
+    orderNumber: string;
+    orderDate: string;
+    products: any[];
 }

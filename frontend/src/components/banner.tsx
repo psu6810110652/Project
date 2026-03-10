@@ -47,8 +47,6 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
   }
   // (ถ้าเป็น promotion จะข้ามบรรทัดบนไป ทำให้แสดงครบทุกชิ้นที่มี)
 
-  if (products.length === 0) return null;
-
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftBtn, setShowLeftBtn] = useState(false);
   const [showRightBtn, setShowRightBtn] = useState(true);
@@ -79,6 +77,8 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
       return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }
   }, [products]);
+
+  if (products.length === 0) return null;
 
   return (
     <section className={`w-full ${type === 'all' ? 'py-10 bg-[#fffef2] mb-12' : 'h-160 py-10 bg-[#fffef2] mb-12'} overflow-hidden`}>

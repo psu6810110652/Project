@@ -1,23 +1,34 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, RelationId } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, RelationId, CreateDateColumn, UpdateDateColumn } from "typeorm";
 import { Product } from "../../product/entities/product.entity";
 import { User } from '../../users/entities/user.entity';
+import { Order } from "../../orders/entities/order.entity";
 
 @Entity('reviews')
 export class Review {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    @ManyToOne(() => Order, { nullable: true, onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'orderID' })
+    order: Order;
+
+    @RelationId((review: Review) => review.order)
+    orderID: string;
+
+    @Column({ name: 'orderDate', type: 'timestamp', nullable: true })
+    orderDate: Date;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+
     @Column()
     rating: number;
 
     @Column('text')
     reviewContent: string;
-
-    @Column({ default: '' })
-    userName: string; // เก็บชื่อตอนที่รีวิว
-
-    @Column({name: 'orderDate', type: 'timestamp', nullable: true})
-    orderDate: Date; // วันที่สั่งซื้อ เพื่อยืนยันว่าผู้ใช้เคยซื้อสินค้านี้จริง
 
     @ManyToOne(() => Product, (product) => (product as any).reviews, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'productId' })
@@ -31,5 +42,5 @@ export class Review {
     user: User;
 
     @RelationId((review: Review) => review.user)
-    userId: string;
+    userId: number;
 }

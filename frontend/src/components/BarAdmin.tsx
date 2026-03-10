@@ -88,7 +88,7 @@ const BarAdmin: React.FC = () => {
                                             <React.Fragment key={sub.id}>
                                                 <Link
                                                     to={subPath}
-                                                    className={`pt-2 text-xl font-bold font-['Prompt'] transition-all ${isSubActive ? 'text-[#256D45] scale-110' : 'text-[#256D45]'
+                                                    className={`pt-2 text-xl font-bold transition-all ${isSubActive ? 'text-[#256D45] scale-110' : 'text-[#256D45]'
                                                         }`}
                                                 >
                                                     {sub.name}

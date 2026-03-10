@@ -27,7 +27,8 @@ const Profile = () => {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
 
-      // ✅ เช็ค token ก่อน
+      // Check if user is authenticated
+      console.log('Profile page - checking auth:', { userStr: !!userStr, token: !!token });
       if (!token) {
         navigate('/login', { replace: true });
         return;
@@ -306,11 +307,29 @@ const Profile = () => {
           title: 'จัดการ',
           key: 'action',
           align: 'center',
-          render: () => (
-            <button className="border-2 border-[#256D45] text-[#256D45] hover:bg-green-50 px-6 py-1.5 rounded-full text-sm font-bold shadow-sm transition-colors">
-              รีวิว
-            </button>
-          )
+          render: (_, record) => {
+            const dateStr = record.createdAt || record.orderDate || record.created_at;
+            let d = new Date();
+            if (dateStr) d = new Date(dateStr);
+
+            const day = d.getDate().toString().padStart(2, '0');
+            const monthChars = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+            const monthChar = monthChars[d.getMonth()];
+            const yearBE = d.getFullYear() + 543;
+            const shortYear = yearBE.toString().slice(-2);
+            const hours = d.getHours().toString().padStart(2, '0');
+            const minutes = d.getMinutes().toString().padStart(2, '0');
+            const formattedId = `${day}${monthChar}${shortYear}${hours}${minutes}`;
+
+            return (
+              <button
+                onClick={() => navigate(`/profile/review/${formattedId}`)}
+                className="border-2 border-[#256D45] text-[#256D45] px-6! py-1! rounded-full text-sm font-bold hover:bg-[#256D45] hover:text-white shadow-sm transition-colors"
+              >
+                รีวิว
+              </button>
+            );
+          }
         }
       ];
     }
@@ -341,7 +360,7 @@ const Profile = () => {
   const tableColumns = getTableColumns();
 
   return (
-    <div className="bg-[#DCEDC1] font-['Prompt'] text-[#256D45] px-6! py-15! md:px-6 md:py-10">
+    <div className="bg-[#DCEDC1] text-[#256D45] px-6! py-15! md:px-6 md:py-10">
       <div className="max-w-6xl mx-auto w-full">
 
         {/* 🌟 ย้ายหัวข้อมาตรงกลางด้านบนสุด */}
