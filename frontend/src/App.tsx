@@ -69,9 +69,9 @@ function AdminLayout() {
 
   return (
     <AdminSearchProvider>
-      <div className="flex flex-col min-h-screen">
-        {/* Navbar อยู่บนสุด มี id เพื่อวัด height */}
-        <div id="admin-navbar" className="sticky top-0 z-40">
+      <div className="flex flex-col h-screen overflow-hidden bg-[#DCEDC1]">
+        {/* Navbar อยู่บนสุด */}
+        <div id="admin-navbar" className="flex-none z-50">
           <Navbar />
         </div>
 
@@ -84,7 +84,7 @@ function AdminLayout() {
           {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
           {/* Backdrop สำหรับมือถือ */}
           {isMobileMenuOpen && (
             <div
@@ -93,12 +93,12 @@ function AdminLayout() {
             />
           )}
 
-          {/* Sidebar: fixed overlay บนมือถือ, sticky บน desktop */}
+          {/* Sidebar: fixed overlay บนมือถือ, relative ประคอง h-full บน desktop */}
           <aside
             className={`
               fixed top-0 left-0 h-full z-40
               transform transition-transform duration-300 ease-in-out
-              md:sticky md:top-0 md:h-screen md:translate-x-0 md:shrink-0 md:overflow-y-auto
+              md:relative md:translate-x-0 md:shrink-0 md:h-full md:overflow-y-auto
               ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
             `}
           >
@@ -107,7 +107,7 @@ function AdminLayout() {
             <BarAdmin />
           </aside>
 
-          <main className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
+          <main className="flex-1 overflow-y-auto min-w-0 bg-[#DCEDC1]">
             <Routes>
               <Route index element={<Dashboard />} />
               <Route path="orders" element={<Order />} />

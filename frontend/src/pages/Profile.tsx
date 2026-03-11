@@ -369,7 +369,7 @@ const Profile = () => {
         <div className="flex flex-col md:flex-row gap-8">
 
           {/* === คอลัมน์ซ้าย: รูปโปรไฟล์และเมนู === */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-4">
+          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-4 md:sticky md:top-24 h-fit">
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col border border-gray-100">
               {/* รูปโปรไฟล์ */}
               <div className="p-8 flex flex-col items-center border-b border-gray-100">
