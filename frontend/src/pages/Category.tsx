@@ -118,7 +118,7 @@ const Category: React.FC = () => {
     if (loading) return <div>กำลังโหลดข้อมูล...</div>;
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg-main)] font-['Prompt'] text-[var(--color-text-main)] pb-20">
+        <div className="min-h-screen bg-(--color-bg-main) text-(--color-text-main) pb-20">
 
             {/* --- ส่วน Hero Banner --- */}
             <section className="z-0 w-full h-72 md:h-120 lg:h-150 relative">
@@ -132,7 +132,7 @@ const Category: React.FC = () => {
 
                 <div className="absolute top-1/2 -translate-y-1/2 w-full h-16 md:h-24 lg:h-35 bg-[#fffef2bf]" />
 
-                <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-center font-semibold [-webkit-text-stroke:1px_#256d45] md:[-webkit-text-stroke:2.5px_#256d45] lg:[-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal] w-full px-4 break-words">
+                <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-center font-semibold [-webkit-text-stroke:1px_#256d45] md:[-webkit-text-stroke:2.5px_#256d45] lg:[-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal] w-full px-4 wrap-break-words">
                     {categoryInfo?.name || "ไม่พบหมวดหมู่"}
                 </h2>
             </section>
@@ -153,7 +153,7 @@ const Category: React.FC = () => {
                     <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
                         <button
                             onClick={() => setSelectedTypes([])}
-                            className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-bold border-2 transition-all flex items-center gap-2 ${selectedTypes.length === 0 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-primary)] border-[var(--color-primary)]'}`}
+                            className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-bold border-2 transition-all flex items-center gap-2 ${selectedTypes.length === 0 ? 'bg-(--color-primary) text-white border-(--color-primary)' : 'bg-white text-(--color-primary) border-(--color-primary)'}`}
                         >
                             <span>ทั้งหมด</span>
                             <span className="opacity-60 text-xs">({products.length})</span>
@@ -191,11 +191,11 @@ const Category: React.FC = () => {
                 <aside className="hidden md:block w-72 shrink-0">
                     <div className="sticky top-24">
                         {/* Single Filter Box with All Filters */}
-                        <div className="bg-[var(--color-bg-card)] p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
+                        <div className="bg-(--color-bg-card) p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
                             
                             {/* Type Filter Section */}
                             <div className="mb-8">
-                                <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-6">ประเภทสินค้า</h3>
+                                <h3 className="text-2xl font-semibold text-(--color-primary) mb-6">ประเภทสินค้า</h3>
                                 <div className="flex flex-col gap-3">
                                     <label className="flex items-center gap-3 cursor-pointer group p-1">
                                         <input
@@ -204,14 +204,14 @@ const Category: React.FC = () => {
                                             checked={selectedTypes.length === 0}
                                             onChange={() => setSelectedTypes([])}
                                         />
-                                        <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.length === 0 ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-gray-300 group-hover:border-[var(--color-primary)]'}`}>
+                                        <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.length === 0 ? 'bg-(--color-primary) border-(--color-primary)' : 'border-gray-300 group-hover:border-(--color-primary)'}`}>
                                             {selectedTypes.length === 0 && (
                                                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             )}
                                         </div>
-                                        <span className={`text-lg font-semibold transition-all ${selectedTypes.length === 0 ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>ทั้งหมด</span>
+                                        <span className={`text-lg font-semibold transition-all ${selectedTypes.length === 0 ? 'text-(--color-primary)' : 'text-gray-500 group-hover:text-(--color-primary)'}`}>ทั้งหมด</span>
                                         <span className="ml-auto text-sm text-gray-400">({products.length})</span>
                                     </label>
 
@@ -223,14 +223,14 @@ const Category: React.FC = () => {
                                                 checked={selectedTypes.includes(type)}
                                                 onChange={() => toggleType(type)}
                                             />
-                                            <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.includes(type) ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'border-gray-300 group-hover:border-[var(--color-primary)]'}`}>
+                                            <div className={`w-6 h-6 border-2 rounded-md flex items-center justify-center transition-all ${selectedTypes.includes(type) ? 'bg-(--color-primary) border-(--color-primary)' : 'border-gray-300 group-hover:border-(--color-primary)'}`}>
                                                 {selectedTypes.includes(type) && (
                                                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 )}
                                             </div>
-                                            <span className={`text-lg font-semibold transition-all ${selectedTypes.includes(type) ? 'text-[var(--color-primary)]' : 'text-gray-500 group-hover:text-[var(--color-primary)]'}`}>{type}</span>
+                                            <span className={`text-lg font-semibold transition-all ${selectedTypes.includes(type) ? 'text-(--color-primary)' : 'text-gray-500 group-hover:text-(--color-primary)'}`}>{type}</span>
                                             <span className="ml-auto text-sm text-gray-400">({count})</span>
                                         </label>
                                     ))}
@@ -242,7 +242,7 @@ const Category: React.FC = () => {
 
                             {/* Rating Filter Section */}
                             <div className="mb-8">
-                                <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-6">คะแนนรีวิว</h3>
+                                
                                 <RatingFilter
                                     selectedRating={selectedRating}
                                     onRatingChange={setSelectedRating}
@@ -254,7 +254,7 @@ const Category: React.FC = () => {
 
                             {/* Price Filter Section */}
                             <div>
-                                <h3 className="text-2xl font-semibold text-[var(--color-primary)] mb-6">ช่วงราคา</h3>
+                                
                                 <PriceFilter
                                     minPrice={priceRange[0]}
                                     maxPrice={priceRange[1]}
