@@ -19,6 +19,11 @@ const PaymentPage: React.FC = () => {
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  // เก็บข้อมูลผู้ใช้ (ชื่อ, เบอร์โทร) แยกจาก Address
+  const [userData, setUserData] = useState<{ name: string; phone: string }>({
+    name: 'ไม่ระบุชื่อ',
+    phone: '-'
+  });
 
   const cartItems: CartItem[] = location.state?.cartItems || [];
   const totalPrice: number = location.state?.totalPrice || 0;
@@ -31,24 +36,47 @@ const PaymentPage: React.FC = () => {
   // 🌟 ฟังก์ชันสำหรับดึงข้อมูลที่อยู่ทั้งหมดของผู้ใช้
   const fetchUserAddresses = async () => {
     try {
+      // ดึงข้อมูลผู้ใช้จาก localStorage และ API ก่อน เพื่อเอาชื่อและเบอร์โทร
+      let userName = 'ไม่ระบุชื่อ';
+      let userPhone = '-';
+      const userStr = localStorage.getItem('user');
+      const localUser = userStr ? JSON.parse(userStr) : null;
+
+      if (localUser?.id) {
+        try {
+          const userRes = await api.get(`/users/${localUser.id}`);
+          if (userRes.data) {
+            userName = userRes.data.name || userRes.data.username || 'ไม่ระบุชื่อ';
+            userPhone = userRes.data.phone || '-';
+            setUserData({ name: userName, phone: userPhone });
+          }
+        } catch (uErr) {
+          console.warn('ไม่สามารถดึงข้อมูล user API ได้ ใช้ข้อมูลจาก localStorage ถ้ามี', uErr);
+          // ถ้า userRes ล้มเหลว ปล่อยให้ค่า default จาก localStorage อยู่
+        }
+      }
+
+      // ดึงที่อยู่เหมือนเดิม
       const response = await api.get('/addresses');
       const addresses = response.data;
       setSavedAddresses(addresses);
-      
+
       if (addresses.length > 0) {
-        // หาที่อยู่ที่เป็น default หรือใช้ที่อยู่แรก
         const defaultAddress = addresses.find((addr: any) => addr.isDefault) || addresses[0];
         setSelectedAddressId(defaultAddress.id);
-        
-        // สร้างข้อความที่อยู่แบบเต็ม
-        const fullAddress = `${defaultAddress.name || 'ไม่ระบุชื่อ'} เบอร์โทร: ${defaultAddress.phone || '-'}\nเลขที่: ${defaultAddress.houseNumber || ''} ถนน/ซอย: ${defaultAddress.streetSoi || ''}\nตำบล: ${defaultAddress.subDistrict || ''} อำเภอ: ${defaultAddress.district || ''}\nจังหวัด: ${defaultAddress.province || ''} รหัสไปรษณีย์ ${defaultAddress.postalCode || ''}`;
+
+        // สร้างข้อความที่อยู่แบบเต็ม โดยใช้ชื่อ/เบอร์จาก userData (หรือค่าที่เพิ่งดึงมา)
+        const fullAddress = `${userName} เบอร์โทร: ${userPhone}\n` +
+          `เลขที่: ${defaultAddress.houseNumber || ''} ถนน/ซอย: ${defaultAddress.streetSoi || ''}\n` +
+          `ตำบล: ${defaultAddress.subDistrict || ''} อำเภอ: ${defaultAddress.district || ''}\n` +
+          `จังหวัด: ${defaultAddress.province || ''} รหัสไปรษณีย์ ${defaultAddress.postalCode || ''}`;
         setDeliveryAddress(fullAddress);
       } else {
         // ถ้าไม่มีที่อยู่ในระบบ ลองดึงจาก localStorage เดิม
         const savedAddress = localStorage.getItem('shippingAddress');
         if (savedAddress) {
           const addr = JSON.parse(savedAddress);
-          const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
+          const fullAddress = `${addr.nameSurname || userData.name || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || userData.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
           setDeliveryAddress(fullAddress);
         } else {
           setDeliveryAddress('ไม่พบข้อมูลการจัดส่ง กรุณากลับไปเพิ่มที่อยู่ในหน้าโปรไฟล์');
@@ -60,7 +88,7 @@ const PaymentPage: React.FC = () => {
       const savedAddress = localStorage.getItem('shippingAddress');
       if (savedAddress) {
         const addr = JSON.parse(savedAddress);
-        const fullAddress = `${addr.nameSurname || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
+        const fullAddress = `${addr.nameSurname || userData.name || 'ไม่ระบุชื่อ'} เบอร์โทร: ${addr.phone || userData.phone || '-'}\nเลขที่: ${addr.houseNumber || ''} ถนน/ซอย: ${addr.streetSoi || ''}\nตำบล: ${addr.subDistrict || ''} อำเภอ: ${addr.district || ''}\nจังหวัด: ${addr.province || ''} รหัสไปรษณีย์ ${addr.postalCode || ''}`;
         setDeliveryAddress(fullAddress);
       } else {
         setDeliveryAddress('ไม่พบข้อมูลการจัดส่ง กรุณากลับไปเพิ่มที่อยู่ในหน้าโปรไฟล์');
@@ -71,7 +99,12 @@ const PaymentPage: React.FC = () => {
   // 🌟 ฟังก์ชันสำหรับเลือกที่อยู่
   const handleAddressSelect = (address: any) => {
     setSelectedAddressId(address.id);
-    const fullAddress = `${address.name || 'ไม่ระบุชื่อ'} เบอร์โทร: ${address.phone || '-'}\nเลขที่: ${address.houseNumber || ''} ถนน/ซอย: ${address.streetSoi || ''}\nตำบล: ${address.subDistrict || ''} อำเภอ: ${address.district || ''}\nจังหวัด: ${address.province || ''} รหัสไปรษณีย์ ${address.postalCode || ''}`;
+
+    const fullAddress = `${userData.name} เบอร์โทร: ${userData.phone}\n` +
+      `เลขที่: ${address.houseNumber || ''} ถนน/ซอย: ${address.streetSoi || ''}\n` +
+      `ตำบล: ${address.subDistrict || ''} อำเภอ: ${address.district || ''}\n` +
+      `จังหวัด: ${address.province || ''} รหัสไปรษณีย์ ${address.postalCode || ''}`;
+
     setDeliveryAddress(fullAddress);
     setShowAddressDropdown(false);
   };
@@ -150,9 +183,9 @@ const PaymentPage: React.FC = () => {
       const customerId = localUser?.id ? String(localUser.id) : undefined;
 
       const orderPayload = {
-        customerName: addr.name || 'ลูกค้าทั่วไป', // ✅ ตรวจสอบให้แน่ใจว่าไม่เป็นค่าว่าง
+        customerName: userData.name || 'ลูกค้าทั่วไป', // ✅ ดึงจาก userData (User table)
         address: deliveryAddress, // ✅ ส่งที่อยู่จัดส่งแบบเต็มที่โชว์ใน UI
-        phone: addr.phone || '-', // ✅ ตรวจสอบให้แน่ใจว่าไม่เป็นค่าว่าง
+        phone: userData.phone || '-', // ✅ ดึงจาก userData (User table)
         totalAmount: finalTotal,
         products: cartItems.map(item => ({
           productId: item.id, // ✅ เก็บ ID สินค้าไว้เผื่อเรียกดูภายหลัง
