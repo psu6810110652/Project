@@ -3,16 +3,41 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { Product } from '../product/entities/product.entity';
 
 @Injectable()
 export class OrdersService {
     constructor(
         @InjectRepository(Order)
         private ordersRepository: Repository<Order>,
+        @InjectRepository(Product)
+        private productRepository: Repository<Product>,
     ) { }
 
     async create(createOrderDto: CreateOrderDto): Promise<Order> {
-        // สร้างเลขออเดอร์ให้มีความเฉพาะเจาะจงมากขึ้นเพื่อเลี่ยงปัญหาเลขซ้ำ (Unique Constraint)
+        // 1. ตรวจสอบสต็อกสินค้าก่อน (Pre-check)
+        for (const item of createOrderDto.products) {
+            const pId = item.productId || item.id;
+            const product = await this.productRepository.findOne({ where: { id: pId } });
+            if (!product) {
+                throw new NotFoundException(`ไม่พบสินค้าที่มีรหัส ${pId}`);
+            }
+            if (product.stockQuantity < item.quantity) {
+                throw new Error(`สินค้า ${product.name} มีสต็อกไม่เพียงพอ (คงเหลือ ${product.stockQuantity})`);
+            }
+        }
+
+        // 2. ตัดสต็อกสินค้า
+        for (const item of createOrderDto.products) {
+            const pId = item.productId || item.id;
+            const product = await this.productRepository.findOne({ where: { id: pId } });
+            if (product) {
+                product.stockQuantity -= item.quantity;
+                await this.productRepository.save(product);
+            }
+        }
+
+        // 3. สร้างเลขออเดอร์ให้มีความเฉพาะเจาะจง
         const datePart = new Date().toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
         const randomPart = Math.floor(1000 + Math.random() * 9000).toString();  // 4 random digits
         const orderNumber = `ORD${datePart}${randomPart}`;
@@ -52,10 +77,25 @@ export class OrdersService {
 
     async updateStatus(id: string, status: string, trackingNumber?: string): Promise<Order> {
         const order = await this.findOne(id);
+        const previousStatus = order.status;
         order.status = status;
+
         if (trackingNumber !== undefined) {
             order.trackingNumber = trackingNumber;
         }
+
+        // คืนสต็อกสินค้าหากออเดอร์ถูกยกเลิก (และก่อนหน้านี้ยังไม่ได้ยกเลิก)
+        if (status === 'cancelled' && previousStatus !== 'cancelled') {
+            for (const item of order.products) {
+                const pId = item.productId || item.id;
+                const product = await this.productRepository.findOne({ where: { id: pId } });
+                if (product) {
+                    product.stockQuantity += item.quantity;
+                    await this.productRepository.save(product);
+                }
+            }
+        }
+
         return this.ordersRepository.save(order);
     }
 
