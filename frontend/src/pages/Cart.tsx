@@ -1,76 +1,40 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { CartItem } from '../types';
+import { useCart } from '../context/CartContext';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { cartItems, updateQuantity, removeFromCart } = useCart();
   const [isLoading, setIsLoading] = useState(true);
 
   // Load cart data from localStorage on component mount
   useEffect(() => {
-    const loadCart = () => {
-      try {
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-          const cartData = JSON.parse(savedCart);
-          setCartItems(cartData);
-        }
-      } catch (error) {
-        console.error('Error loading cart:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadCart();
-
-    // Listen for cart updates from other components
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'cart') {
-        loadCart();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    // Cart is now managed by CartContext, so we just need to set loading to false
+    setIsLoading(false);
   }, []);
-
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('cart', JSON.stringify(cartItems));
-    }
-  }, [cartItems, isLoading]);
 
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity > 0) {
-      setCartItems(cartItems.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      ));
+      updateQuantity(id, newQuantity);
     }
   };
 
   const handleQuantityInput = (id: string, value: string) => {
     if (value === '') {
-      setCartItems(cartItems.map(item =>
-        item.id === id ? { ...item, quantity: 0 } : item
-      ));
+      updateQuantity(id, 0);
     } else {
       const numValue = parseInt(value) || 0;
       if (numValue > 0) {
-        setCartItems(cartItems.map(item =>
-          item.id === id ? { ...item, quantity: numValue } : item
-        ));
+        updateQuantity(id, numValue);
       }
     }
   };
 
   const handleRemoveItem = (id: string) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
+    removeFromCart(id);
   };
 
-  const totalPrice = cartItems.reduce((sum, item) => {
+  const totalPrice = cartItems.reduce((sum: number, item: any) => {
     const itemPrice = item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price;
     return sum + (itemPrice * item.quantity);
   }, 0);
@@ -112,7 +76,7 @@ const Cart = () => {
             <div className="lg:col-span-3">
               <div className="bg-[#FFFEF2] rounded-2xl shadow-lg overflow-hidden p-6">
                 <div className="space-y-4">
-                  {cartItems.map(item => {
+                  {cartItems.map((item: any) => {
                     const itemPrice = item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price;
                     return (
                       <div key={item.id} className="flex items-center gap-6 pb-4 border-b border-gray-200 last:border-b-0">

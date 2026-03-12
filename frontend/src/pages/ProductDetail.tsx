@@ -3,10 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Star, Share2 } from 'lucide-react';
 import type { Product } from '../types';
 import api from '../services/api';
+import { useCart } from '../context/CartContext';
 
 export const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { addToCart } = useCart();
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [product, setProduct] = useState<Product | null>(null);
@@ -80,12 +82,6 @@ export const ProductDetail: React.FC = () => {
         setMessage('');
 
         try {
-            // Get existing cart from localStorage
-            const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-            // Check if product already exists in cart
-            const existingItemIndex = existingCart.findIndex((item: any) => item.id === id);
-
             // 🌟 ปรับตรงนี้ให้ดึงรูปลงตะกร้าได้ถูกต้อง
             const cartItem = {
                 id: product.id,
@@ -93,28 +89,13 @@ export const ProductDetail: React.FC = () => {
                 price: product.price,
                 quantity: quantity,
                 imageUrl: (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] : product.imageUrl,
-                imageUrls: product.imageUrls,
                 stockQuantity: product.stockQuantity ?? product.stock ?? 0,
                 isPromotion: product.isPromotion,
                 promotionPrice: product.promotionPrice
             };
 
-            if (existingItemIndex >= 0) {
-                // Update existing item quantity
-                existingCart[existingItemIndex].quantity += quantity;
-            } else {
-                // Add new item
-                existingCart.push(cartItem);
-            }
-
-            // Save to localStorage
-            localStorage.setItem('cart', JSON.stringify(existingCart));
-
-            // Trigger storage event for other components
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'cart',
-                newValue: JSON.stringify(existingCart)
-            }));
+            // Use CartContext to add to cart
+            addToCart(cartItem);
 
             setMessage('เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว');
             setTimeout(() => setMessage(''), 3000);
@@ -127,7 +108,6 @@ export const ProductDetail: React.FC = () => {
             setIsLoading(false);
         }
     };
-
 
     const handleQuantityChange = (newQuantity: number) => {
         const stockLimit = product?.stockQuantity ?? product?.stock ?? 0;

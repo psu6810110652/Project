@@ -3,10 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload, CheckCircle } from 'lucide-react';
 import api from '../services/api';
 import { type CartItem } from '../types';
+import { useCart } from '../context/CartContext';
 
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { clearCart } = useCart();
 
   // 🌟 State เดิมสำหรับโชว์รูปบนหน้าเว็บ
   const [slipImage, setSlipImage] = useState<string | null>(null);
@@ -238,7 +240,7 @@ const PaymentPage: React.FC = () => {
       }
 
       // ✅ ล้างตะกร้าสินค้าหลังจากสั่งซื้อสำเร็จ
-      localStorage.removeItem('cart');
+      clearCart();
 
       setShowSuccessOverlay(true);
 

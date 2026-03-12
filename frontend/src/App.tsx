@@ -25,6 +25,7 @@ const PaymentPage = lazy(() => import('./pages/PaymentPage'));
 
 import Navbar from './components/Navbar';
 import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 import Footer from './components/Footer';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminSearchProvider } from './context/AdminSearchContext';
@@ -39,28 +40,30 @@ const LoadingFallback = () => (
 
 function UserLayout() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <div className="flex-1">
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/:category" element={<Category />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
-            <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/login" element={<Loginpage />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/review/:productId" element={<ReviewPage />} />
-            <Route path="/profile/review/:orderId" element={<EditReviewPage />} />
-          </Routes>
-        </Suspense>
+    <CartProvider>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <div className="flex-1">
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/:category" element={<Category />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/edit-profile" element={<EditProfile />} />
+              <Route path="/payment" element={<PaymentPage />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/login" element={<Loginpage />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/review/:productId" element={<ReviewPage />} />
+              <Route path="/profile/review/:orderId" element={<EditReviewPage />} />
+            </Routes>
+          </Suspense>
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </CartProvider>
   );
 }
 

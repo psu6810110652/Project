@@ -1,17 +1,20 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-// 🌟 Import ไอคอนทั้งของฝั่ง User และ Admin มารวมกัน
+// Import ไอคอนทั้งของฝั่ง User และ Admin มารวมกัน
 import { UserCircle, ShoppingCart, LogOut, Search, Bell } from "lucide-react";
 import logo from "../assets/images/logo.png";
 import { AuthContext } from "../context/AuthContext";
+import { CartContext } from "../context/CartContext";
 import { AdminSearchContext } from "../context/AdminSearchContext";
 import api from "../services/api";
 
 function Navbar() {
   const auth = useContext(AuthContext);
+  const cart = useContext(CartContext);
   const user = auth?.user;
   const logout = auth?.logout;
   const navigate = useNavigate();
+  const cartCount = cart?.cartCount || 0;
 
   const { searchTerm, setSearchTerm } = useContext(AdminSearchContext);
 
@@ -23,7 +26,7 @@ function Navbar() {
     }
   };
 
-  // 🌟 เช็คสิทธิ์ว่าเป็น Admin หรือไม่ และอยู่ในหน้า Admin หรือไม่
+  // เช็คสิทธิ์ว่าเป็น Admin หรือไม่ และอยู่ในหน้า Admin หรือไม่
   const isAdmin = user?.role === 'Admin';
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith('/admin');
@@ -101,7 +104,7 @@ function Navbar() {
       label: p.name,
       subLabel: `รหัส: ${p.id}`,
       type: 'สินค้า',
-      path: p.category ? `/admin/products/${p.category.id}/${p.id}` : `/admin/products`
+      path: p.category?.id ? `/admin/products/${p.category.id}/${p.id}` : `/admin/products`
     }));
 
     // ค้นหาคำสั่งซื้อ
@@ -121,7 +124,7 @@ function Navbar() {
   }
 
   // ==========================================
-  // 🔴 1. ถ้าเป็น ADMIN และอยู่ในหน้า Admin จะแสดงส่วนนี้
+  // ถ้าเป็น ADMIN และอยู่ในหน้า Admin จะแสดงส่วนนี้
   // ==========================================
   if (isAdmin && isAdminPage) {
     return (
@@ -248,7 +251,7 @@ function Navbar() {
   }
 
   // ==========================================
-  // 🟢 2. ถ้าเป็นลูกค้าปกติ (USER) จะมาแสดงส่วนนี้แทน
+  // ถ้าเป็นลูกค้าปกติ (USER) จะมาแสดงส่วนนี้แทน
   // ==========================================
   return (
     <div className="sticky top-0 z-50 w-full bg-[#FFFEF2] border-b border-gray-100 shadow-sm flex flex-col font-['Prompt']">
@@ -299,8 +302,13 @@ function Navbar() {
             </Link>
           )}
 
-          <Link to="/cart" className="hover:opacity-80 flex items-center">
+          <Link to="/cart" className="hover:opacity-80 flex items-center relative">
             <ShoppingCart size={28} className="md:w-8 md:h-8" strokeWidth={1.5} />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>
