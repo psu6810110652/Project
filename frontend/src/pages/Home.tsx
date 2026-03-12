@@ -11,12 +11,18 @@ const Home: React.FC = () => {
   const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
-    // Fetch products that are on promotion
+    // ฟังก์ชันช่วยจัดการรูปภาพ (เพราะ API ส่งมาเป็น Array)
+    const getFirstImage = (p: any) => {
+      const urls = p.thumbnailUrls || p.imageUrls || p.thumbnailUrl || p.imageUrl;
+      return Array.isArray(urls) ? urls[0] : urls;
+    };
+
+    // 1. Fetch products that are on promotion
     api.get('/product/promotions')
       .then(res => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
-          image: p.thumbnailUrl || p.imageUrl,
+          image: getFirstImage(p), // ดึงรูปแรก
           stock: p.stockQuantity,
           isRecommend: p.isFeatured,
           rating: p.rating || 0,
@@ -26,16 +32,14 @@ const Home: React.FC = () => {
         }));
         setPromotions(mappedProducts);
       })
-      .catch(err => {
-        console.error("Error fetching promotions:", err);
-      });
+      .catch(err => console.error("Error fetching promotions:", err));
 
-    // Fetch products that are featured (สินค้าแนะนำ)
+    // 2. Fetch products that are featured (สินค้าแนะนำ)
     api.get('/product/featured')
       .then(res => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
-          image: p.thumbnailUrl || p.imageUrl,
+          image: getFirstImage(p), // ดึงรูปแรก
           stock: p.stockQuantity,
           isRecommend: true,
           rating: p.rating || 0,
@@ -45,16 +49,14 @@ const Home: React.FC = () => {
         }));
         setFeatured(mappedProducts);
       })
-      .catch(err => {
-        console.error("Error fetching featured products:", err);
-      });
+      .catch(err => console.error("Error fetching featured products:", err));
 
-    // Fetch all products
+    // 3. Fetch all products
     api.get('/product')
       .then(res => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
-          image: p.thumbnailUrl || p.imageUrl,
+          image: getFirstImage(p), // ดึงรูปแรก
           stock: p.stockQuantity ?? p.stock ?? 0,
           rating: p.rating || 0,
           favoriteCount: p.favoriteCount || 0,
@@ -63,9 +65,7 @@ const Home: React.FC = () => {
         }));
         setAllProducts(mappedProducts);
       })
-      .catch(err => {
-        console.error("Error fetching all products:", err);
-      });
+      .catch(err => console.error("Error fetching all products:", err));
   }, []);
 
   return (
