@@ -1,10 +1,12 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { type OrderData } from '../../types';
 import { Table, ConfigProvider } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { AdminSearchContext } from '../../context/AdminSearchContext';
+
+const MONTH_CHARS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
 export default function Order() {
   const navigate = useNavigate();
@@ -51,7 +53,7 @@ export default function Order() {
   });
 
   // คอลัมน์สำหรับตาราง
-  const columns: ColumnsType<OrderData> = [
+  const columns: ColumnsType<OrderData> = useMemo(() => [
     {
       title: 'รหัสสั่งซื้อ',
       dataIndex: 'orderNumber',
@@ -65,8 +67,7 @@ export default function Order() {
         }
 
         const day = d.getDate().toString().padStart(2, '0');
-        const monthChars = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-        const monthChar = monthChars[d.getMonth()];
+        const monthChar = MONTH_CHARS[d.getMonth()];
         const yearBE = d.getFullYear() + 543;
         const shortYear = yearBE.toString().slice(-2);
 
@@ -179,7 +180,7 @@ export default function Order() {
         </button>
       ),
     },
-  ];
+  ], [navigate]);
 
   return (
     <ConfigProvider

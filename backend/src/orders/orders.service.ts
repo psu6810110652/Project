@@ -52,6 +52,11 @@ export class OrdersService {
 
     findAll(): Promise<Order[]> {
         return this.ordersRepository.find({
+            select: [
+                'id', 'orderNumber', 'customerName', 'products',
+                'totalAmount', 'orderDate', 'status', 'address',
+                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId'
+            ],
             order: {
                 orderDate: 'DESC',
             },
@@ -61,6 +66,11 @@ export class OrdersService {
     findByStatus(status: string): Promise<Order[]> {
         return this.ordersRepository.find({
             where: { status },
+            select: [
+                'id', 'orderNumber', 'customerName', 'products',
+                'totalAmount', 'orderDate', 'status', 'address',
+                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId'
+            ],
             order: {
                 orderDate: 'DESC',
             },
@@ -68,6 +78,7 @@ export class OrdersService {
     }
 
     async findOne(id: string): Promise<Order> {
+        // findOne should return all fields including paymentSlip
         const order = await this.ordersRepository.findOne({ where: { id } });
         if (!order) {
             throw new NotFoundException(`Order #${id} not found`);
@@ -102,6 +113,11 @@ export class OrdersService {
     findByCustomerId(customerId: string): Promise<Order[]> {
         return this.ordersRepository.find({
             where: { customerId },
+            select: [
+                'id', 'orderNumber', 'customerName', 'products',
+                'totalAmount', 'orderDate', 'status', 'address',
+                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId'
+            ],
             order: { orderDate: 'DESC' },
         });
     }
