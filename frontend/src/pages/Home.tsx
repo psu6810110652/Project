@@ -6,44 +6,116 @@ import api from '../services/api';
 import HomeImage from '../assets/images/Home.png';
 
 const Home: React.FC = () => {
-  const [promotions, setPromotions] = useState([]);
-  const [featured, setFeatured] = useState([]);
-  const [allProducts, setAllProducts] = useState([]);
+  const [promotions, setPromotions] = useState<any[]>([]);
+  const [featured, setFeatured] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch products that are on promotion
+    // Fetch products that are on promotion with detailed data like ProductDetail
     api.get('/product/promotions')
-      .then(res => {
-        const mappedProducts = res.data.map((p: any) => ({
-          ...p,
-          image: p.thumbnailUrl || p.imageUrl,
-          stock: p.stockQuantity,
-          isRecommend: p.isFeatured,
-          rating: p.rating || 0,
-          favoriteCount: p.favoriteCount || 0,
-          reviewCount: p.reviewCount || 0,
-          soldCount: p.soldCount || 0
-        }));
-        setPromotions(mappedProducts);
+      .then(async (res) => {
+        // For each product, fetch detailed reviews like ProductDetail does
+        const productsWithDetails = await Promise.all(
+          res.data.map(async (p: any) => {
+            try {
+              // Fetch reviews for each product to calculate real rating
+              const reviewsResponse = await api.get(`/product/${p.id}/reviews`);
+              const reviewsData = reviewsResponse.data;
+              
+              let averageRating = p.rating || 0;
+              let totalReviews = p.reviewCount || 0;
+              
+              // Calculate average rating from reviews like ProductDetail
+              if (reviewsData && reviewsData.length > 0) {
+                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+                averageRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
+                totalReviews = reviewsData.length;
+              }
+              
+              return {
+                ...p,
+                image: p.thumbnailUrl || p.imageUrl,
+                stock: p.stockQuantity ?? p.stock ?? 0,
+                isRecommend: p.isFeatured,
+                isPromotion: true,
+                rating: averageRating,
+                favoriteCount: p.favoriteCount || 0,
+                reviewCount: totalReviews,
+                soldCount: p.soldCount || 0
+              };
+            } catch (error) {
+              console.error(`Error fetching reviews for product ${p.id}:`, error);
+              // Fallback to basic product data
+              return {
+                ...p,
+                image: p.thumbnailUrl || p.imageUrl,
+                stock: p.stockQuantity ?? p.stock ?? 0,
+                isRecommend: p.isFeatured,
+                isPromotion: true,
+                rating: p.rating || 0,
+                favoriteCount: p.favoriteCount || 0,
+                reviewCount: p.reviewCount || 0,
+                soldCount: p.soldCount || 0
+              };
+            }
+          })
+        );
+        setPromotions(productsWithDetails);
       })
       .catch(err => {
         console.error("Error fetching promotions:", err);
       });
 
-    // Fetch products that are featured (สินค้าแนะนำ)
+    // Fetch products that are featured (สินค้าแนะนำ) with detailed data like ProductDetail
     api.get('/product/featured')
-      .then(res => {
-        const mappedProducts = res.data.map((p: any) => ({
-          ...p,
-          image: p.thumbnailUrl || p.imageUrl,
-          stock: p.stockQuantity,
-          isRecommend: true,
-          rating: p.rating || 0,
-          favoriteCount: p.favoriteCount || 0,
-          reviewCount: p.reviewCount || 0,
-          soldCount: p.soldCount || 0
-        }));
-        setFeatured(mappedProducts);
+      .then(async (res) => {
+        // For each product, fetch detailed reviews like ProductDetail does
+        const productsWithDetails = await Promise.all(
+          res.data.map(async (p: any) => {
+            try {
+              // Fetch reviews for each product to calculate real rating
+              const reviewsResponse = await api.get(`/product/${p.id}/reviews`);
+              const reviewsData = reviewsResponse.data;
+              
+              let averageRating = p.rating || 0;
+              let totalReviews = p.reviewCount || 0;
+              
+              // Calculate average rating from reviews like ProductDetail
+              if (reviewsData && reviewsData.length > 0) {
+                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+                averageRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
+                totalReviews = reviewsData.length;
+              }
+              
+              return {
+                ...p,
+                image: p.thumbnailUrl || p.imageUrl,
+                stock: p.stockQuantity ?? p.stock ?? 0,
+                isRecommend: true,
+                isPromotion: p.isPromotion || false,
+                rating: averageRating,
+                favoriteCount: p.favoriteCount || 0,
+                reviewCount: totalReviews,
+                soldCount: p.soldCount || 0
+              };
+            } catch (error) {
+              console.error(`Error fetching reviews for product ${p.id}:`, error);
+              // Fallback to basic product data
+              return {
+                ...p,
+                image: p.thumbnailUrl || p.imageUrl,
+                stock: p.stockQuantity ?? p.stock ?? 0,
+                isRecommend: true,
+                isPromotion: p.isPromotion || false,
+                rating: p.rating || 0,
+                favoriteCount: p.favoriteCount || 0,
+                reviewCount: p.reviewCount || 0,
+                soldCount: p.soldCount || 0
+              };
+            }
+          })
+        );
+        setFeatured(productsWithDetails);
       })
       .catch(err => {
         console.error("Error fetching featured products:", err);
@@ -56,6 +128,8 @@ const Home: React.FC = () => {
           ...p,
           image: p.thumbnailUrl || p.imageUrl,
           stock: p.stockQuantity ?? p.stock ?? 0,
+          isRecommend: p.isFeatured || false,
+          isPromotion: p.isPromotion || false,
           rating: p.rating || 0,
           favoriteCount: p.favoriteCount || 0,
           reviewCount: p.reviewCount || 0,

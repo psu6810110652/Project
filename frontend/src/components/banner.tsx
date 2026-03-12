@@ -104,6 +104,10 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
                   price={product.price}
                   stock={product.stock}
                   image={product.image}
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
+                  favoriteCount={product.favoriteCount}
+                  soldCount={product.soldCount}
                 />
               </div>
             ))}
@@ -135,6 +139,10 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
                     price={product.price}
                     stock={product.stock}
                     image={product.image}
+                    rating={product.rating}
+                    reviewCount={product.reviewCount}
+                    favoriteCount={product.favoriteCount}
+                    soldCount={product.soldCount}
                   />
                 </div>
               ))}
