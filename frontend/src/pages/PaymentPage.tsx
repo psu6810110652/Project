@@ -219,6 +219,24 @@ const PaymentPage: React.FC = () => {
       const response = await api.post('/api/admin/orders', orderPayload);
       console.log('บันทึกออเดอร์สำเร็จ:', response.data);
 
+      // ✅ Update sold counts for purchased products
+      try {
+        for (const item of cartItems) {
+          const currentProductResponse = await api.get(`/product/${item.id}`);
+          const currentProduct = currentProductResponse.data;
+          const newSoldCount = (currentProduct.soldCount || 0) + item.quantity;
+          
+          await api.patch(`/product/${item.id}/stats`, {
+            soldCount: newSoldCount
+          });
+          
+          console.log(`Updated sold count for ${item.name}: ${newSoldCount}`);
+        }
+      } catch (soldCountError) {
+        console.error('Error updating sold counts:', soldCountError);
+        // Continue with order process even if sold count update fails
+      }
+
       // ✅ ล้างตะกร้าสินค้าหลังจากสั่งซื้อสำเร็จ
       localStorage.removeItem('cart');
 

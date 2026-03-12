@@ -51,6 +51,26 @@ export class ProductController {
   }
 
 
+  @Patch(':id/stats')
+  async updateProductStats(@Param('id') id: string, @Body() statsData: { favoriteCount?: number; soldCount?: number }) {
+    try {
+      const product = await this.productService.findOne(id);
+      
+      // Only update the provided fields
+      const updateData: any = {};
+      if (statsData.favoriteCount !== undefined) {
+        updateData.favoriteCount = statsData.favoriteCount;
+      }
+      if (statsData.soldCount !== undefined) {
+        updateData.soldCount = statsData.soldCount;
+      }
+      
+      return this.productService.update(id, updateData);
+    } catch (error) {
+      throw new Error(`Failed to update product stats: ${error.message}`);
+    }
+  }
+
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -60,7 +80,7 @@ export class ProductController {
 
 
   @Get('seed/update-stats')
-  async updateStats() {
+  async seedProductStats() {
     console.log('🔄 Updating product statistics...');
     try {
       // Get all products

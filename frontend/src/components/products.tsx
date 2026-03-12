@@ -16,7 +16,8 @@ export const Products = (props: ExtendedProductCard) => {
         rating: props.rating || 0,
         reviewCount: props.reviewCount || 0,
         favoriteCount: props.favoriteCount || 0,
-        soldCount: props.soldCount || 0
+        soldCount: props.soldCount || 0,
+        stock: props.stock || 0
     });
 
     useEffect(() => {
@@ -53,7 +54,8 @@ export const Products = (props: ExtendedProductCard) => {
                 rating: averageRating,
                 reviewCount: totalReviews,
                 favoriteCount: productDetail.favoriteCount || 0,
-                soldCount: productDetail.soldCount || 0
+                soldCount: productDetail.soldCount || 0,
+                stock: productDetail.stockQuantity || productDetail.stock || 0
             });
         } catch (error) {
             console.error(`Error fetching product details for ${productId}:`, error);
@@ -62,7 +64,8 @@ export const Products = (props: ExtendedProductCard) => {
                 rating: props.rating || 0,
                 reviewCount: props.reviewCount || 0,
                 favoriteCount: props.favoriteCount || 0,
-                soldCount: props.soldCount || 0
+                soldCount: props.soldCount || 0,
+                stock: props.stock || 0
             });
         }
     };
@@ -73,14 +76,39 @@ export const Products = (props: ExtendedProductCard) => {
         }
     };
 
-    const toggleFavorite = (e: React.MouseEvent) => {
+    const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!props.id) return;
+        
         const newFavoriteStatus = FavoritesService.toggleFavorite(props.id);
         setIsFavorite(newFavoriteStatus);
+        
+        // Update favorite count on backend
+        try {
+            const currentFavoriteCount = productData.favoriteCount || 0;
+            const newFavoriteCount = newFavoriteStatus ? currentFavoriteCount + 1 : Math.max(0, currentFavoriteCount - 1);
+            
+            // Update local state immediately for better UX
+            setProductData(prev => ({
+                ...prev,
+                favoriteCount: newFavoriteCount
+            }));
+            
+            // Update backend
+            await api.patch(`/product/${props.id}/stats`, {
+                favoriteCount: newFavoriteCount
+            });
+        } catch (error) {
+            console.error('Error updating favorite count:', error);
+            // Revert local state if backend update fails
+            setProductData(prev => ({
+                ...prev,
+                favoriteCount: props.favoriteCount || 0
+            }));
+        }
     };
 
-    // 🌟 ฟังก์ชันจัดการรูปภาพแบบฉลาดสุดๆ (อัปเดตใหม่)
+    // ฟังก์ชันจัดการรูปภาพแบบฉลาดสุดๆ (อัปเดตใหม่)
     const getDisplayImage = () => {
         let finalImage = '';
 
@@ -189,7 +217,7 @@ export const Products = (props: ExtendedProductCard) => {
                         </div>
                     </div>
                     <div className="flex justify-between items-center text-sm mb-1.5">
-                        <div className="font-normal opacity-75">มีจำนวน {props.stock} ชิ้น</div>
+                        <div className="font-normal opacity-75">มีจำนวน {productData.stock} ชิ้น</div>
                         <div className="font-normal bg-gray-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter">ขายแล้ว {productData.soldCount || 0}</div>
                     </div>
                     <div className="flex justify-end items-center">
