@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { FavoritesService } from '../services/favoritesService';
 import api from '../services/api';
 
-type ExtendedProductCard = ProductCard & { 
-    imageUrls?: string[] | string; 
-    imageUrl?: string; 
+type ExtendedProductCard = ProductCard & {
+    imageUrls?: string[] | string;
+    imageUrl?: string;
 };
 
 export const Products = (props: ExtendedProductCard) => {
@@ -22,7 +22,7 @@ export const Products = (props: ExtendedProductCard) => {
     useEffect(() => {
         if (props.id) {
             setIsFavorite(FavoritesService.isFavorite(props.id));
-            
+
             // Fetch real product data like ProductDetail does
             fetchProductDetails(props.id);
         }
@@ -33,21 +33,21 @@ export const Products = (props: ExtendedProductCard) => {
             // Fetch complete product details (including soldCount and favoriteCount)
             const productResponse = await api.get(`/product/${productId}`);
             const productDetail = productResponse.data;
-            
+
             // Fetch reviews for this product to calculate real rating (like ProductDetail)
             const reviewsResponse = await api.get(`/product/${productId}/reviews`);
             const reviewsData = reviewsResponse.data;
-            
+
             let averageRating = productDetail.rating || 0;
             let totalReviews = productDetail.reviewCount || 0;
-            
+
             // Calculate average rating from reviews like ProductDetail
             if (reviewsData && reviewsData.length > 0) {
                 const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
                 averageRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
                 totalReviews = reviewsData.length;
             }
-            
+
             // Update with real data from backend
             setProductData({
                 rating: averageRating,
@@ -86,9 +86,9 @@ export const Products = (props: ExtendedProductCard) => {
 
         // 1. ลองดึงจาก imageUrls ก่อน
         if (props.imageUrls) {
-        if (Array.isArray(props.imageUrls) && props.imageUrls.length > 0) {
-            finalImage = props.imageUrls[0]; // <--- ตรงนี้แหละครับที่มันหยิบรูปแรกมาใช้!
-        } else if (typeof props.imageUrls === 'string') {
+            if (Array.isArray(props.imageUrls) && props.imageUrls.length > 0) {
+                finalImage = props.imageUrls[0]; // <--- ตรงนี้แหละครับที่มันหยิบรูปแรกมาใช้!
+            } else if (typeof props.imageUrls === 'string') {
                 try {
                     const parsed = JSON.parse(props.imageUrls);
                     if (Array.isArray(parsed) && parsed.length > 0) finalImage = parsed[0];
@@ -116,7 +116,7 @@ export const Products = (props: ExtendedProductCard) => {
         // 5. ตรวจสอบว่าต้องเติม Base URL ไหม (รูปที่อัปโหลดจริง)
         // ⚠️ สำคัญ: ถ้า Backend รันพอร์ตอื่น (เช่น 8000) ให้แก้เลข 3000 ด้านล่างนี้นะครับ
         if (finalImage.startsWith('/uploads') || finalImage.startsWith('/images') || finalImage.startsWith('/api')) {
-            const API_BASE_URL = 'http://localhost:3000'; 
+            const API_BASE_URL = 'http://localhost:3000';
             return `${API_BASE_URL}${finalImage}`;
         }
 
@@ -144,7 +144,7 @@ export const Products = (props: ExtendedProductCard) => {
                             e.currentTarget.src = 'https://placehold.co/290x290/fee2e2/ef4444?text=Error';
                         }}
                     />
-                    
+
                     <button
                         onClick={toggleFavorite}
                         className="w-10 h-10 object-contain absolute top-2 right-2 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors z-10"
@@ -178,7 +178,7 @@ export const Products = (props: ExtendedProductCard) => {
                                     </span>
                                 ))}
                             </div>
-                            <span className="text-sm font-semibold whitespace-nowrap">{(productData.rating || 0).toFixed(1)}/5.0</span>
+                            <span className="text-sm font-semibold whitespace-nowrap">{Number(productData.rating || 0).toFixed(1)}/5.0</span>
                             <span className="text-xs text-gray-500 whitespace-nowrap">({productData.reviewCount || 0} รีวิว)</span>
                         </div>
                         <div className="flex items-center gap-1 text-gray-400 shrink-0">

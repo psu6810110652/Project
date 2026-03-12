@@ -54,4 +54,20 @@ export class CreateProductDto {
   @ValidateNested()
   @Type(() => CategoryDto)
   category: CategoryDto;
+
+  @IsOptional()
+  @IsNumber()
+  soldCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  favoriteCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  rating?: number;
+
+  @IsOptional()
+  @IsNumber()
+  reviewCount?: number;
 }
