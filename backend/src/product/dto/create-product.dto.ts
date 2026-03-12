@@ -10,4 +10,8 @@ export class CreateProductDto {
     thumbnailUrl?: string;
     type?: string;
     category: { id: number };
+    soldCount?: number;
+    favoriteCount?: number;
+    rating?: number;
+    reviewCount?: number;
 }

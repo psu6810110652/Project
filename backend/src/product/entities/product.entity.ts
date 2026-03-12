@@ -45,6 +45,18 @@ export class Product {
     @Column({ name: 'is_featured', nullable: true }) // boolean
     isFeatured: boolean;
 
+    @Column({ name: 'sold_count', default: 0 }) // int, default 0
+    soldCount: number;
+
+    @Column({ name: 'favorite_count', default: 0 }) // int, default 0
+    favoriteCount: number;
+
+    @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 }) // decimal(3,2), default 0
+    rating: number;
+
+    @Column({ name: 'review_count', default: 0 }) // int, default 0
+    reviewCount: number;
+
     @CreateDateColumn({ name: 'created_at', nullable: true }) // timestamp
     createdAt: Date;
 

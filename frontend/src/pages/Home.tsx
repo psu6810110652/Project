@@ -121,21 +121,56 @@ const Home: React.FC = () => {
         console.error("Error fetching featured products:", err);
       });
 
-    // Fetch all products
+    // Fetch all products with detailed data like ProductDetail
     api.get('/product')
-      .then(res => {
-        const mappedProducts = res.data.map((p: any) => ({
-          ...p,
-          image: p.thumbnailUrl || p.imageUrl,
-          stock: p.stockQuantity ?? p.stock ?? 0,
-          isRecommend: p.isFeatured || false,
-          isPromotion: p.isPromotion || false,
-          rating: p.rating || 0,
-          favoriteCount: p.favoriteCount || 0,
-          reviewCount: p.reviewCount || 0,
-          soldCount: p.soldCount || 0
-        }));
-        setAllProducts(mappedProducts);
+      .then(async (res) => {
+        // For each product, fetch detailed reviews like ProductDetail does
+        const productsWithDetails = await Promise.all(
+          res.data.map(async (p: any) => {
+            try {
+              // Fetch reviews for each product to calculate real rating
+              const reviewsResponse = await api.get(`/product/${p.id}/reviews`);
+              const reviewsData = reviewsResponse.data;
+              
+              let averageRating = p.rating || 0;
+              let totalReviews = p.reviewCount || 0;
+              
+              // Calculate average rating from reviews like ProductDetail
+              if (reviewsData && reviewsData.length > 0) {
+                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+                averageRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
+                totalReviews = reviewsData.length;
+              }
+              
+              return {
+                ...p,
+                image: p.thumbnailUrl || p.imageUrl,
+                stock: p.stockQuantity ?? p.stock ?? 0,
+                isRecommend: p.isFeatured || false,
+                isPromotion: p.isPromotion || false,
+                rating: averageRating,
+                favoriteCount: p.favoriteCount || 0,
+                reviewCount: totalReviews,
+                soldCount: p.soldCount || 0
+              };
+            } catch (error) {
+              console.error(`Error fetching reviews for product ${p.id}:`, error);
+              // Fallback to basic product data
+              return {
+                ...p,
+                image: p.thumbnailUrl || p.imageUrl,
+                stock: p.stockQuantity ?? p.stock ?? 0,
+                isRecommend: p.isFeatured || false,
+                isPromotion: p.isPromotion || false,
+                rating: p.rating || 0,
+                favoriteCount: p.favoriteCount || 0,
+                reviewCount: p.reviewCount || 0,
+                soldCount: p.soldCount || 0
+              };
+            }
+          })
+        );
+        setAllProducts(productsWithDetails);
       })
       .catch(err => {
         console.error("Error fetching all products:", err);

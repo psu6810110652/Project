@@ -2,17 +2,66 @@ import { type ProductCard } from "../types";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FavoritesService } from '../services/favoritesService';
+import api from '../services/api';
 
 export const Products = (props: ProductCard) => {
     const navigate = useNavigate();
     const [isFavorite, setIsFavorite] = useState(false);
+    const [productData, setProductData] = useState({
+        rating: props.rating || 0,
+        reviewCount: props.reviewCount || 0,
+        favoriteCount: props.favoriteCount || 0,
+        soldCount: props.soldCount || 0
+    });
 
     useEffect(() => {
         // Check if product is in favorites using the service
         if (props.id) {
             setIsFavorite(FavoritesService.isFavorite(props.id));
+            
+            // Fetch real product data like ProductDetail does
+            fetchProductDetails(props.id);
         }
     }, [props.id]);
+
+    const fetchProductDetails = async (productId: string) => {
+        try {
+            // Fetch complete product details (including soldCount and favoriteCount)
+            const productResponse = await api.get(`/product/${productId}`);
+            const productDetail = productResponse.data;
+            
+            // Fetch reviews for this product to calculate real rating (like ProductDetail)
+            const reviewsResponse = await api.get(`/product/${productId}/reviews`);
+            const reviewsData = reviewsResponse.data;
+            
+            let averageRating = productDetail.rating || 0;
+            let totalReviews = productDetail.reviewCount || 0;
+            
+            // Calculate average rating from reviews like ProductDetail
+            if (reviewsData && reviewsData.length > 0) {
+                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+                averageRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
+                totalReviews = reviewsData.length;
+            }
+            
+            // Update with real data from backend
+            setProductData({
+                rating: averageRating,
+                reviewCount: totalReviews,
+                favoriteCount: productDetail.favoriteCount || 0,
+                soldCount: productDetail.soldCount || 0
+            });
+        } catch (error) {
+            console.error(`Error fetching product details for ${productId}:`, error);
+            // Use props data as fallback
+            setProductData({
+                rating: props.rating || 0,
+                reviewCount: props.reviewCount || 0,
+                favoriteCount: props.favoriteCount || 0,
+                soldCount: props.soldCount || 0
+            });
+        }
+    };
 
     const handleProductClick = () => {
         if (props.id) {
@@ -75,25 +124,25 @@ export const Products = (props: ProductCard) => {
                             <div className="flex text-[#fbbf24] shrink-0">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <span key={star} className="text-base">
-                                        {star <= Math.round(props.rating || 0) ? "★" : "☆"}
+                                        {star <= Math.round(productData.rating || 0) ? "★" : "☆"}
                                     </span>
                                 ))}
                             </div>
-                            <span className="text-sm font-semibold whitespace-nowrap">{(props.rating || 0).toFixed(1)}/5.0</span>
-                            <span className="text-xs text-gray-500 whitespace-nowrap">({props.reviewCount || 0} รีวิว)</span>
+                            <span className="text-sm font-semibold whitespace-nowrap">{(productData.rating || 0).toFixed(1)}/5.0</span>
+                            <span className="text-xs text-gray-500 whitespace-nowrap">({productData.reviewCount || 0} รีวิว)</span>
                         </div>
                         <div className="flex items-center gap-1 text-gray-400 shrink-0">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
                             </svg>
-                            <span className="text-sm font-normal">{props.favoriteCount || 0}</span>
+                            <span className="text-sm font-normal">{productData.favoriteCount || 0}</span>
                         </div>
                     </div>
 
                     {/* บรรทัดล่าง: สต็อก และ ยอดขาย */}
                     <div className="flex justify-between items-center text-sm mb-1.5">
                         <div className="font-normal opacity-75">มีจำนวน {props.stock} ชิ้น</div>
-                        <div className="font-normal bg-gray-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter">ขายแล้ว {props.soldCount || 0}</div>
+                        <div className="font-normal bg-gray-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter">ขายแล้ว {productData.soldCount || 0}</div>
                     </div>
 
                     {/* บรรทัดราคา (เด่น) */}
