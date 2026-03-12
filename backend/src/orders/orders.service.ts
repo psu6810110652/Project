@@ -37,10 +37,19 @@ export class OrdersService {
             }
         }
 
-        // 3. สร้างเลขออเดอร์ให้มีความเฉพาะเจาะจง
-        const datePart = new Date().toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
-        const randomPart = Math.floor(1000 + Math.random() * 9000).toString();  // 4 random digits
-        const orderNumber = `ORD${datePart}${randomPart}`;
+        // 3. สร้างเลขออเดอร์ให้มีความเฉพาะเจาะจง (ORD + ปี พ.ศ. สองหลัก + เดือน + วัน + เวลา)
+        // ใช้เวลาประเทศไทย (UTC+7)
+        const now = new Date();
+        const thTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+
+        const yearBE = (thTime.getFullYear() + 543).toString().slice(-2);
+        const month = (thTime.getMonth() + 1).toString().padStart(2, '0');
+        const day = thTime.getDate().toString().padStart(2, '0');
+        const hours = thTime.getHours().toString().padStart(2, '0');
+        const minutes = thTime.getMinutes().toString().padStart(2, '0');
+
+        // ตัวอย่าง: ORD6903121909
+        const orderNumber = `ORD${yearBE}${month}${day}${hours}${minutes}`;
 
         const newOrder = this.ordersRepository.create({
             ...createOrderDto,
@@ -54,11 +63,12 @@ export class OrdersService {
         return this.ordersRepository.find({
             select: [
                 'id', 'orderNumber', 'customerName', 'products',
-                'totalAmount', 'orderDate', 'status', 'address',
-                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId'
+                'totalAmount', 'status', 'address',
+                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId',
+                'cancelReason'
             ],
             order: {
-                orderDate: 'DESC',
+                createdAt: 'DESC',
             },
         });
     }
@@ -66,13 +76,8 @@ export class OrdersService {
     findByStatus(status: string): Promise<Order[]> {
         return this.ordersRepository.find({
             where: { status },
-            select: [
-                'id', 'orderNumber', 'customerName', 'products',
-                'totalAmount', 'orderDate', 'status', 'address',
-                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId'
-            ],
             order: {
-                orderDate: 'DESC',
+                createdAt: 'DESC',
             },
         });
     }
@@ -86,13 +91,17 @@ export class OrdersService {
         return order;
     }
 
-    async updateStatus(id: string, status: string, trackingNumber?: string): Promise<Order> {
+    async updateStatus(id: string, status: string, trackingNumber?: string, cancelReason?: string): Promise<Order> {
         const order = await this.findOne(id);
         const previousStatus = order.status;
         order.status = status;
 
         if (trackingNumber !== undefined) {
             order.trackingNumber = trackingNumber;
+        }
+
+        if (cancelReason !== undefined) {
+            order.cancelReason = cancelReason;
         }
 
         // คืนสต็อกสินค้าหากออเดอร์ถูกยกเลิก (และก่อนหน้านี้ยังไม่ได้ยกเลิก)
@@ -113,12 +122,7 @@ export class OrdersService {
     findByCustomerId(customerId: string): Promise<Order[]> {
         return this.ordersRepository.find({
             where: { customerId },
-            select: [
-                'id', 'orderNumber', 'customerName', 'products',
-                'totalAmount', 'orderDate', 'status', 'address',
-                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId'
-            ],
-            order: { orderDate: 'DESC' },
+            order: { createdAt: 'DESC' },
         });
     }
 }

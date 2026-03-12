@@ -17,9 +17,6 @@ export class Order {
     @Column({ name: 'total_amount', type: 'decimal', precision: 10, scale: 2 })
     totalAmount: number;
 
-    @CreateDateColumn({ name: 'order_date' })
-    orderDate: Date;
-
     @Column({
         type: 'varchar',
         length: 50,
@@ -47,4 +44,7 @@ export class Order {
 
     @Column({ name: 'payment_slip_url', type: 'text', nullable: true })
     paymentSlip: string;
+
+    @Column({ name: 'cancel_reason', type: 'varchar', length: 255, nullable: true })
+    cancelReason: string;
 }

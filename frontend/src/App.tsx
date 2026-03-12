@@ -1,57 +1,63 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Menu, X, Loader2 } from 'lucide-react';
 import './App.css'
 
-import Home from './pages/Home'
-import Category from './pages/Category';
-import Favorites from './pages/Favorites';
+// Lazy loaded components
+const Home = lazy(() => import('./pages/Home'));
+const Category = lazy(() => import('./pages/Category'));
+const Favorites = lazy(() => import('./pages/Favorites'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Profile = lazy(() => import('./pages/Profile'));
+const EditProfile = lazy(() => import('./pages/EditProfile'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail').then(m => ({ default: m.ProductDetail })));
+const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const EditReviewPage = lazy(() => import('./pages/EditReviewPage'));
+const Loginpage = lazy(() => import('./pages/Loginpage'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Admin/Dashboard'));
+const Order = lazy(() => import('./pages/Admin/Order'));
+const ManageCategories = lazy(() => import('./pages/Admin/Category'));
+const ViewProducts = lazy(() => import('./pages/Admin/Product'));
+const ManageProduct = lazy(() => import('./pages/Admin/ManagerProduct'));
+const ManagerOrder = lazy(() => import('./pages/Admin/ManagerOrder'));
+const PaymentPage = lazy(() => import('./pages/PaymentPage'));
 
 import Navbar from './components/Navbar';
 import { AuthProvider } from './context/AuthContext';
 import Footer from './components/Footer';
-import Cart from './pages/Cart';
-import Profile from './pages/Profile';
-import EditProfile from './pages/EditProfile';
-import { ProductDetail } from './pages/ProductDetail';
-import ReviewPage from './pages/ReviewPage';
-import EditReviewPage from './pages/EditReviewPage';
-
-// Login/Register
-import Loginpage from './pages/Loginpage';
-import Register from './pages/Register';
-
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminSearchProvider } from './context/AdminSearchContext';
-
 import BarAdmin from './components/BarAdmin';
-import Dashboard from './pages/Admin/Dashboard';
-import Order from './pages/Admin/Order';
-import ManageCategories from './pages/Admin/Category';
-import ViewProducts from './pages/Admin/Product';
-import ManageProduct from './pages/Admin/ManagerProduct';
-import ManagerOrder from './pages/Admin/ManagerOrder';
-import PaymentPage from './pages/PaymentPage';
+
+const LoadingFallback = () => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#256D45]">
+    <Loader2 className="animate-spin mb-4" size={48} />
+    <p className="text-xl font-medium">กำลังโหลดข้อมูล...</p>
+  </div>
+);
 
 function UserLayout() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <div className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/:category" element={<Category />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/edit-profile" element={<EditProfile />} />
-          <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/login" element={<Loginpage />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/review/:productId" element={<ReviewPage />} />
-          <Route path="/profile/review/:orderId" element={<EditReviewPage />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/:category" element={<Category />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/login" element={<Loginpage />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/review/:productId" element={<ReviewPage />} />
+            <Route path="/profile/review/:orderId" element={<EditReviewPage />} />
+          </Routes>
+        </Suspense>
       </div>
       <Footer />
     </div>
@@ -102,21 +108,22 @@ function AdminLayout() {
               ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
             `}
           >
-            {/* spacer ความสูง navbar สำหรับ mobile fixed sidebar */}
             <div className="md:hidden h-16" />
             <BarAdmin />
           </aside>
 
           <main className="flex-1 overflow-y-auto min-w-0 bg-[#DCEDC1]">
-            <Routes>
-              <Route index element={<Dashboard />} />
-              <Route path="orders" element={<Order />} />
-              <Route path="orders/:orderId" element={<ManagerOrder />} />
-              <Route path="products" element={<ManageCategories />} />
-              <Route path="products/:categoryId" element={<ViewProducts />} />
-              <Route path="products/:categoryId/new" element={<ManageProduct />} />
-              <Route path="products/:categoryId/:code" element={<ManageProduct />} />
-            </Routes>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route index element={<Dashboard />} />
+                <Route path="orders" element={<Order />} />
+                <Route path="orders/:orderId" element={<ManagerOrder />} />
+                <Route path="products" element={<ManageCategories />} />
+                <Route path="products/:categoryId" element={<ViewProducts />} />
+                <Route path="products/:categoryId/new" element={<ManageProduct />} />
+                <Route path="products/:categoryId/:code" element={<ManageProduct />} />
+              </Routes>
+            </Suspense>
           </main>
         </div>
       </div>
@@ -138,7 +145,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
         </Routes>
       </AuthProvider>
     </Router>
