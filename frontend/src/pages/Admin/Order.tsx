@@ -1,10 +1,11 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { type OrderData } from '../../types';
 import { Table, ConfigProvider } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { AdminSearchContext } from '../../context/AdminSearchContext';
+
 
 export default function Order() {
   const navigate = useNavigate();
@@ -51,31 +52,14 @@ export default function Order() {
   });
 
   // คอลัมน์สำหรับตาราง
-  const columns: ColumnsType<OrderData> = [
+  const columns: ColumnsType<OrderData> = useMemo(() => [
     {
       title: 'รหัสสั่งซื้อ',
       dataIndex: 'orderNumber',
       key: 'orderNumber',
       align: 'center',
       render: (_, record: any) => {
-        const dateStr = record.createdAt || record.orderDate || record.created_at;
-        let d = new Date();
-        if (dateStr) {
-          d = new Date(dateStr);
-        }
-
-        const day = d.getDate().toString().padStart(2, '0');
-        const monthChars = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-        const monthChar = monthChars[d.getMonth()];
-        const yearBE = d.getFullYear() + 543;
-        const shortYear = yearBE.toString().slice(-2);
-
-        const hours = d.getHours().toString().padStart(2, '0');
-        const minutes = d.getMinutes().toString().padStart(2, '0');
-
-        const formattedId = `${day}${monthChar}${shortYear}${hours}${minutes}`;
-
-        return <span className="font-bold text-[#256D45]">#{record.orderNumber || formattedId}</span>;
+        return <span className="font-bold text-[#256D45]">#{record.orderNumber || 'ไม่มีรหัส'}</span>;
       },
     },
     {
@@ -87,7 +71,7 @@ export default function Order() {
     },
     {
       title: 'ไอดีผู้ใช้',
-      dataIndex: 'userid',
+      dataIndex: 'customerId',
       key: 'customerId',
       align: 'center',
       render: (text) => <span className="font-bold text-gray-500 whitespace-nowrap">{text || '-'}</span>,
@@ -125,6 +109,13 @@ export default function Order() {
       align: 'center',
       width: 120,
       render: (text) => <span className="font-bold text-[#256D45] whitespace-nowrap">฿ {Number(text).toLocaleString()}</span>,
+    },
+    {
+      title: 'สาเหตุ',
+      dataIndex: 'cancelReason',
+      key: 'cancelReason',
+      align: 'center',
+      render: (text) => <span className="text-red-500 font-bold text-sm whitespace-nowrap">{text || '-'}</span>,
     },
     {
       title: 'สถานะ',
@@ -179,7 +170,7 @@ export default function Order() {
         </button>
       ),
     },
-  ];
+  ], [navigate]);
 
   return (
     <ConfigProvider

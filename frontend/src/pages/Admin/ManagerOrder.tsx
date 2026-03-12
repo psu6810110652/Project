@@ -10,7 +10,7 @@ export default function ManagerOrder() {
     const [order, setOrder] = useState<OrderData | null>(null);
     const [loading, setLoading] = useState(true);
     const [trackingNumber, setTrackingNumber] = useState('');
-    
+
     // State สำหรับเปิด/ปิดรูปสลิปเต็ม
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
@@ -45,7 +45,8 @@ export default function ManagerOrder() {
             }
             await api.put(`/api/admin/orders/${orderId}/status`, {
                 status: newStatus,
-                trackingNumber: trackingNumber.trim() || undefined
+                trackingNumber: trackingNumber.trim() || undefined,
+                cancelReason: newStatus === 'cancelled' ? 'สลิปไม่ถูกต้อง' : undefined
             });
             message.success("อัปเดตสถานะสำเร็จ");
             fetchOrder();
@@ -102,7 +103,7 @@ export default function ManagerOrder() {
                 {/* Header Title */}
                 <div className="flex justify-between items-end border-b-[3px] border-[#256D45] pb-3 md:pb-4 mt-2">
                     <h1 className="text-3xl md:text-5xl font-black shrink-0 tracking-tight drop-shadow-sm">
-                        รหัสคำสั่งซื้อ #{order.orderNumber || order.id.toString().substring(0, 8).toUpperCase()}
+                        รหัสคำสั่งซื้อ #{order.orderNumber || 'ไม่มีรหัส'}
                     </h1>
                     <div className="text-xl md:text-2xl font-bold bg-transparent text-[#256D45] drop-shadow-sm">
                         {getStatusLabel(order.status)}
@@ -152,17 +153,17 @@ export default function ManagerOrder() {
                             </div>
                             {order.paymentSlip ? (
                                 // เปลี่ยนจากแท็ก <a> เป็น <div> และจับ onClick เพื่อเปิด Modal
-                                <div 
+                                <div
                                     onClick={() => setIsImageModalOpen(true)}
                                     className="cursor-pointer block border-[2.5px] border-[#256D45] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group relative bg-gray-50 h-48 md:h-64 flex items-center justify-center"
                                 >
-                                    <img 
-                                        src={order.paymentSlip} 
-                                        alt="สลิปโอนเงิน" 
-                                        className="w-full h-full object-contain" 
+                                    <img
+                                        src={order.paymentSlip}
+                                        alt="สลิปโอนเงิน"
+                                        className="w-full h-full object-contain"
                                         onError={(e) => {
                                             const target = e.target as HTMLImageElement;
-                                            target.src = 'https://via.placeholder.com/300x400?text=Slip+Image+Not+Found'; 
+                                            target.src = 'https://via.placeholder.com/300x400?text=Slip+Image+Not+Found';
                                         }}
                                     />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -260,9 +261,9 @@ export default function ManagerOrder() {
                 bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
             >
                 {order?.paymentSlip && (
-                    <img 
-                        src={order.paymentSlip} 
-                        alt="สลิปโอนเงินแบบเต็ม" 
+                    <img
+                        src={order.paymentSlip}
+                        alt="สลิปโอนเงินแบบเต็ม"
                         className="w-full h-auto rounded-xl object-contain"
                     />
                 )}

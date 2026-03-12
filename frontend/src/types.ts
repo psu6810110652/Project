@@ -81,6 +81,7 @@ export interface OrderData {
     phone?: string;
     trackingNumber?: string;
     slipUrl?: string;
+    cancelReason?: string;
 }
 
 export interface CartItem {

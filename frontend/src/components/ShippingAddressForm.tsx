@@ -173,12 +173,29 @@ const ShippingAddressForm = ({ onFormChange, errors = {} }: ShippingAddressFormP
 
     // โหลดฐานข้อมูลที่อยู่ไทย
     useEffect(() => {
-        fetch('https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/master/jquery.Thailand.js/database/raw_database/raw_database.json')
-            .then(res => res.json())
-            .then(data => setAddressData(data))
-            .catch(err => console.error('โหลดฐานข้อมูลที่อยู่ไม่ได้:', err));
+        const cachedData = localStorage.getItem('thailand_address_db');
+        if (cachedData) {
+            try {
+                setAddressData(JSON.parse(cachedData));
+            } catch (e) {
+                console.error('Error parsing cached address data:', e);
+                fetchAddressData();
+            }
+        } else {
+            fetchAddressData();
+        }
         loadAddresses();
     }, []);
+
+    const fetchAddressData = () => {
+        fetch('https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/master/jquery.Thailand.js/database/raw_database/raw_database.json')
+            .then(res => res.json())
+            .then(data => {
+                setAddressData(data);
+                localStorage.setItem('thailand_address_db', JSON.stringify(data));
+            })
+            .catch(err => console.error('โหลดฐานข้อมูลที่อยู่ไม่ได้:', err));
+    };
 
     const loadAddresses = async () => {
         try {

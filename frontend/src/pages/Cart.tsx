@@ -88,18 +88,18 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#DCEDC1] font-['Prompt'] text-[#256D45] py-12">
-      {/* Fixed Back Button */}
-      <div className="fixed top-24 left-4 z-40">
-        <button
-          onClick={() => navigate('/')}
-          className="bg-white text-[#256D45] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
-        >
-          กลับ
-        </button>
-      </div>
+    <div className="min-h-screen bg-[#DCEDC1] pt-4 pb-8 text-[#256D45]">
+      <div className="container mx-auto px-4 max-w-6xl">
+        {/* Back Button inside container */}
+        <div className="text-left flex justify-start mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-[#fdfcf6] text-[#2a6b3b] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
+          >
+            กลับ
+          </button>
+        </div>
 
-      <div className="container mx-auto px-4 max-w-7xl">
         <h1 className="text-5xl font-bold mb-12 text-left text-[#256D45]">รถเข็น</h1>
 
         {cartItems.length === 0 ? (

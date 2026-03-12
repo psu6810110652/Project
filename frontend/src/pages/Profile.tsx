@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Edit, User } from 'lucide-react';
 import { Table, ConfigProvider } from 'antd';
@@ -97,6 +97,7 @@ const Profile = () => {
 
         // ดึงคำสั่งซื้อของ user คนนี้
         const ordersRes = await api.get(`/api/admin/orders/my-orders`);
+        console.log('📦 My Orders Response:', ordersRes.data);
         if (ordersRes.data && Array.isArray(ordersRes.data)) {
           setOrders(ordersRes.data);
         } else {
@@ -151,22 +152,161 @@ const Profile = () => {
     fetchUserData();
   }, []);
 
-  const getFilteredOrders = () => {
-    if (activeTab === 'pending_confirm') return orders.filter(o => o.status === 'pending_confirm' || !o.status);
-    if (activeTab === 'pending_delivery') return orders.filter(o => o.status === 'pending_delivery');
-    if (activeTab === 'pending_received') return orders.filter(o => o.status === 'pending_received');
-    if (activeTab === 'completed') return orders.filter(o => o.status === 'completed');
-    if (activeTab === 'cancelled') return orders.filter(o => o.status === 'cancelled');
-    return [];
+  const handleBuyAgain = (order: any) => {
+    try {
+      // 1. Get current cart
+      const savedCart = localStorage.getItem('cart');
+      let cartItems = savedCart ? JSON.parse(savedCart) : [];
+
+      // 2. Add products from order to cart
+      const orderProducts = order.products || [];
+
+      orderProducts.forEach((product: any) => {
+        const productId = product.productId || product.id;
+        const existingItemIndex = cartItems.findIndex((item: any) => item.id === productId);
+
+        if (existingItemIndex > -1) {
+          // Increase quantity if already in cart
+          cartItems[existingItemIndex].quantity += (product.quantity || 1);
+        } else {
+          // Add new item
+          cartItems.push({
+            id: productId,
+            name: product.name,
+            price: product.price,
+            quantity: product.quantity || 1,
+            imageUrl: product.imageUrl || '',
+            isPromotion: product.isPromotion || false,
+            promotionPrice: product.promotionPrice || null,
+            stockQuantity: product.stockQuantity || 100 // Fallback
+          });
+        }
+      });
+
+      // 3. Save back to localStorage
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+
+      // 4. Trigger storage event for other components (like Navbar/Cart)
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'cart',
+        newValue: JSON.stringify(cartItems)
+      }));
+
+      // 5. Navigate to cart
+      navigate('/cart');
+    } catch (error) {
+      console.error('Error in handleBuyAgain:', error);
+      Swal.fire({
+        title: 'เกิดข้อผิดพลาด',
+        text: 'ไม่สามารถเพิ่มสินค้าลงในรถเข็นได้',
+        icon: 'error',
+        confirmButtonColor: '#256D45',
+        confirmButtonText: 'ตกลง',
+      });
+    }
   };
 
-  const getTableColumns = (): ColumnsType<any> => {
+  const handleCancelOrder = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: 'ยืนยันการยกเลิก?',
+      text: 'คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำสั่งซื้อนี้?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#256D45',
+      confirmButtonText: 'ใช่',
+      cancelButtonText: 'ไม่'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.put(`/api/admin/orders/${orderId}/cancel`);
+
+        // อัปเดต state ทันที
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order.id === orderId ? { ...order, status: 'cancelled', cancelReason: 'ยกเลิกเอง' } : order
+          )
+        );
+
+        Swal.fire({
+          title: 'ยกเลิกสำเร็จ!',
+          text: 'คำสั่งซื้อของคุณถูกยกเลิกเรียบร้อยแล้ว',
+          icon: 'success',
+          confirmButtonColor: '#256D45',
+        });
+
+        // ย้ายไป tab ยกเลิก
+        setActiveTab('cancelled');
+
+      } catch (error: any) {
+        console.error('Error cancelling order:', error);
+        Swal.fire({
+          title: 'เกิดข้อผิดพลาด',
+          text: error.response?.data?.message || 'ไม่สามารถยกเลิกคำสั่งซื้อได้ในขณะนี้',
+          icon: 'error',
+          confirmButtonColor: '#256D45',
+        });
+      }
+    }
+  };
+
+  const handleConfirmReceived = async (orderId: string) => {
+    try {
+      await api.put(`/api/admin/orders/${orderId}/received`);
+
+      // อัปเดต state ทันที
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.id === orderId ? { ...order, status: 'completed' } : order
+        )
+      );
+
+      Swal.fire({
+        title: 'ยืนยันสำเร็จ!',
+        text: 'ขอบคุณที่ใช้บริการครับ',
+        icon: 'success',
+        confirmButtonColor: '#256D45',
+      });
+
+      // ย้ายไป tab สำเร็จ
+      setActiveTab('completed');
+
+    } catch (error: any) {
+      console.error('Error confirming received:', error);
+      Swal.fire({
+        title: 'เกิดข้อผิดพลาด',
+        text: error.response?.data?.message || 'ไม่สามารถดำเนินการได้ในขณะนี้',
+        icon: 'error',
+        confirmButtonColor: '#256D45',
+      });
+    }
+  };
+
+  const { filteredOrders, tableColumns, counts } = useMemo(() => {
+    // 1. Calculate counts for each status
+    const pendingConfirmCount = orders.filter(o => o.status === 'pending_confirm' || !o.status).length;
+    const pendingDeliveryCount = orders.filter(o => o.status === 'pending_delivery').length;
+    const pendingReceivedCount = orders.filter(o => o.status === 'pending_received').length;
+    const completedCount = orders.filter(o => o.status === 'completed').length;
+    const cancelledCount = orders.filter(o => o.status === 'cancelled').length;
+
+    // 2. Filter orders based on activeTab
+    let filtered;
+    if (activeTab === 'pending_confirm') filtered = orders.filter(o => o.status === 'pending_confirm' || !o.status);
+    else if (activeTab === 'pending_delivery') filtered = orders.filter(o => o.status === 'pending_delivery');
+    else if (activeTab === 'pending_received') filtered = orders.filter(o => o.status === 'pending_received');
+    else if (activeTab === 'completed') filtered = orders.filter(o => o.status === 'completed');
+    else if (activeTab === 'cancelled') filtered = orders.filter(o => o.status === 'cancelled');
+    else filtered = [];
+
+    // 3. Define columns
     const baseColumns: ColumnsType<any> = [
       {
         title: 'รหัสคำสั่งซื้อ',
         dataIndex: 'orderNumber',
         key: 'orderNumber',
-        width: '20%',
+        width: '18%',
         align: 'left',
         sorter: (a, b) => {
           const dateAStr = a.createdAt || a.orderDate || a.created_at || a.id;
@@ -178,7 +318,6 @@ const Profile = () => {
           if (dateAStr && !isNaN(Date.parse(dateAStr))) dateA = new Date(dateAStr);
           if (dateBStr && !isNaN(Date.parse(dateBStr))) dateB = new Date(dateBStr);
 
-          // If no parsed date, fallback to localeCompare of string
           if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
             const idA = String(dateAStr || '');
             const idB = String(dateBStr || '');
@@ -190,44 +329,30 @@ const Profile = () => {
         sortOrder: tableSort,
         sortDirections: ['descend', 'ascend'],
         render: (_, record) => {
-          // If the backend has a creation date, use it; otherwise fallback to something safe
-          const dateStr = record.createdAt || record.orderDate || record.created_at;
-          let d = new Date();
-          if (dateStr) {
-            d = new Date(dateStr);
-          }
-
-          const day = d.getDate().toString().padStart(2, '0');
-          // Month logic: J(Jan), F(Feb), M(Mar), A(Apr), M(May), J(Jun), J(Jul), A(Aug), S(Sep), O(Oct), N(Nov), D(Dec)
-          const monthChars = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-          const monthChar = monthChars[d.getMonth()];
-          // Thai Year (BE)
-          const yearBE = d.getFullYear() + 543;
-          const shortYear = yearBE.toString().slice(-2);
-
-          const hours = d.getHours().toString().padStart(2, '0');
-          const minutes = d.getMinutes().toString().padStart(2, '0');
-
-          const formattedId = `${day}${monthChar}${shortYear}${hours}${minutes}`;
-
-          return <span style={{ color: '#215A36', fontWeight: 600, backgroundColor: 'transparent' }}>#{formattedId}</span>;
+          return <span style={{ color: '#215A36', fontWeight: 600, backgroundColor: 'transparent' }} className="whitespace-nowrap">#{record.orderNumber || 'ไม่มีรหัส'}</span>;
         },
       },
       {
         title: 'ชื่อสินค้า',
         key: 'products',
-        width: '35%',
+        width: '25%',
         align: 'left',
         render: (_, record) => (
-          <div style={{ color: '#215A36', fontWeight: 600 }}>
-            {record.products?.map((p: any) => p.name).join(', ')}
+          <div className="flex flex-col gap-1.5 py-1">
+            {record.products?.map((p: any, idx: number) => (
+              <div key={idx} className="text-[#215A36] font-semibold text-xs md:text-sm leading-tight">
+                <span className="opacity-70 mr-1">•</span>
+                {p.name}
+                <span className="text-gray-400 font-normal ml-2">x{p.quantity}</span>
+              </div>
+            ))}
           </div>
         ),
       },
       {
         title: 'จำนวน',
         key: 'quantity',
-        width: '10%',
+        width: '9%',
         align: 'center',
         render: (_, record) => {
           const totalQty = record.products?.reduce((sum: number, p: any) => sum + p.quantity, 0) || 0;
@@ -238,39 +363,39 @@ const Profile = () => {
         title: 'ราคารวม',
         dataIndex: 'totalAmount',
         key: 'totalAmount',
-        width: '15%',
+        width: '13%',
         align: 'center',
-        render: (text) => <span style={{ color: '#215A36', fontWeight: 600 }}>฿ {text}</span>,
+        render: (text) => <span style={{ color: '#215A36', fontWeight: 600 }} className="whitespace-nowrap">฿ {text}</span>,
       },
     ];
 
+    let cols = baseColumns;
     if (activeTab === 'pending_confirm') {
-      return [
+      cols = [
         ...baseColumns,
         {
           title: 'จัดการ',
           key: 'action',
+          width: '20%',
           align: 'center',
-          render: () => (
-            <button className="bg-red-500 hover:bg-red-600 text-white px-6 py-1.5 rounded-full text-sm font-bold shadow-sm transition-colors">
+          render: (_, record) => (
+            <button
+              onClick={() => handleCancelOrder(record.id)}
+              className="border-2 border-red-500 text-red-500 px-4! py-1! rounded-full text-sm font-bold hover:bg-red-500 hover:text-white shadow-sm transition-all whitespace-nowrap"
+            >
               ยกเลิก
             </button>
           )
         }
       ];
-    }
-
-    if (activeTab === 'pending_delivery') {
-      return baseColumns;
-    }
-
-    if (activeTab === 'pending_received') {
-      return [
+    } else if (activeTab === 'pending_received') {
+      cols = [
         ...baseColumns,
         {
           title: 'หมายเลขพัสดุ',
           dataIndex: 'trackingNumber',
           key: 'trackingNumber',
+          width: '17%',
           align: 'center',
           render: (text) => text ? (
             <a
@@ -278,7 +403,7 @@ const Profile = () => {
               target="_blank"
               rel="noopener noreferrer"
               title="เช็คพัสดุ"
-              className="text-[#256D45] font-bold underline hover:text-[#1a5434] bg-[#E8F3EE] px-3 py-1 rounded-lg border border-[#256D45]/20 inline-block"
+              className="text-[#256D45] font-bold underline hover:text-[#1a5434] bg-[#E8F3EE] px-3 py-1 rounded-lg border border-[#256D45]/20 inline-block whitespace-nowrap"
             >
               {text}
             </a>
@@ -287,77 +412,86 @@ const Profile = () => {
         {
           title: 'จัดการ',
           key: 'action',
+          width: '18%',
           align: 'center',
-          render: () => (
+          render: (_, record) => (
             <button
-              onClick={() => setActiveTab('completed')}
-              className="bg-[#256D45] hover:bg-[#1a5434] text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
+              onClick={() => handleConfirmReceived(record.id)}
+              className="border-2 border-[#256D45] text-[#256D45] px-6! py-1! rounded-full text-sm font-bold hover:bg-[#256D45] hover:text-white shadow-sm transition-colors whitespace-nowrap"
             >
-              ยืนยันรับสินค้า
+              ยืนยันได้รับสินค้า
+            </button>
+          )
+        }
+      ];
+    } else if (activeTab === 'completed') {
+      cols = [
+        ...baseColumns,
+        {
+          title: 'จัดการ',
+          key: 'action',
+          width: '35%',
+          align: 'center',
+          render: (_, record) => {
+            return (
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => navigate(`/profile/review/${record.orderNumber || record.id}`)}
+                  className="border-2 border-[#256D45] text-[#256D45] px-6! py-1! rounded-full text-sm font-bold hover:bg-[#256D45] hover:text-white shadow-sm transition-colors whitespace-nowrap"
+                >
+                  รีวิว
+                </button>
+                <button
+                  onClick={() => handleBuyAgain(record)}
+                  className="border-2 border-[#256D45] text-[#256D45] px-6! py-1! rounded-full text-sm font-bold hover:bg-[#256D45] hover:text-white shadow-sm transition-colors whitespace-nowrap"
+                >
+                  สั่งซื้ออีกครั้ง
+                </button>
+              </div>
+            );
+          }
+        }
+      ];
+    } else if (activeTab === 'cancelled') {
+      cols = [
+        ...baseColumns,
+        {
+          title: 'สาเหตุ',
+          dataIndex: 'cancelReason',
+          key: 'cancelReason',
+          width: '15%',
+          align: 'center',
+          render: (text) => <span className="text-red-500 font-bold text-sm">{text || 'ยกเลิกโดยระบบ'}</span>,
+        },
+        {
+          title: 'จัดการ',
+          key: 'action',
+          width: '20%',
+          align: 'center',
+          render: (_, record) => (
+            <button
+              onClick={() => handleBuyAgain(record)}
+              className="border-2 border-[#256D45] text-[#256D45] px-6! py-1! rounded-full text-sm font-bold hover:bg-[#256D45] hover:text-white shadow-sm transition-colors whitespace-nowrap"
+            >
+              สั่งซื้ออีกครั้ง
             </button>
           )
         }
       ];
     }
 
-    if (activeTab === 'completed') {
-      return [
-        ...baseColumns,
-        {
-          title: 'จัดการ',
-          key: 'action',
-          align: 'center',
-          render: (_, record) => {
-            const dateStr = record.createdAt || record.orderDate || record.created_at;
-            let d = new Date();
-            if (dateStr) d = new Date(dateStr);
-
-            const day = d.getDate().toString().padStart(2, '0');
-            const monthChars = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-            const monthChar = monthChars[d.getMonth()];
-            const yearBE = d.getFullYear() + 543;
-            const shortYear = yearBE.toString().slice(-2);
-            const hours = d.getHours().toString().padStart(2, '0');
-            const minutes = d.getMinutes().toString().padStart(2, '0');
-            const formattedId = `${day}${monthChar}${shortYear}${hours}${minutes}`;
-
-            return (
-              <button
-                onClick={() => navigate(`/profile/review/${formattedId}`)}
-                className="border-2 border-[#256D45] text-[#256D45] px-6! py-1! rounded-full text-sm font-bold hover:bg-[#256D45] hover:text-white shadow-sm transition-colors"
-              >
-                รีวิว
-              </button>
-            );
-          }
-        }
-      ];
-    }
-
-    // cancelled / failed
-    return [
-      ...baseColumns,
-      {
-        title: 'สาเหตุ',
-        dataIndex: 'cancelReason',
-        key: 'cancelReason',
-        align: 'center',
-        render: (text) => <span className="text-red-500 font-bold text-sm">{text || 'ยกเลิกเอง / สลิปไม่ถูกต้อง'}</span>,
-      },
-      {
-        title: 'จัดการ',
-        key: 'action',
-        align: 'center',
-        render: () => (
-          <button className="bg-[#256D45] hover:bg-[#1a5434] text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
-            สั่งซื้ออีกครั้ง
-          </button>
-        )
+    return {
+      filteredOrders: filtered,
+      tableColumns: cols,
+      counts: {
+        pendingConfirm: pendingConfirmCount,
+        pendingDelivery: pendingDeliveryCount,
+        pendingReceived: pendingReceivedCount,
+        completed: completedCount,
+        cancelled: cancelledCount,
       }
-    ];
-  };
-
-  const tableColumns = getTableColumns();
+    };
+  }, [orders, activeTab, tableSort, navigate]);
 
   return (
     <div className="bg-[#DCEDC1] text-[#256D45] px-6! py-15! md:px-6 md:py-10">
@@ -436,7 +570,7 @@ const Profile = () => {
                     }`}
                 >
                   <span className={`text-4xl font-bold mb-2 ${activeTab === 'pending_confirm' ? 'text-white' : 'text-[#256D45]'}`}>
-                    {orders.filter(o => o.status === 'pending_confirm' || !o.status).length}
+                    {counts.pendingConfirm}
                   </span>
                   <span className={`text-sm font-medium ${activeTab === 'pending_confirm' ? 'text-white' : 'text-gray-600'}`}>รอยืนยัน</span>
                 </div>
@@ -448,7 +582,7 @@ const Profile = () => {
                     }`}
                 >
                   <span className={`text-4xl font-bold mb-2 ${activeTab === 'pending_delivery' ? 'text-white' : 'text-[#256D45]'}`}>
-                    {orders.filter(o => o.status === 'pending_delivery').length}
+                    {counts.pendingDelivery}
                   </span>
                   <span className={`text-sm font-medium ${activeTab === 'pending_delivery' ? 'text-white' : 'text-gray-600'}`}>รอจัดส่ง</span>
                 </div>
@@ -460,7 +594,7 @@ const Profile = () => {
                     }`}
                 >
                   <span className={`text-4xl font-bold mb-2 ${activeTab === 'pending_received' ? 'text-white' : 'text-[#256D45]'}`}>
-                    {orders.filter(o => o.status === 'pending_received').length}
+                    {counts.pendingReceived}
                   </span>
                   <span className={`text-sm font-medium ${activeTab === 'pending_received' ? 'text-white' : 'text-gray-600'}`}>รอได้รับ</span>
                 </div>
@@ -472,7 +606,7 @@ const Profile = () => {
                     }`}
                 >
                   <span className={`text-4xl font-bold mb-2 ${activeTab === 'completed' ? 'text-white' : 'text-[#256D45]'}`}>
-                    {orders.filter(o => o.status === 'completed').length}
+                    {counts.completed}
                   </span>
                   <span className={`text-sm font-medium ${activeTab === 'completed' ? 'text-white' : 'text-gray-600'}`}>สำเร็จ</span>
                 </div>
@@ -484,7 +618,7 @@ const Profile = () => {
                     }`}
                 >
                   <span className={`text-4xl font-bold mb-2 ${activeTab === 'cancelled' ? 'text-white' : 'text-red-500'}`}>
-                    {orders.filter(o => o.status === 'cancelled').length}
+                    {counts.cancelled}
                   </span>
                   <span className={`text-sm font-medium ${activeTab === 'cancelled' ? 'text-white' : 'text-red-500'}`}>ไม่สำเร็จ</span>
                 </div>
@@ -554,7 +688,7 @@ const Profile = () => {
                     </style>
                     <Table
                       loading={loadingOrders}
-                      dataSource={getFilteredOrders()}
+                      dataSource={filteredOrders}
                       columns={tableColumns}
                       rowKey="id"
                       bordered={false}

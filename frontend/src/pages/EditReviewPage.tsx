@@ -32,17 +32,7 @@ const EditReviewPage: React.FC = () => {
                 const allOrders = ordersRes.data || [];
 
                 const getFormattedId = (record: any) => {
-                    const dateStr = record.createdAt || record.orderDate || record.created_at;
-                    if (!dateStr) return null;
-                    const d = new Date(dateStr);
-                    const day = d.getDate().toString().padStart(2, '0');
-                    const monthChars = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-                    const monthChar = monthChars[d.getMonth()];
-                    const yearBE = d.getFullYear() + 543;
-                    const shortYear = yearBE.toString().slice(-2);
-                    const hours = d.getHours().toString().padStart(2, '0');
-                    const minutes = d.getMinutes().toString().padStart(2, '0');
-                    return `${day}${monthChar}${shortYear}${hours}${minutes}`;
+                    return record.orderNumber || record.id;
                 };
 
                 const targetOrder = allOrders.find((o: any) => getFormattedId(o) === orderId);
@@ -176,7 +166,7 @@ const EditReviewPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#DCEDC1] text-[#1f653a] flex flex-col" style={{ fontFamily: 'Prompt, sans-serif' }}>
+        <div className="min-h-screen bg-[#DCEDC1] text-[#1f653a] flex flex-col">
 
             {/* Main Content */}
             <main className="flex-1 pt-4 pb-8">
@@ -191,7 +181,7 @@ const EditReviewPage: React.FC = () => {
 
                     <div className="text-left flex justify-start mb-8">
                         <button
-                            onClick={() => navigate(-1)}
+                            onClick={() => navigate('/profile')}
                             className="bg-[#fdfcf6] text-[#2a6b3b] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
                         >
                             กลับ

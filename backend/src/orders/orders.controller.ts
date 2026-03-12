@@ -77,8 +77,59 @@ export class OrdersController {
     updateStatus(
         @Param('id') id: string,
         @Body('status') status: string,
-        @Body('trackingNumber') trackingNumber?: string
+        @Body('trackingNumber') trackingNumber?: string,
+        @Body('cancelReason') cancelReason?: string
     ) {
-        return this.ordersService.updateStatus(id, status, trackingNumber);
+        return this.ordersService.updateStatus(id, status, trackingNumber, cancelReason);
+    }
+
+    // 👤 User ยกเลิกออเดอร์ตัวเอง ได้เฉพาะตอนที่ยังรอการยืนยัน
+    @Put(':id/cancel')
+    @UseGuards(AuthGuard('jwt'))
+    async cancelOrder(@Param('id') id: string, @Request() req) {
+        try {
+            const userId = String(req.user.sub || req.user.userId);
+            const order = await this.ordersService.findOne(id);
+
+            // ตรวจสอบว่าเป็นเจ้าของออเดอร์ไหม
+            if (order.customerId !== userId) {
+                throw new Error('คุณไม่มีสิทธิ์ยกเลิกออเดอร์นี้');
+            }
+
+            // ตรวจสอบสถานะว่ายังยกเลิกได้ไหม (ต้องเป็น pending_confirm)
+            if (order.status !== 'pending_confirm' && order.status !== '') {
+                throw new Error('ไม่สามารถยกเลิกออเดอร์นี้ได้แล้วเนื่องจากร้านค้าได้ดำเนินการแล้ว');
+            }
+
+            return await this.ordersService.updateStatus(id, 'cancelled', undefined, 'ยกเลิกเอง');
+        } catch (error) {
+            console.error('Error in OrdersController.cancelOrder:', error);
+            throw error;
+        }
+    }
+
+    // 👤 User ยืนยันได้รับสินค้า (เปลี่ยนเป็น completed)
+    @Put(':id/received')
+    @UseGuards(AuthGuard('jwt'))
+    async confirmReceived(@Param('id') id: string, @Request() req) {
+        try {
+            const userId = String(req.user.sub || req.user.userId);
+            const order = await this.ordersService.findOne(id);
+
+            // ตรวจสอบว่าเป็นเจ้าของออเดอร์ไหม
+            if (order.customerId !== userId) {
+                throw new Error('คุณไม่มีสิทธิ์จัดการออเดอร์นี้');
+            }
+
+            // ตรวจสอบสถานะ (ต้องเป็น pending_received)
+            if (order.status !== 'pending_received') {
+                throw new Error('สถานะออเดอร์ไม่ถูกต้องสำหรับการยืนยันการรับสินค้า');
+            }
+
+            return await this.ordersService.updateStatus(id, 'completed');
+        } catch (error) {
+            console.error('Error in OrdersController.confirmReceived:', error);
+            throw error;
+        }
     }
 }
