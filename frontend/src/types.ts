@@ -31,7 +31,9 @@ export interface Product {
 
     image?: string;
     imageUrl?: string;
+    imageUrls?: string[]; // 🌟 เพิ่มตรงนี้เพื่อแก้ Error
     thumbnailUrl?: string; // Small version
+    thumbnailUrls?: string[];
     gallery?: string[];
 
     isRecommend: boolean;

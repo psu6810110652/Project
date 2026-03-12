@@ -69,7 +69,10 @@ export class ProductService {
   }
 
   async create(createProductDto: CreateProductDto) {
-    const newProduct = this.productRepository.create(createProductDto);
+    const newProduct = this.productRepository.create({
+      ...createProductDto,
+      promotionPrice: createProductDto.promotionPrice ?? undefined,
+    });
     return await this.productRepository.save(newProduct);
   }
 }

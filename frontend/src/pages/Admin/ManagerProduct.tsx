@@ -25,8 +25,8 @@ const ManagerProduct: React.FC = () => {
         isFeatured: false,
         stock: 0,
         description: '',
-        imageUrl: '',
-        thumbnailUrl: '',
+        imageUrls: [] as string[],
+        thumbnailUrls: [] as string[],
         type: ''
     });
 
@@ -58,8 +58,9 @@ const ManagerProduct: React.FC = () => {
                     isPromotion: res.data.isPromotion || false,
                     promotionPrice: res.data.promotionPrice || 0,
                     isFeatured: res.data.isFeatured || false,
-                    imageUrl: res.data.imageUrl || '',
-                    thumbnailUrl: res.data.thumbnailUrl || '',
+                    // 🌟 ดึงข้อมูลมาเป็น Array
+                    imageUrls: res.data.imageUrls || (res.data.imageUrl ? [res.data.imageUrl] : []),
+                    thumbnailUrls: res.data.thumbnailUrls || (res.data.thumbnailUrl ? [res.data.thumbnailUrl] : []),
                     type: res.data.type || ''
                 });
             }).catch(() => messageApi.error("ดึงข้อมูลสินค้าไม่สำเร็จ"));
@@ -82,10 +83,11 @@ const ManagerProduct: React.FC = () => {
                 isFeatured: formData.isFeatured,
                 stockQuantity: formData.stock,
                 description: formData.description,
-                imageUrl: formData.imageUrl,
-                thumbnailUrl: formData.thumbnailUrl,
                 type: formData.type,
-                category: { id: Number(categoryId) }
+                category: { id: Number(categoryId) },
+                // 🌟 ส่งค่าเป็น Array ไปให้ Backend
+                imageUrls: formData.imageUrls,
+                thumbnailUrls: formData.thumbnailUrls,
             };
 
             if (isEditMode) {
@@ -110,45 +112,56 @@ const ManagerProduct: React.FC = () => {
         }
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
+    // 🌟 ฟังก์ชันจัดการรูปใหม่ (รองรับหลายรูปพร้อมกัน)
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
-                    // Helper to resize image
-                    const resizeImage = (maxWidth: number) => {
-                        let width = img.width;
-                        let height = img.height;
+        const processImage = (file: File): Promise<{ main: string, thumb: string }> => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
 
-                        if (width > maxWidth) {
-                            height = Math.round((height * maxWidth) / width);
-                            width = maxWidth;
-                        }
+                        const resizeImage = (maxWidth: number) => {
+                            let { width, height } = img;
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            ctx?.drawImage(img, 0, 0, width, height);
+                            return canvas.toDataURL('image/jpeg', 0.8);
+                        };
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx?.drawImage(img, 0, 0, width, height);
-                        return canvas.toDataURL('image/jpeg', 0.8);
+                        resolve({ main: resizeImage(800), thumb: resizeImage(300) });
                     };
-
-                    const mainImage = resizeImage(800);
-                    const thumbnail = resizeImage(300);
-
-                    setFormData(prev => ({
-                        ...prev,
-                        imageUrl: mainImage,
-                        thumbnailUrl: thumbnail
-                    }));
+                    img.src = event.target?.result as string;
                 };
-                img.src = event.target?.result as string;
-            };
-            reader.readAsDataURL(file);
-        }
+                reader.readAsDataURL(file);
+            });
+        };
+
+        const processedImages = await Promise.all(files.map(processImage));
+
+        setFormData(prev => ({
+            ...prev,
+            imageUrls: [...prev.imageUrls, ...processedImages.map(img => img.main)],
+            thumbnailUrls: [...prev.thumbnailUrls, ...processedImages.map(img => img.thumb)]
+        }));
+    };
+
+    // 🌟 ฟังก์ชันลบรูป (ลบตาม index)
+    const handleRemoveImage = (indexToRemove: number) => {
+        setFormData(prev => ({
+            ...prev,
+            imageUrls: prev.imageUrls.filter((_, index) => index !== indexToRemove),
+            thumbnailUrls: prev.thumbnailUrls.filter((_, index) => index !== indexToRemove)
+        }));
     };
 
     return (
@@ -178,10 +191,7 @@ const ManagerProduct: React.FC = () => {
                 </button>
             </div>
 
-            {/* Main Content: Single Column for Forms, Image at Bottom */}
             <div className="flex flex-col gap-10">
-
-                {/* FIELDS SECTION */}
                 <div className="bg-white p-8 rounded-[40px] shadow-xl border-4 border-[#256D45]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputBox label="ชื่อสินค้า" icon={<Package size={20} />}>
@@ -199,18 +209,14 @@ const ManagerProduct: React.FC = () => {
                             />
                         </InputBox>
 
-                        {/* Type Field: Now Col Span 1 */}
                         <InputBox label="ประเภทสินค้า" icon={<FolderTree size={20} />}>
-                            {/* ใช้ input เดิมของคุณ และเพิ่มคำสั่ง list="type-options" */}
                             <input
                                 className="input-style"
                                 placeholder="ระบุหรือเลือกประเภทสินค้า"
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                list="type-options" // 🌟 ผูกกับ datalist ด้านล่าง
+                                list="type-options"
                             />
-
-                            {/* สร้าง datalist เพื่อเป็นตัวเลือก Dropdown */}
                             <datalist id="type-options">
                                 {existingTypes.map((item, index) => (
                                     <option key={index} value={item.value} />
@@ -218,7 +224,6 @@ const ManagerProduct: React.FC = () => {
                             </datalist>
                         </InputBox>
 
-                        {/* Price: Moved next to Type */}
                         <InputBox label="ราคาสินค้าปกติ (บาท)" icon={<Coins size={20} />}>
                             <input
                                 type="number"
@@ -277,7 +282,6 @@ const ManagerProduct: React.FC = () => {
                             </label>
                         </div>
 
-                        {/* Description: Col Span 2 (Full Width) */}
                         <div className="col-span-1 md:col-span-2">
                             <InputBox label="รายละเอียดสินค้า" icon={<FileText size={20} />}>
                                 <textarea
@@ -291,37 +295,44 @@ const ManagerProduct: React.FC = () => {
                     </div>
                 </div>
 
-                {/* IMAGE UPLOAD SECTION: Moved to Bottom */}
-                <div className="bg-white p-8 rounded-[40px] border-4 border-[#256D45] shadow-xl flex flex-col items-center justify-center relative group min-h-80">
+                {/* 🌟 IMAGE UPLOAD SECTION: รองรับหลายรูป */}
+                <div className="bg-white p-8 rounded-[40px] border-4 border-[#256D45] shadow-xl flex flex-col relative group min-h-80">
                     <h2 className="text-2xl font-bold text-[#256D45] mb-6 flex items-center gap-2">
-                        <ImagePlus /> รูปภาพสินค้า
+                        <ImagePlus /> รูปภาพสินค้า ({formData.imageUrls.length} รูป)
                     </h2>
 
-                    {formData.imageUrl ? (
-                        <div className="relative w-full max-w-lg">
-                            <img src={formData.imageUrl} className="w-full h-auto object-contain rounded-3xl border-2 border-[#E8E8E8]" />
-                            <button
-                                onClick={() => setFormData({ ...formData, imageUrl: '', thumbnailUrl: '' })}
-                                className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-all"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-                    ) : (
-                        <label className="flex flex-col items-center gap-4 cursor-pointer text-[#256D45] w-full h-60 justify-center border-2 border-dashed border-[#256D45]/30 rounded-3xl hover:bg-[#F0F7F0] transition-all">
-                            <div className="p-6 bg-[#F0F7F0] rounded-full group-hover:bg-[#256D45] group-hover:text-white transition-all">
-                                <ImagePlus size={64} />
+                    <div className="flex flex-wrap gap-6">
+                        {formData.imageUrls.map((url, index) => (
+                            <div key={index} className="relative w-40 h-40 group">
+                                <img src={url} className="w-full h-full object-cover rounded-2xl border-2 border-[#E8E8E8] shadow-md group-hover:brightness-90 transition-all" alt={`product-${index}`} />
+                                <button
+                                    onClick={() => handleRemoveImage(index)}
+                                    className="absolute -top-3 -right-3 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 hover:scale-110 transition-all z-10"
+                                    title="ลบรูปนี้"
+                                >
+                                    <X size={18} />
+                                </button>
+                                {index === 0 && (
+                                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#256D45] text-white text-xs px-2 py-1 rounded-full shadow-md whitespace-nowrap">
+                                        รูปปก
+                                    </span>
+                                )}
                             </div>
-                            <span className="text-xl font-bold">อัปโหลดรูปสินค้า</span>
-                            <span className="text-sm text-gray-500">รองรับไฟล์ JPG, PNG (แนะนำขนาด 800x800px)</span>
+                        ))}
+
+                        <label className="flex flex-col items-center justify-center cursor-pointer text-[#256D45] w-40 h-40 border-2 border-dashed border-[#256D45]/40 rounded-2xl hover:bg-[#F0F7F0] hover:border-[#256D45] transition-all">
+                            <ImagePlus size={36} className="mb-2" />
+                            <span className="text-sm font-bold">เพิ่มรูปภาพ</span>
                             <input
                                 type="file"
+                                multiple
                                 className="hidden"
                                 accept="image/*"
                                 onChange={handleImageUpload}
                             />
                         </label>
-                    )}
+                    </div>
+                    <span className="text-sm text-gray-400 mt-6">รองรับไฟล์ JPG, PNG สามารถเลือกทีละหลายรูปได้ (รูปแรกจะถูกใช้เป็นรูปปก)</span>
                 </div>
             </div>
 
@@ -346,7 +357,6 @@ const ManagerProduct: React.FC = () => {
     );
 };
 
-// Sub-component เพื่อความสะอาดของโค้ด
 const InputBox = ({ label, icon, children }: any) => (
     <div className="flex flex-col gap-2">
         <label className="flex items-center gap-2 text-[#256D45] font-bold text-lg">

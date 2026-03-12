@@ -86,12 +86,14 @@ export const ProductDetail: React.FC = () => {
             // Check if product already exists in cart
             const existingItemIndex = existingCart.findIndex((item: any) => item.id === id);
 
+            // 🌟 ปรับตรงนี้ให้ดึงรูปลงตะกร้าได้ถูกต้อง
             const cartItem = {
                 id: product.id,
                 name: product.name,
                 price: product.price,
                 quantity: quantity,
-                imageUrl: product.imageUrl,
+                imageUrl: (product.imageUrls && product.imageUrls.length > 0) ? product.imageUrls[0] : product.imageUrl,
+                imageUrls: product.imageUrls,
                 stockQuantity: product.stockQuantity ?? product.stock ?? 0,
                 isPromotion: product.isPromotion,
                 promotionPrice: product.promotionPrice
@@ -188,20 +190,19 @@ export const ProductDetail: React.FC = () => {
         ));
     };
 
-    const currentImages = product?.imageUrl ? [product.imageUrl] : [];
-    // If no images exist, create array with first image repeated 4 times
+    // 🌟 ปรับเงื่อนไขการเช็คเล็กน้อยเพื่อความปลอดภัยของ TypeScript
+    const currentImages = (product?.imageUrls && product.imageUrls.length > 0)
+        ? product.imageUrls
+        : (product?.imageUrl ? [product.imageUrl] : []);
+
     const displayImages = currentImages.length === 0 ? [
         '/api/placeholder/320/320',
         '/api/placeholder/320/320',
         '/api/placeholder/320/320',
         '/api/placeholder/320/320'
-    ] : currentImages.length === 1 ? [
-        product?.imageUrl,
-        product?.imageUrl,
-        product?.imageUrl,
-        product?.imageUrl
-    ] : currentImages;
-    const currentImage = displayImages[selectedImageIndex] || product?.imageUrl || '/api/placeholder/320/320';
+    ] : currentImages; 
+
+    const currentImage = displayImages[selectedImageIndex] || '/api/placeholder/320/320';
 
     return (
         <div className="min-h-screen bg-[#DCEDC1]">
@@ -230,7 +231,7 @@ export const ProductDetail: React.FC = () => {
                     <div className="container mx-auto px-4 max-w-6xl text-left flex justify-start">
                         <button
                             onClick={() => navigate(-1)}
-                            className="bg-[#fdfcf6] text-[#2a6b3b] font-bold py-2! px-6! rounded-xl shadow-sm hover:bg-gray-50"
+                            className="bg-[#fdfcf6] text-[#2a6b3b] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50"
                         >
                             กลับ
                         </button>
@@ -249,7 +250,7 @@ export const ProductDetail: React.FC = () => {
                                             >
                                                 {image && image.includes('/api/placeholder/') ? (
                                                     <div className="text-gray-400 text-center">
-                                                        <span className="text-2xl">�</span>
+                                                        <span className="text-2xl"></span>
                                                     </div>
                                                 ) : (
                                                     <img src={image || ''} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
@@ -257,9 +258,9 @@ export const ProductDetail: React.FC = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="w-80 h-80 border-2 border-gray-200 rounded-xl flex items-center justify-center bg-gray-50">
+                                    <div className="w-80 h-80 border-2 border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 overflow-hidden">
                                         {currentImage ? (
-                                            <img src={currentImage} alt={product.name} className="w-full h-full object-cover rounded-xl" />
+                                            <img src={currentImage} alt={product.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="text-gray-400 text-center">
                                                 <span className="text-4xl mb-2 block">📦</span>
@@ -372,7 +373,7 @@ export const ProductDetail: React.FC = () => {
                                     <button
                                         onClick={handleAddToCart}
                                         disabled={isLoading}
-                                        className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-2! rounded-xl hover:bg-[#cbe6a8] transition flex justify-center items-center gap-2 shadow-sm"
+                                        className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-3 rounded-xl hover:bg-[#cbe6a8] transition flex justify-center items-center gap-2 shadow-sm"
                                     >
                                         🛒 {isLoading ? 'กำลังเพิ่ม...' : 'เพิ่มไปยังรถเข็น'}
                                     </button>
@@ -385,7 +386,7 @@ export const ProductDetail: React.FC = () => {
                             <div className="flex gap-1">
                                 <button
                                     onClick={() => setActiveTab('description')}
-                                    className={`font-bold py-3! px-8! rounded-t-xl transition-colors ${activeTab === 'description'
+                                    className={`font-bold py-3 px-8 rounded-t-xl transition-colors ${activeTab === 'description'
                                         ? 'bg-[#3a7c50] text-white'
                                         : 'bg-gray-200 text-gray-600'
                                         }`}
@@ -394,7 +395,7 @@ export const ProductDetail: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('pricing')}
-                                    className={`font-bold py-3! px-8! rounded-t-xl transition-colors ${activeTab === 'pricing'
+                                    className={`font-bold py-3 px-8 rounded-t-xl transition-colors ${activeTab === 'pricing'
                                         ? 'bg-[#3a7c50] text-white'
                                         : 'bg-gray-200 text-gray-600'
                                         }`}
@@ -405,11 +406,11 @@ export const ProductDetail: React.FC = () => {
                             <div className="bg-[#fdfcf6] border-t-4 border-[#3a7c50] rounded-b-xl shadow-sm p-6 text-left">
                                 {activeTab === 'description' ? (
                                     <div>
-                                        <p className="text-gray-600 leading-relaxed">
+                                        <p className="text-gray-600 leading-relaxed whitespace-pre-line">
                                             {product.description || 'ไม่มีคำอธิบายสินค้า'}
                                         </p>
                                         {product.description && (
-                                            <p className="text-sm text-gray-600 mt-2">
+                                            <p className="text-sm text-gray-600 mt-4">
                                                 <span className="font-medium">รหัสสินค้า:</span> {product.id}
                                             </p>
                                         )}
@@ -442,9 +443,9 @@ export const ProductDetail: React.FC = () => {
                                                 <span className="text-gray-600">จำนวนที่เลือก:</span>
                                                 <span className="font-semibold">{quantity} ชิ้น</span>
                                             </div>
-                                            <div className="border-t pt-2 mt-2">
+                                            <div className="border-t border-gray-200 pt-3 mt-3">
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-lg font-semibold">รวม:</span>
+                                                    <span className="text-lg font-semibold text-gray-800">รวม:</span>
                                                     <span className="text-xl font-bold text-green-600">
                                                         ฿{((product.isPromotion && product.promotionPrice) ? product.promotionPrice : product.price) * quantity}
                                                     </span>

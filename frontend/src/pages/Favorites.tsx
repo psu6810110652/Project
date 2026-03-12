@@ -12,8 +12,8 @@ interface Product {
   name: string;
   price: number;
   image?: string;
-  imageUrl?: string;
-  thumbnailUrl?: string;
+  imageUrls?: string[];
+  thumbnailUrls?: string[];
   rating?: number;
   reviewCount?: number;
   stockQuantity?: number;
@@ -71,18 +71,27 @@ const FavoritesPage = () => {
   };
 
   // Transform products to ProductCard format
-  const productCards: ProductCard[] = favorites.map(product => ({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    image: product.image || product.imageUrl || product.thumbnailUrl,
-    stock: product.stockQuantity || product.stock || 0,
-    rating: product.rating,
-    reviewCount: product.reviewCount,
-    soldCount: product.soldCount,
-    favoriteCount: product.favoriteCount,
-    type: product.Type || product.Category,
-  }));
+  const productCards: ProductCard[] = favorites.map(product => {
+    // 💡 ดึงรูปภาพออกมาเช็คว่าเป็น Array หรือไม่ (เหมือนที่ทำในหน้า Home)
+    const rawImage = product.image || product.imageUrls || product.thumbnailUrls;
+    const finalImage = Array.isArray(rawImage) ? rawImage[0] : rawImage;
+
+    // 💡 เช็คค่า Stock ให้ชัวร์ว่าไม่เป็น undefined
+    const finalStock = product.stockQuantity ?? product.stock ?? 0;
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: finalImage, // ส่งรูปที่กรองแล้วเข้าไป
+      stock: finalStock,
+      rating: product.rating || 0,
+      reviewCount: product.reviewCount || 0,
+      soldCount: product.soldCount || 0,
+      favoriteCount: product.favoriteCount || 0,
+      type: product.Type || product.Category || 'ทั่วไป',
+    };
+  });
 
   // โทนสีหลักจากภาพ
   const colorPrimaryDark = '#215A36'; // สีเขียวเข้ม (ตัวหนังสือ/เส้นขอบ)

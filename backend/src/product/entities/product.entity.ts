@@ -1,6 +1,5 @@
 import {
     Entity,
-    PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
     ManyToOne,
@@ -12,37 +11,47 @@ import { Category } from '../../category/entities/category.entity';
 @Entity('products')
 export class Product {
 
-    @PrimaryColumn() // id is now the product code (string)
+    @PrimaryColumn()
     id: string;
 
-    @Column() // varchar NN (Not Null)
+    @Column()
     name: string;
 
-    @Column({ name: 'image_url', nullable: true, type: 'text' })
-    imageUrl: string;
+    @Column({ name: 'image_urls', type: 'json', nullable: true })
+    imageUrls: string[];
 
-    @Column({ name: 'thumbnail_url', nullable: true, type: 'text' })
-    thumbnailUrl: string;
+    @Column({ name: 'thumbnail_urls', type: 'json', nullable: true })
+    thumbnailUrls: string[];
 
-    @Column({ nullable: true }) // Product type/subcategory
+    @Column({ nullable: true })
     type: string;
 
-    @Column({ type: 'text', nullable: true }) // description text (nullable)
+    @Column({ type: 'text', nullable: true })
     description: string;
 
-    @Column({ type: 'decimal', precision: 10, scale: 2 }) // decimal(10,2) NN
+    @Column({
+        type: 'decimal', precision: 10, scale: 2, transformer: {
+            to: (value: number) => value,
+            from: (value: string) => parseFloat(value)
+        }
+    })
     price: number;
 
-    @Column({ name: 'stock_quantity' }) // int NN
+    @Column({ name: 'stock_quantity' })
     stockQuantity: number;
 
     @Column({ name: 'is_promotion', default: false })
     isPromotion: boolean;
 
-    @Column({ name: 'promotion_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
+    @Column({
+        name: 'promotion_price', type: 'decimal', precision: 10, scale: 2, nullable: true, transformer: {
+            to: (value: number) => value,
+            from: (value: string) => value ? parseFloat(value) : null
+        }
+    })
     promotionPrice: number;
 
-    @Column({ name: 'is_featured', nullable: true }) // boolean
+    @Column({ name: 'is_featured', default: false, nullable: true })
     isFeatured: boolean;
 
     @Column({ name: 'sold_count', default: 0 }) // int, default 0
@@ -60,7 +69,6 @@ export class Product {
     @CreateDateColumn({ name: 'created_at', nullable: true }) // timestamp
     createdAt: Date;
 
-    // --- ความสัมพันธ์ (Relation) กับตาราง Category ---
     @ManyToOne(() => Category, (category) => category.products)
     @JoinColumn({ name: 'category_id' })
     category: Category;
