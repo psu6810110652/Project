@@ -3,12 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FavoritesService } from '../services/favoritesService';
 
-export const Products = (props: ProductCard) => {
+type ExtendedProductCard = ProductCard & { 
+    imageUrls?: string[] | string; 
+    imageUrl?: string; 
+};
+
+export const Products = (props: ExtendedProductCard) => {
     const navigate = useNavigate();
     const [isFavorite, setIsFavorite] = useState(false);
 
     useEffect(() => {
-        // Check if product is in favorites using the service
         if (props.id) {
             setIsFavorite(FavoritesService.isFavorite(props.id));
         }
@@ -21,14 +25,57 @@ export const Products = (props: ProductCard) => {
     };
 
     const toggleFavorite = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent product click when clicking heart
-
+        e.stopPropagation();
         if (!props.id) return;
-
-        // Use the service to toggle favorite
         const newFavoriteStatus = FavoritesService.toggleFavorite(props.id);
         setIsFavorite(newFavoriteStatus);
     };
+
+    // 🌟 ฟังก์ชันจัดการรูปภาพแบบฉลาดสุดๆ (อัปเดตใหม่)
+    const getDisplayImage = () => {
+        let finalImage = '';
+
+        // 1. ลองดึงจาก imageUrls ก่อน
+        if (props.imageUrls) {
+        if (Array.isArray(props.imageUrls) && props.imageUrls.length > 0) {
+            finalImage = props.imageUrls[0]; // <--- ตรงนี้แหละครับที่มันหยิบรูปแรกมาใช้!
+        } else if (typeof props.imageUrls === 'string') {
+                try {
+                    const parsed = JSON.parse(props.imageUrls);
+                    if (Array.isArray(parsed) && parsed.length > 0) finalImage = parsed[0];
+                } catch (e) {
+                    finalImage = props.imageUrls;
+                }
+            }
+        }
+
+        // 2. ถ้ายังไม่มี ให้ลองใช้ imageUrl หรือ image
+        if (!finalImage) {
+            finalImage = props.imageUrl || props.image || '';
+        }
+
+        // 3. ถ้าไม่มีรูปภาพเลย ให้แสดงรูป placeholder
+        if (!finalImage) {
+            return 'https://placehold.co/290x290/f1f5f9/94a3b8?text=No+Image';
+        }
+
+        // 4. ถ้าเป็นข้อมูล Mock (มีคำว่า api/placeholder) ให้ดึงจากเว็บ Placehold แทน จะได้ไม่ติด 404
+        if (finalImage.includes('api/placeholder')) {
+            return 'https://placehold.co/290x290/e2e8f0/64748b?text=Mock+Product';
+        }
+
+        // 5. ตรวจสอบว่าต้องเติม Base URL ไหม (รูปที่อัปโหลดจริง)
+        // ⚠️ สำคัญ: ถ้า Backend รันพอร์ตอื่น (เช่น 8000) ให้แก้เลข 3000 ด้านล่างนี้นะครับ
+        if (finalImage.startsWith('/uploads') || finalImage.startsWith('/images') || finalImage.startsWith('/api')) {
+            const API_BASE_URL = 'http://localhost:3000'; 
+            return `${API_BASE_URL}${finalImage}`;
+        }
+
+        // 6. ถ้าเป็น URL เต็มๆ อยู่แล้ว ก็ใช้ได้เลย
+        return finalImage;
+    };
+
+    const displayImage = getDisplayImage();
 
     return (
         <div
@@ -41,12 +88,17 @@ export const Products = (props: ProductCard) => {
                 >
                     <img
                         className="absolute w-full h-full p-4 left-1/2 transform -translate-x-1/2 object-contain"
-                        alt="Icon"
-                        src={props.image}
+                        alt={props.name || "Product"}
+                        src={displayImage}
+                        // ถ้ารูปโหลดพัง (เช่น ลิงก์เสีย) ให้สลับไปใช้รูป Placeholder
+                        onError={(e) => {
+                            e.currentTarget.src = 'https://placehold.co/290x290/fee2e2/ef4444?text=Error';
+                        }}
                     />
+                    
                     <button
                         onClick={toggleFavorite}
-                        className="w-10 h-10 object-contain absolute top-2 right-2 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors"
+                        className="w-10 h-10 object-contain absolute top-2 right-2 bg-white rounded-full p-1 hover:bg-gray-100 transition-colors z-10"
                         title={isFavorite ? "ลบออกจากรายการโปรด" : "เพิ่มไปยังรายการโปรด"}
                     >
                         <svg
@@ -65,11 +117,9 @@ export const Products = (props: ProductCard) => {
                 </div>
 
                 <div className="absolute w-[290px] top-[325px] left-1/2 -translate-x-1/2 font-medium text-[#256d45]">
-                    {/* บรรทัดบน: ชื่อสินค้า */}
                     <div className="flex items-baseline mb-1">
                         <div className=" text-2xl text-left font-semibold tracking-[0.05em] leading-[normal] truncate">{props.name}</div>
                     </div>
-                    {/* บรรทัดกลาง: เรตติ้งดาว, คะแนน, และจำนวนรีวิว */}
                     <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-1.5 overflow-hidden">
                             <div className="flex text-[#fbbf24] shrink-0">
@@ -89,14 +139,10 @@ export const Products = (props: ProductCard) => {
                             <span className="text-sm font-normal">{props.favoriteCount || 0}</span>
                         </div>
                     </div>
-
-                    {/* บรรทัดล่าง: สต็อก และ ยอดขาย */}
                     <div className="flex justify-between items-center text-sm mb-1.5">
                         <div className="font-normal opacity-75">มีจำนวน {props.stock} ชิ้น</div>
                         <div className="font-normal bg-gray-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter">ขายแล้ว {props.soldCount || 0}</div>
                     </div>
-
-                    {/* บรรทัดราคา (เด่น) */}
                     <div className="flex justify-end items-center">
                         <div className="text-xl font-bold text-right whitespace-nowrap">{typeof props.price === 'number' ? props.price.toFixed(2) : props.price} บาท</div>
                     </div>
