@@ -90,8 +90,8 @@ export class ProductController {
         // Add random sold count (0-200)
         const soldCount = Math.floor(Math.random() * 200) + 1;
         
-        // Add random favorite count (0-100)
-        const favoriteCount = Math.floor(Math.random() * 100) + 1;
+        // Add random favorite count (1-13) - เหมาะสมกับจำนวนผู้ใช้จริง
+        const favoriteCount = Math.floor(Math.random() * 13) + 1;
         
         // Add random rating (3-5)
         const rating = Number((Math.random() * 2 + 3).toFixed(1));
