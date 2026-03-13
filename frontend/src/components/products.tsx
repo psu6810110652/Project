@@ -13,62 +13,28 @@ export const Products = (props: ExtendedProductCard) => {
     const navigate = useNavigate();
     const [isFavorite, setIsFavorite] = useState(false);
     const [productData, setProductData] = useState({
-        rating: props.rating || 0,
-        reviewCount: props.reviewCount || 0,
-        favoriteCount: props.favoriteCount || 0,
-        soldCount: props.soldCount || 0,
-        stock: props.stock || 0
+        rating: Number(props.rating) || 0,
+        reviewCount: Number(props.reviewCount) || 0,
+        favoriteCount: Number(props.favoriteCount) || 0,
+        soldCount: Number(props.soldCount) || 0,
+        stock: Number(props.stock) || 0
     });
 
     useEffect(() => {
         if (props.id) {
             setIsFavorite(FavoritesService.isFavorite(props.id));
-
-            // Fetch real product data like ProductDetail does
-            fetchProductDetails(props.id);
-        }
-    }, [props.id]);
-
-    const fetchProductDetails = async (productId: string) => {
-        try {
-            // Fetch complete product details (including soldCount and favoriteCount)
-            const productResponse = await api.get(`/product/${productId}`);
-            const productDetail = productResponse.data;
-
-            // Fetch reviews for this product to calculate real rating (like ProductDetail)
-            const reviewsResponse = await api.get(`/product/${productId}/reviews`);
-            const reviewsData = reviewsResponse.data;
-
-            let averageRating = Number(productDetail.rating) || 0;
-            let totalReviews = Number(productDetail.reviewCount) || 0;
-
-            // Calculate average rating from reviews like ProductDetail
-            if (reviewsData && reviewsData.length > 0) {
-                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + Number(review.rating || 0), 0);
-                averageRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
-                totalReviews = reviewsData.length;
-            }
-
-            // Update with real data from backend
+            
+            // ใช้ข้อมูลจาก props ที่ Home.tsx ส่งมาโดยตรง (จาก Supabase)
+            // ไม่ต้องดึงข้อมูลใหม่ เพราะ Home.tsx ดึงจาก Supabse มาแล้ว
             setProductData({
-                rating: averageRating,
-                reviewCount: totalReviews,
-                favoriteCount: productDetail.favoriteCount || 0,
-                soldCount: productDetail.soldCount || 0,
-                stock: productDetail.stockQuantity || productDetail.stock || 0
-            });
-        } catch (error) {
-            console.error(`Error fetching product details for ${productId}:`, error);
-            // Use props data as fallback
-            setProductData({
-                rating: props.rating || 0,
-                reviewCount: props.reviewCount || 0,
-                favoriteCount: props.favoriteCount || 0,
-                soldCount: props.soldCount || 0,
-                stock: props.stock || 0
+                rating: Number(props.rating) || 0,
+                reviewCount: Number(props.reviewCount) || 0,
+                favoriteCount: Number(props.favoriteCount) || 0,
+                soldCount: Number(props.soldCount) || 0,
+                stock: Number(props.stock) || 0
             });
         }
-    };
+    }, [props.id, props.rating, props.reviewCount, props.favoriteCount, props.soldCount, props.stock]);
 
     const handleProductClick = () => {
         if (props.id) {

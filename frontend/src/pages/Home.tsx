@@ -23,12 +23,14 @@ const Home: React.FC = () => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
           image: getFirstImage(p), // ดึงรูปแรก
-          stock: p.stockQuantity,
+          stock: p.stockQuantity ?? p.stock ?? 0,
           isRecommend: p.isFeatured,
-          rating: p.rating || 0,
-          favoriteCount: p.favoriteCount || 0,
-          reviewCount: p.reviewCount || 0,
-          soldCount: p.soldCount || 0
+          isPromotion: true,
+          // ดึงข้อมูลจริงจาก Supabase โดยตรง
+          rating: Number(p.rating) || 0,
+          favoriteCount: Number(p.favoriteCount) || 0,
+          reviewCount: Number(p.reviewCount) || 0,
+          soldCount: Number(p.soldCount) || 0
         }));
         setPromotions(mappedProducts);
       })
@@ -40,12 +42,14 @@ const Home: React.FC = () => {
         const mappedProducts = res.data.map((p: any) => ({
           ...p,
           image: getFirstImage(p), // ดึงรูปแรก
-          stock: p.stockQuantity,
+          stock: p.stockQuantity ?? p.stock ?? 0,
           isRecommend: true,
-          rating: p.rating || 0,
-          favoriteCount: p.favoriteCount || 0,
-          reviewCount: p.reviewCount || 0,
-          soldCount: p.soldCount || 0
+          isPromotion: p.isPromotion || false,
+          // ดึงข้อมูลจริงจาก Supabase โดยตรง
+          rating: Number(p.rating) || 0,
+          favoriteCount: Number(p.favoriteCount) || 0,
+          reviewCount: Number(p.reviewCount) || 0,
+          soldCount: Number(p.soldCount) || 0
         }));
         setFeatured(mappedProducts);
       })
@@ -58,10 +62,13 @@ const Home: React.FC = () => {
           ...p,
           image: getFirstImage(p), // ดึงรูปแรก
           stock: p.stockQuantity ?? p.stock ?? 0,
-          rating: p.rating || 0,
-          favoriteCount: p.favoriteCount || 0,
-          reviewCount: p.reviewCount || 0,
-          soldCount: p.soldCount || 0
+          isRecommend: p.isFeatured || false,
+          isPromotion: p.isPromotion || false,
+          // ดึงข้อมูลจริงจาก Supabase โดยตรง
+          rating: Number(p.rating) || 0,
+          favoriteCount: Number(p.favoriteCount) || 0,
+          reviewCount: Number(p.reviewCount) || 0,
+          soldCount: Number(p.soldCount) || 0
         }));
         setAllProducts(mappedProducts);
       })
