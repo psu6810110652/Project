@@ -17,35 +17,32 @@ const NavButton = ({ direction, onClick }: { direction: 'left' | 'right', onClic
   <button
     type="button"
     onClick={onClick}
-    className={`absolute top-1/2 -translate-y-1/2 z-20 w-20 h-20 flex items-center justify-center transition-transform rounded-full active:scale-90 ${direction === 'left' ? 'left-8' : 'right-8'
-      }`}
+    className={`absolute top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-16 md:h-16 bg-white/80 shadow-md flex items-center justify-center transition-transform rounded-full hover:scale-105 active:scale-95 ${
+      direction === 'left' ? '-left-4 md:-left-8' : '-right-4 md:-right-8'
+    }`}
   >
     <img
       src={direction === 'left' ? Arrowright : Arrowleft}
       alt={`nav-${direction}`}
-      className="w-full h-full object-contain"
+      className="w-1/2 h-1/2 object-contain" // ลดขนาดลูกศรลงหน่อยให้พอดีวงกลม
     />
   </button>
 );
 
 export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
-
-  // เช็คว่าเป็นโหมดแนะนำหรือไม่
   const isRecommend = type === 'recommend';
+  const title = isRecommend ? "สินค้าแนะนำ" : type === 'promotion' ? "สินค้าโปรโมชั่น" : "สินค้าทั้งหมด";
 
-  const title = type === 'recommend' ? "สินค้าแนะนำ" : type === 'promotion' ? "สินค้าโปรโมชั่น" : "สินค้าทั้งหมด";
-
-  // 1. กรองข้อมูลตามประเภท
+  // 1. กรองข้อมูล
   let products = allProducts.filter(product => {
     if (type === 'all') return true;
-    return type === 'recommend' ? product.isRecommend : product.isPromotion;
+    return isRecommend ? product.isRecommend : product.isPromotion;
   });
 
-  // 2. ตัดจำนวน "เฉพาะ" สินค้าแนะนำ ให้เหลือ 8 ชิ้น
+  // 2. ตัดจำนวนเฉพาะสินค้าแนะนำ
   if (isRecommend) {
     products = products.slice(0, 8);
   }
-  // (ถ้าเป็น promotion จะข้ามบรรทัดบนไป ทำให้แสดงครบทุกชิ้นที่มี)
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftBtn, setShowLeftBtn] = useState(false);
@@ -53,7 +50,7 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 400;
+      const scrollAmount = 300; // ปรับระยะเลื่อนให้พอดีขึ้น
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -69,33 +66,40 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
     }
   };
 
+  // ✅ ย้าย useEffect มาไว้หลัง handleScroll และปรับให้เช็คขนาดหน้าจอด้วย
   useEffect(() => {
     const scrollContainer = scrollRef.current;
     if (scrollContainer) {
-      handleScroll();
+      handleScroll(); // เช็คตอนโหลดครั้งแรก
       scrollContainer.addEventListener('scroll', handleScroll);
-      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+      window.addEventListener('resize', handleScroll); // เช็คตอนย่อขยายจอ
+
+      return () => {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', handleScroll);
+      };
     }
   }, [products]);
 
   if (products.length === 0) return null;
 
   return (
-    <section className={`w-full ${type === 'all' ? 'py-10 bg-[#fffef2] mb-12' : 'h-160 py-10 bg-[#fffef2] mb-12'} overflow-hidden`}>
-      <div className="w-full mx-auto px-4 md:px-10 lg:px-20">
+    // ✅ เอา h-160 ออก เปลี่ยนเป็น py-10 ธรรมดา เพื่อให้ความสูงยืดหยุ่นตามของข้างใน
+    <section className="w-full py-10 bg-[#fffef2] mb-12 overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-10">
 
         {/* Header */}
-        <header className="flex flex-col items-center mt-1">
-          <h2 className="text-[3rem] font-semibold text-[#256d45] text-center tracking-wider leading-[normal]">
+        <header className="flex flex-col items-center mt-1 mb-8">
+          <h2 className="text-3xl md:text-[3rem] font-semibold text-[#256d45] text-center tracking-wider leading-tight">
             {title}
           </h2>
-          <div className="w-[80%] h-0.75 bg-[#256d45] mt-2 rounded-full" />
+          <div className="w-[80%] max-w-md h-1 bg-[#256d45] mt-4 rounded-full" />
         </header>
 
         {/* Content Area */}
         {type === 'all' ? (
-          /* Grid Layout for "All Products" */
-          <div className="grid grid-cols-[repeat(auto-fill,340px)] gap-x-6 gap-y-12 mt-12 justify-center">
+          /* ✅ Grid Layout: ปรับให้ Responsive ชัดเจน ไม่ใช้ auto-fill ที่ 340px แข็งๆ */
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-8 justify-center">
             {products.map((product) => (
               <div key={product.id} className="transition-transform hover:scale-105 duration-300">
                 <Products
@@ -109,23 +113,15 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
             ))}
           </div>
         ) : (
-          /* Slider Layout for Promotions & Recommend */
-          <div className="relative group">
-            {showLeftBtn && (
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30">
-                <NavButton direction="left" onClick={() => scroll('left')} />
-              </div>
-            )}
-
-            {showRightBtn && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
-                <NavButton direction="right" onClick={() => scroll('right')} />
-              </div>
-            )}
+          /* Slider Layout */
+          <div className="relative group px-4 md:px-8">
+            {showLeftBtn && <NavButton direction="left" onClick={() => scroll('left')} />}
+            {showRightBtn && <NavButton direction="right" onClick={() => scroll('right')} />}
 
             <div
               ref={scrollRef}
-              className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth py-6 mt-2 px-10"
+              className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-6 w-full"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // ซ่อน Scrollbar เผื่อคลาส no-scrollbar ไม่ทำงาน
             >
               {products.map((product) => (
                 <div key={product.id} className="shrink-0 transition-transform hover:scale-105 duration-300">
@@ -141,6 +137,7 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
             </div>
           </div>
         )}
+
       </div>
     </section>
   );
