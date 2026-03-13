@@ -133,15 +133,13 @@ function Navbar() {
             
             // แสดงรายละเอียดคำสั่งซื้อที่รอจัดส่ง
             if (pendingOrdersList.length > 0) {
-              // แสดง 2 ออเดอร์แรกที่มีรายละเอียด
-              pendingOrdersList.slice(0, 2).forEach((order: any, index: number) => {
+              // แสดง 5 ออเดอร์แรกที่มีรายละเอียด
+              pendingOrdersList.slice(0, 5).forEach((order: any, index: number) => {
                 // สร้างรายการสินค้าจากออเดอร์
-                const productNames = order.items && order.items.length > 0 
-                  ? order.items.slice(0, 2).map((item: any) => 
-                      item.product?.name || 
-                      item.productName || 
-                      item.name || 
-                      item.product_name || 
+                const productNames = order.products && order.products.length > 0 
+                  ? order.products.slice(0, 2).map((product: any) => 
+                      product.name || 
+                      product.productName || 
                       'สินค้าไม่ระบุ'
                     ).join(', ')
                   : 'ไม่มีรายการสินค้า';
@@ -156,11 +154,11 @@ function Navbar() {
                 });
               });
               
-              // ถ้ามีมากกว่า 2 ออเดอร์ ให้แสดงจำนวนรวม
-              if (pendingOrdersList.length > 2) {
+              // ถ้ามีมากกว่า 5 ออเดอร์ ให้แสดงจำนวนรวม
+              if (pendingOrdersList.length > 5) {
                 newNotifs.push({
                   id: `pending-orders-summary-${Date.now()}`,
-                  message: `และอีก ${pendingOrdersList.length - 2} คำสั่งซื้อรอจัดส่ง`,
+                  message: `และอีก ${pendingOrdersList.length - 5} คำสั่งซื้อรอจัดส่ง`,
                   time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
                   type: 'pending_orders',
                   path: '/admin/orders'
