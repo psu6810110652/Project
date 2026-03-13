@@ -75,4 +75,9 @@ export class ProductService {
     });
     return await this.productRepository.save(newProduct);
   }
+
+  // Method to execute raw SQL queries
+  async query(query: string, parameters?: any[]) {
+    return await this.productRepository.query(query, parameters);
+  }
 }
