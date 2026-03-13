@@ -1,58 +1,75 @@
 import { useState, useEffect } from 'react';
 import { Home, ChevronUp, Image as ImageIcon } from 'lucide-react';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid,
+    Tooltip, ResponsiveContainer
+} from 'recharts';
 import api from '../../services/api';
 import { type Product } from '../../types';
 import { useNavigate } from 'react-router-dom';
 
+// ฟอร์แมตวันที่เป็นภาษาไทย เช่น "จ 10"
+function formatDateTH(dateStr: string): string {
+    const date = new Date(dateStr);
+    const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+    return `${days[date.getDay()]} ${date.getDate()}`;
+}
+
+// ฟอร์แมตตัวเลขบาท
+function formatBaht(value: number): string {
+    if (value >= 1000) return `฿${(value / 1000).toFixed(1)}K`;
+    return `฿${value.toLocaleString()}`;
+}
+
 export default function Dashboard() {
     const navigate = useNavigate();
 
-    // States for dashboard data
     const [lowStockItems, setLowStockItems] = useState<Product[]>([]);
-
-    // Placeholder states for APIs that don't exist in backend yet
-    const salesToday = 0;
-    const pendingOrders = 0;
+    const [salesToday, setSalesToday] = useState<number>(0);
+    const [pendingOrders, setPendingOrders] = useState<number>(0);
     const [newCustomers, setNewCustomers] = useState(0);
+    const [weeklySales, setWeeklySales] = useState<{ date: string; total: number }[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch all products to calculate low stock items
-        const fetchProducts = async () => {
-            try {
-                // Using the api interceptor which attaches the token automatically
-                const response = await api.get('/product');
-                const allProducts: Product[] = response.data;
-                // Filter items with stock <= 5 (Checking both stock types)
-                const lowStock = allProducts.filter(p => {
-                    const currentStock = typeof p.stock === 'number' ? p.stock : (p.stockQuantity ?? 0);
-                    return currentStock <= 5;
-                });
-                // Sort by stock quantity ascending (lowest first)
-                lowStock.sort((a, b) => {
-                    const stockA = typeof a.stock === 'number' ? a.stock : (a.stockQuantity ?? 0);
-                    const stockB = typeof b.stock === 'number' ? b.stock : (b.stockQuantity ?? 0);
-                    return stockA - stockB;
-                });
+        const BASE = '/api/admin/orders';
+
+        // ดึงข้อมูลทั้งหมดพร้อมกัน
+        Promise.allSettled([
+            // ยอดขายวันนี้
+            api.get(`${BASE}/today-sales`)
+                .then(res => setSalesToday(res.data)),
+
+            // รอการจัดส่ง
+            api.get(`${BASE}/pending-count`)
+                .then(res => setPendingOrders(res.data)),
+
+            // กราฟ 7 วัน
+            api.get(`${BASE}/weekly-sales`)
+                .then(res => setWeeklySales(res.data)),
+
+            // สินค้าสต็อกต่ำ
+            api.get('/product').then(res => {
+                const allProducts: Product[] = res.data;
+                const lowStock = allProducts
+                    .filter(p => (p.stockQuantity ?? 0) <= 5)
+                    .sort((a, b) => (a.stockQuantity ?? 0) - (b.stockQuantity ?? 0));
                 setLowStockItems(lowStock);
-            } catch (error) {
-                console.error("Error fetching products:", error);
-            }
-        };
+            }),
 
-        fetchProducts();
-
-        // Fetch all users to get the total customers count
-        api.get('/users')
-            .then(res => {
-                const customers = res.data.filter((user: any) => user.role !== 'Admin');
+            // ลูกค้าทั้งหมด
+            api.get('/users').then(res => {
+                const customers = res.data.filter((u: any) => u.role !== 'Admin');
                 setNewCustomers(customers.length);
-            })
-            .catch(err => console.error("Error fetching users:", err));
-
-        // TODO: Fetch Sales and Orders when the backend APIs are ready
-        // api.get('/api/orders/today-sales').then(res => setSalesToday(res.data.total));
-        // api.get('/api/orders/pending').then(res => setPendingOrders(res.data.count));
+            }),
+        ]).finally(() => setLoading(false));
     }, []);
+
+    // แปลง weekly data สำหรับ recharts
+    const chartData = weeklySales.map(d => ({
+        name: formatDateTH(d.date),
+        ยอดขาย: d.total,
+    }));
 
     return (
         <div className="min-h-screen p-4 md:p-8 text-left">
@@ -64,63 +81,125 @@ export default function Dashboard() {
 
             {/* 4 Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8 w-full">
-                {/* Card 1 */}
+                {/* ยอดขายวันนี้ */}
                 <div className="bg-[#FFFEF4] rounded-[1.25rem] p-6 shadow-sm flex flex-col justify-between relative h-32 items-start text-left">
                     <div className="flex justify-between items-start w-full">
-                        <div className="text-[2rem] leading-none font-bold text-[#1E5631]">{salesToday.toLocaleString()}</div>
+                        <div className="text-[2rem] leading-none font-bold text-[#1E5631]">
+                            {loading ? '—' : `฿${salesToday.toLocaleString()}`}
+                        </div>
                         <ChevronUp className="w-8 h-8 text-[#1E5631] -mt-1 shrink-0" strokeWidth={3} />
                     </div>
                     <div className="text-[#1E5631] font-medium text-sm">ยอดขายวันนี้</div>
                 </div>
 
-                {/* Card 2 */}
+                {/* รอการจัดส่ง */}
                 <div className="bg-[#FFFEF4] rounded-[1.25rem] p-6 shadow-sm flex flex-col justify-between relative h-32 items-start text-left">
-                    <div className="text-[2rem] leading-none font-bold text-[#1E5631]">{pendingOrders.toLocaleString()}</div>
+                    <div className="text-[2rem] leading-none font-bold text-[#1E5631]">
+                        {loading ? '—' : pendingOrders.toLocaleString()}
+                    </div>
                     <div className="text-[#1E5631] font-medium text-sm">รอการจัดส่ง</div>
-                    <div className="absolute bottom-6 right-6 flex items-center gap-1.5 text-[0.65rem] text-[#1E5631] font-bold bg-transparent">
+                    <div className="absolute bottom-6 right-6 flex items-center gap-1.5 text-[0.65rem] text-[#1E5631] font-bold">
                         <div className="w-2 h-2 bg-[#1E5631] rounded-full"></div>
                         คำสั่งซื้อใหม่
                     </div>
                 </div>
 
-                {/* Card 3 */}
+                {/* สต็อกต่ำ */}
                 <div className="bg-[#FFFEF4] rounded-[1.25rem] p-6 shadow-sm flex flex-col justify-between relative h-32 items-start text-left">
-                    <div className="text-[2rem] leading-none font-bold text-red-600">{lowStockItems.length}</div>
+                    <div className="text-[2rem] leading-none font-bold text-red-600">
+                        {loading ? '—' : lowStockItems.length}
+                    </div>
                     <div className="text-red-600 font-bold text-sm">แจ้งเตือนสต็อกต่ำ</div>
-                    <div className="absolute bottom-6 right-6 flex items-center gap-1.5 text-[0.65rem] text-red-600 font-bold bg-transparent">
+                    <div className="absolute bottom-6 right-6 flex items-center gap-1.5 text-[0.65rem] text-red-600 font-bold">
                         <div className="w-2 h-2 bg-red-600 rounded-full"></div>
                         สต็อกต่ำ
                     </div>
                 </div>
 
-                {/* Card 4 */}
+                {/* ลูกค้าทั้งหมด */}
                 <div className="bg-[#FFFEF4] rounded-[1.25rem] p-6 shadow-sm flex flex-col justify-between relative h-32 items-start text-left">
-                    <div className="text-[2rem] leading-none font-bold text-[#1E5631]">{newCustomers.toLocaleString()}</div>
+                    <div className="text-[2rem] leading-none font-bold text-[#1E5631]">
+                        {loading ? '—' : newCustomers.toLocaleString()}
+                    </div>
                     <div className="text-[#1E5631] font-medium text-sm">ลูกค้าทั้งหมด</div>
                 </div>
             </div>
 
             {/* Bottom Section */}
             <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 w-full text-left">
-                {/* Graph Area */}
-                <div className="xl:col-span-3 bg-[#FFFEF4] rounded-[1.5rem] p-4 sm:p-8 shadow-sm min-h-[400px] flex flex-col items-start text-left">
-                    <h2 className="text-xl font-bold text-[#1E5631] mb-8">กราฟยอดขาย 7 วันล่าสุด</h2>
-                    <div className="flex-1 border-l-[1.5px] border-b-[1.5px] border-[#1E5631] ml-4 mb-4 relative w-full">
-                        {/* Placeholder for the graph line */}
-                    </div>
+                {/* กราฟ */}
+                <div className="xl:col-span-3 bg-[#FFFEF4] rounded-[1.5rem] p-4 sm:p-8 shadow-sm min-h-[400px] flex flex-col">
+                    <h2 className="text-xl font-bold text-[#1E5631] mb-6">กราฟยอดขาย 7 วันล่าสุด</h2>
+                    {loading ? (
+                        <div className="flex-1 flex items-center justify-center text-gray-400">กำลังโหลด...</div>
+                    ) : chartData.every(d => d.ยอดขาย === 0) ? (
+                        <div className="flex-1 flex items-center justify-center text-gray-400">ยังไม่มีข้อมูลยอดขาย</div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#1E5631" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#1E5631" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis
+                                    dataKey="name"
+                                    tick={{ fill: '#1E5631', fontSize: 12, fontWeight: 600 }}
+                                    axisLine={{ stroke: '#1E5631' }}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    tickFormatter={formatBaht}
+                                    tick={{ fill: '#6b7280', fontSize: 11 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    width={60}
+                                />
+                                <Tooltip
+                                    formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'ยอดขาย']}
+                                    contentStyle={{
+                                        borderRadius: '0.75rem',
+                                        border: 'none',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                        backgroundColor: '#fff',
+                                    }}
+                                    labelStyle={{ color: '#1E5631', fontWeight: 700 }}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="ยอดขาย"
+                                    stroke="#1E5631"
+                                    strokeWidth={2.5}
+                                    fill="url(#salesGradient)"
+                                    dot={{ fill: '#1E5631', r: 4 }}
+                                    activeDot={{ r: 6 }}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    )}
                 </div>
 
-                {/* Low Stock Items Area */}
+                {/* สินค้าสต็อกต่ำ */}
                 <div className="xl:col-span-2 bg-[#FFFEF4] rounded-[1.5rem] p-4 sm:p-8 shadow-sm min-h-[400px] overflow-hidden flex flex-col items-start text-left">
                     <h2 className="text-xl font-bold text-red-600 mb-6 shrink-0">สินค้าในสต็อกต่ำ</h2>
                     <div className="flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar w-full">
-                        {lowStockItems.length > 0 ? (
+                        {loading ? (
+                            <div className="flex items-center justify-center h-full pt-10 text-gray-400 w-full text-center">
+                                กำลังโหลด...
+                            </div>
+                        ) : lowStockItems.length > 0 ? (
                             lowStockItems.map((product) => (
                                 <div key={product.id} className="bg-[#F5F7EC] rounded-[1.25rem] p-3 flex justify-between items-center shadow-sm w-full">
                                     <div className="flex items-center gap-4">
                                         <div className="w-14 h-14 bg-white rounded-[0.8rem] border-[3px] border-[#1E5631] flex items-center justify-center shrink-0 overflow-hidden">
-                                            {product.thumbnailUrl || product.imageUrl ? (
-                                                <img src={product.thumbnailUrl || product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                            {product.thumbnailUrls?.[0] || product.imageUrls?.[0] ? (
+                                                <img
+                                                    src={product.thumbnailUrls?.[0] || product.imageUrls?.[0]}
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover"
+                                                />
                                             ) : (
                                                 <ImageIcon className="w-8 h-8 text-[#1E5631]" strokeWidth={2} />
                                             )}
@@ -128,7 +207,7 @@ export default function Dashboard() {
                                         <div className="flex flex-col items-start text-left">
                                             <span className="text-[#1E5631] font-bold text-sm line-clamp-1">{product.name}</span>
                                             <span className="text-red-600 text-[0.75rem] font-bold mt-0.5">
-                                                มีจำนวน {typeof product.stock === 'number' ? product.stock : (product.stockQuantity ?? 0)} ชิ้น
+                                                มีจำนวน {product.stockQuantity ?? 0} ชิ้น
                                             </span>
                                         </div>
                                     </div>
@@ -149,20 +228,11 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <style>
-                {`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: #cbd5e1;
-                    border-radius: 20px;
-                }
-            `}
-            </style>
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+            `}</style>
         </div>
     );
 }
