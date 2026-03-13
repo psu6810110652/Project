@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { OrdersService } from '../orders/orders.service';
 
 
 import { AuthGuard } from '@nestjs/passport';
@@ -11,7 +12,10 @@ import { UserRole } from '../users/entities/user.entity';
 
 @Controller('product')
 export class ProductController {
-  constructor(private readonly productService: ProductService) { }
+  constructor(
+    private readonly productService: ProductService,
+    private readonly ordersService: OrdersService
+  ) { }
 
 
   @Post()
@@ -79,6 +83,114 @@ export class ProductController {
   }
 
 
+  @Get('seed/real-sold-counts')
+  async updateRealSoldCounts() {
+    console.log('🔄 Calculating real sold counts from actual orders...');
+    try {
+      // Get all products
+      const products = await this.productService.findAll();
+      
+      for (const product of products) {
+        // Calculate real sold count from completed orders
+        const realSoldCount = await this.calculateRealSoldCount(product.id);
+        
+        // Update product with real sold count
+        await this.productService.update(product.id, {
+          soldCount: realSoldCount,
+        });
+        
+        console.log(`✅ Updated ${product.name}: Real Sold Count=${realSoldCount}`);
+      }
+      
+      console.log('✅ Real sold counts updated successfully!');
+      return { message: 'Real sold counts updated successfully!' };
+    } catch (error) {
+      console.error('❌ Error updating real sold counts:', error);
+      throw new Error(`Failed to update real sold counts: ${error.message}`);
+    }
+  }
+
+  private async calculateRealSoldCount(productId: string): Promise<number> {
+    try {
+      // Get all completed orders for this product
+      const completedOrders = await this.ordersService.findByStatus('completed');
+      let totalSold = 0;
+      
+      for (const order of completedOrders) {
+        // Check if this order contains the product
+        const productInOrder = order.products.find((p: any) => 
+          (p.productId === productId || p.id === productId)
+        );
+        
+        if (productInOrder) {
+          totalSold += Number(productInOrder.quantity || 0);
+        }
+      }
+      
+      return totalSold;
+    } catch (error) {
+      console.error(`Error calculating sold count for product ${productId}:`, error);
+      return 0;
+    }
+  }
+
+  @Get('seed/real-stats')
+  async updateRealStats() {
+    console.log('🔄 Updating with REAL Supabase data only...');
+    try {
+      // Get all products
+      const products = await this.productService.findAll();
+      
+      for (const product of products) {
+        // Calculate real sold count from completed orders
+        const soldCount = await this.calculateRealSoldCount(product.id);
+        const favoriteCount = product.favoriteCount || 0;
+        const rating = product.rating || 0;
+        const reviewCount = product.reviewCount || 0;
+        
+        // Update product with real stats only
+        await this.productService.update(product.id, {
+          soldCount,
+          favoriteCount,
+          rating,
+          reviewCount,
+        });
+        
+        console.log(`✅ Real data for ${product.name}: Sold=${soldCount}, Favorites=${favoriteCount}, Rating=${rating}, Reviews=${reviewCount}`);
+      }
+      
+      console.log('✅ Real product statistics updated successfully!');
+      return { message: 'Real product statistics updated successfully!' };
+    } catch (error) {
+      console.error('❌ Error updating real product statistics:', error);
+      throw new Error(`Failed to update real product statistics: ${error.message}`);
+    }
+  }
+
+  @Get('seed/reset-sold-counts')
+  async resetSoldCounts() {
+    console.log('🔄 Resetting all sold counts to 0...');
+    try {
+      // Get all products
+      const products = await this.productService.findAll();
+      
+      for (const product of products) {
+        // Reset sold count to 0
+        await this.productService.update(product.id, {
+          soldCount: 0,
+        });
+        
+        console.log(`✅ Reset ${product.name}: Sold Count=0`);
+      }
+      
+      console.log('✅ All sold counts reset to 0 successfully!');
+      return { message: 'All sold counts reset to 0 successfully!', updated: products.length };
+    } catch (error) {
+      console.error('❌ Error resetting sold counts:', error);
+      throw new Error(`Failed to reset sold counts: ${error.message}`);
+    }
+  }
+
   @Get('seed/update-stats')
   async seedProductStats() {
     console.log('🔄 Updating product statistics...');
@@ -87,17 +199,12 @@ export class ProductController {
       const products = await this.productService.findAll();
       
       for (const product of products) {
-        // Add random sold count (0-200)
-        const soldCount = Math.floor(Math.random() * 200) + 1;
-        
-        // Add random favorite count (0-100)
-        const favoriteCount = Math.floor(Math.random() * 100) + 1;
-        
-        // Add random rating (3-5)
-        const rating = Number((Math.random() * 2 + 3).toFixed(1));
-        
-        // Add random review count (1-50)
-        const reviewCount = Math.floor(Math.random() * 50) + 1;
+        // ใช้ข้อมูลจริงจาก Supabase ถ้าไม่มีให้เป็น 0
+        // ถ้ายังไม่มีข้อมูล ให้ใช้ค่า 0 (ไม่สุ่ม)
+        const soldCount = product.soldCount || 0;
+        const favoriteCount = product.favoriteCount || 0;
+        const rating = product.rating || 0;
+        const reviewCount = product.reviewCount || 0;
         
         // Update product with new stats
         await this.productService.update(product.id, {

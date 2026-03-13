@@ -1,4 +1,5 @@
 import type { Product } from '../types';
+import api from './api';
 
 export class FavoritesService {
   private static readonly STORAGE_KEY = 'favorites';
@@ -66,7 +67,7 @@ export class FavoritesService {
     return this.getFavoriteIds().includes(productId);
   }
 
-  // Get full product details for favorites
+  // Get full product details for favorites with review data processing
   static async getFavoriteProducts(): Promise<Product[]> {
     const favoriteIds = this.getFavoriteIds();
     
@@ -75,11 +76,40 @@ export class FavoritesService {
     }
 
     try {
+      // ฟังก์ชันดึงข้อมูลรีวิวเพื่อคำนวณคะแนน (เหมือนใน Home.tsx)
+      const fetchReviewsAndCalculateRating = async (productId: string) => {
+        try {
+          const reviewsResponse = await api.get(`/product/${productId}/reviews`);
+          const reviewsData = reviewsResponse.data;
+          
+          if (reviewsData && reviewsData.length > 0) {
+            const totalRating = reviewsData.reduce((sum: number, review: any) => sum + Number(review.rating || 0), 0);
+            const avgRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
+            return {
+              rating: avgRating,
+              reviewCount: reviewsData.length
+            };
+          }
+        } catch (error) {
+          console.error(`Error fetching reviews for ${productId}:`, error);
+        }
+        // Return 0 when no reviews exist or API fails - don't use potentially incorrect product data
+        return { rating: 0, reviewCount: 0 };
+      };
+
       const productPromises = favoriteIds.map(async (id: string) => {
         try {
-          const response = await fetch(`/api/product/${id}`);
-          if (response.ok) {
-            return await response.json();
+          const response = await api.get(`/product/${id}`);
+          if (response.data) {
+            const product = response.data;
+            const ratingData = await fetchReviewsAndCalculateRating(id);
+            
+            // ใช้ logic เหมือน Home.tsx เพื่อให้ข้อมูลตรงกัน
+            return {
+              ...product,
+              rating: ratingData.rating,
+              reviewCount: ratingData.reviewCount
+            };
           }
           return null;
         } catch (error) {
