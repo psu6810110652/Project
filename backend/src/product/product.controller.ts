@@ -79,6 +79,39 @@ export class ProductController {
   }
 
 
+  @Get('seed/real-stats')
+  async updateRealStats() {
+    console.log('🔄 Updating with REAL Supabase data only...');
+    try {
+      // Get all products
+      const products = await this.productService.findAll();
+      
+      for (const product of products) {
+        // ใช้เฉพาะข้อมูลจริงจาก Supabase ไม่สุ่มเลย
+        const soldCount = product.soldCount || 0;
+        const favoriteCount = product.favoriteCount || 0;
+        const rating = product.rating || 0;
+        const reviewCount = product.reviewCount || 0;
+        
+        // Update product with real stats only
+        await this.productService.update(product.id, {
+          soldCount,
+          favoriteCount,
+          rating,
+          reviewCount,
+        });
+        
+        console.log(`✅ Real data for ${product.name}: Sold=${soldCount}, Favorites=${favoriteCount}, Rating=${rating}, Reviews=${reviewCount}`);
+      }
+      
+      console.log('✅ Real product statistics updated successfully!');
+      return { message: 'Real product statistics updated successfully!' };
+    } catch (error) {
+      console.error('❌ Error updating real product statistics:', error);
+      throw new Error(`Failed to update real product statistics: ${error.message}`);
+    }
+  }
+
   @Get('seed/update-stats')
   async seedProductStats() {
     console.log('🔄 Updating product statistics...');
@@ -87,17 +120,12 @@ export class ProductController {
       const products = await this.productService.findAll();
       
       for (const product of products) {
-        // Add random sold count (0-200)
-        const soldCount = Math.floor(Math.random() * 200) + 1;
-        
-        // Add random favorite count (1-13) - เหมาะสมกับจำนวนผู้ใช้จริง
-        const favoriteCount = Math.floor(Math.random() * 13) + 1;
-        
-        // Add random rating (3-5)
-        const rating = Number((Math.random() * 2 + 3).toFixed(1));
-        
-        // Add random review count (1-50)
-        const reviewCount = Math.floor(Math.random() * 50) + 1;
+        // ใช้ข้อมูลจริงจาก Supabase ถ้าไม่มีให้เป็น 0
+        // ถ้ายังไม่มีข้อมูล ให้ใช้ค่า 0 (ไม่สุ่ม)
+        const soldCount = product.soldCount || 0;
+        const favoriteCount = product.favoriteCount || 0;
+        const rating = product.rating || 0;
+        const reviewCount = product.reviewCount || 0;
         
         // Update product with new stats
         await this.productService.update(product.id, {
