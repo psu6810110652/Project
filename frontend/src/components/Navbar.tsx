@@ -8,6 +8,34 @@ import { CartContext } from "../context/CartContext";
 import { AdminSearchContext } from "../context/AdminSearchContext";
 import api from "../services/api";
 
+// Define Notification interface
+interface Notification {
+  id: string;
+  message: string;
+  time: string;
+  type: 'low_stock' | 'pending_orders';
+  path?: string;
+  productId?: string;
+  productName?: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  stockQuantity: number;
+  stock: number;
+  category: {
+    id: string;
+  };
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  status: string;
+}
+
 function Navbar() {
   const auth = useContext(AuthContext);
   const cart = useContext(CartContext);
@@ -35,12 +63,12 @@ function Navbar() {
   // ระบบแจ้งเตือน (เช็คสต็อกต่ำ & ออเดอร์รอจัดส่ง)
   // ==========================================
   const [hasNotification, setHasNotification] = useState(false);
-  const [notifications, setNotifications] = useState<string[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   // ข้อมูลสำหรับ Global Search
-  const [allProducts, setAllProducts] = useState<any[]>([]);
-  const [allOrders, setAllOrders] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
@@ -76,9 +104,36 @@ function Navbar() {
             o.status === 'pending_confirm' || o.status === 'pending_delivery' || !o.status
           );
 
-          const newNotifs = [];
-          if (hasLowStock) newNotifs.push('มีสินค้าสต็อกใกล้หมด (น้อยกว่า 5 ชิ้น)');
-          if (hasPendingOrders) newNotifs.push('มีคำสั่งซื้อใหม่ / รอจัดส่ง');
+          const newNotifs: Notification[] = [];
+          if (hasLowStock) {
+            // หาสินค้าที่มีสต็อกต่ำและเพิ่มเข้าไปใน notifications
+            const lowStockProducts = productsRes.data.filter((p: Product) => {
+              const currentStock = typeof p.stock === 'number' ? p.stock : (p.stockQuantity ?? 0);
+              return currentStock <= 5;
+            });
+            
+            // สร้าง notification สำหรับสินค้าที่มีปัญหา
+            lowStockProducts.slice(0, 3).forEach((product: Product, index: number) => {
+              newNotifs.push({
+                id: `low-stock-${product.id}-${index}`,
+                message: `${product.name} (เหลือ ${product.stockQuantity || product.stock || 0} ชิ้น)`,
+                time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+                type: 'low_stock',
+                path: `/admin/products/${product.category?.id || 'all'}/${product.id}`,
+                productId: product.id,
+                productName: product.name
+              });
+            });
+          }
+          if (hasPendingOrders) {
+            newNotifs.push({
+              id: `pending-orders-${Date.now()}`,
+              message: 'มีคำสั่งซื้อใหม่ / รอจัดส่ง',
+              time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+              type: 'pending_orders',
+              path: '/admin/orders'
+            });
+          }
 
           setNotifications(newNotifs);
           setHasNotification(newNotifs.length > 0);
@@ -218,9 +273,48 @@ function Navbar() {
                   </div>
                   <div className="max-h-60 overflow-y-auto pt-2">
                     {notifications.length > 0 ? (
-                      notifications.map((msg, idx) => (
-                        <div key={idx} className="px-4 py-3 hover:bg-gray-50 text-sm text-[#256D45] font-medium border-b border-gray-50 last:border-0 cursor-default">
-                          • {msg}
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={`px-4 py-3 hover:bg-gray-50 text-sm text-[#256D45] font-medium border-b border-gray-50 last:border-0 cursor-pointer transition-colors ${
+                            notif.type === 'low_stock' ? 'border-l-4 border-l-orange-400' : 'border-l-4 border-l-blue-400'
+                          }`}
+                          onClick={() => {
+                            if (notif.path) {
+                              navigate(notif.path);
+                              setIsNotifOpen(false);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                  notif.type === 'low_stock' 
+                                    ? 'bg-orange-100 text-orange-600' 
+                                    : 'bg-blue-100 text-blue-600'
+                                }`}>
+                                  {notif.type === 'low_stock' ? 'สต็อก' : 'ออเดอร์'}
+                                </span>
+                                <span className="text-xs text-gray-500">{notif.time}</span>
+                              </div>
+                              <div className="text-sm">
+                                {notif.message}
+                                {notif.type === 'low_stock' && notif.productId && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/admin/products/${notif.productId}`);
+                                      setIsNotifOpen(false);
+                                    }}
+                                    className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                                  >
+                                    ไปจัดการ
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       ))
                     ) : (
