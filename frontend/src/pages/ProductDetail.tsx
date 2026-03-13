@@ -172,10 +172,11 @@ export const ProductDetail: React.FC = () => {
         }
     };
 
-    const toggleFavorite = () => {
+    const toggleFavorite = async () => {
         if (!id) return;
 
         const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        const newFavoriteStatus = !isFavorite;
 
         if (isFavorite) {
             // Remove from favorites
@@ -189,6 +190,23 @@ export const ProductDetail: React.FC = () => {
             localStorage.setItem('favorites', JSON.stringify(favorites));
             setIsFavorite(true);
             setMessage('เพิ่มไปยังรายการโปรดแล้ว');
+        }
+
+        // Update favorite count on backend
+        try {
+            // Fetch current product data to get accurate favorite count
+            const productResponse = await api.get(`/product/${id}`);
+            const currentProduct = productResponse.data;
+            const currentFavoriteCount = Number(currentProduct.favoriteCount) || 0;
+            
+            const newFavoriteCount = newFavoriteStatus ? currentFavoriteCount + 1 : Math.max(0, currentFavoriteCount - 1);
+            
+            // Update backend
+            await api.patch(`/product/${id}/stats`, {
+                favoriteCount: newFavoriteCount
+            });
+        } catch (error) {
+            console.error('Error updating favorite count:', error);
         }
 
         setTimeout(() => setMessage(''), 2000);

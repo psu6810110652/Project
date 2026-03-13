@@ -118,6 +118,18 @@ export class OrdersService {
             order.cancelReason = cancelReason;
         }
 
+        // อัปเดต soldCount เมื่อออเดอร์สำเร็จ
+        if (status === 'completed' && previousStatus !== 'completed') {
+            for (const item of order.products) {
+                const pId = item.productId || item.id;
+                const product = await this.productRepository.findOne({ where: { id: pId } });
+                if (product) {
+                    product.soldCount = Number(product.soldCount || 0) + Number(item.quantity || 0);
+                    await this.productRepository.save(product);
+                }
+            }
+        }
+
         // คืนสต็อกสินค้าหากออเดอร์ถูกยกเลิก
         if (status === 'cancelled' && previousStatus !== 'cancelled') {
             for (const item of order.products) {

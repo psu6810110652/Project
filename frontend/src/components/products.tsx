@@ -49,9 +49,13 @@ export const Products = (props: ExtendedProductCard) => {
         const newFavoriteStatus = FavoritesService.toggleFavorite(props.id);
         setIsFavorite(newFavoriteStatus);
         
-        // Update favorite count on backend
+        // Update favorite count on backend with proper synchronization
         try {
-            const currentFavoriteCount = productData.favoriteCount || 0;
+            // Fetch current product data to get accurate favorite count
+            const productResponse = await api.get(`/product/${props.id}`);
+            const currentProduct = productResponse.data;
+            const currentFavoriteCount = Number(currentProduct.favoriteCount) || 0;
+            
             const newFavoriteCount = newFavoriteStatus ? currentFavoriteCount + 1 : Math.max(0, currentFavoriteCount - 1);
             
             // Update local state immediately for better UX
@@ -69,8 +73,11 @@ export const Products = (props: ExtendedProductCard) => {
             // Revert local state if backend update fails
             setProductData(prev => ({
                 ...prev,
-                favoriteCount: props.favoriteCount || 0
+                favoriteCount: Number(props.favoriteCount) || 0
             }));
+            // Also revert favorite status
+            FavoritesService.toggleFavorite(props.id); // Toggle back
+            setIsFavorite(!newFavoriteStatus);
         }
     };
 
