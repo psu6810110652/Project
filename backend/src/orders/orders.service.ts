@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
@@ -15,30 +15,27 @@ export class OrdersService {
     ) { }
 
     async create(createOrderDto: CreateOrderDto): Promise<Order> {
-        // 1. ตรวจสอบสต็อกสินค้าก่อน (Pre-check)
+        // 1. ตัดสต็อกสินค้า
         for (const item of createOrderDto.products) {
             const pId = item.productId || item.id;
             const product = await this.productRepository.findOne({ where: { id: pId } });
+
             if (!product) {
                 throw new NotFoundException(`ไม่พบสินค้าที่มีรหัส ${pId}`);
             }
-            if (product.stockQuantity < item.quantity) {
-                throw new Error(`สินค้า ${product.name} มีสต็อกไม่เพียงพอ (คงเหลือ ${product.stockQuantity})`);
+
+            const stockQty = Number(product.stockQuantity || 0);
+            const orderQty = Number(item.quantity || 0);
+
+            if (stockQty < orderQty) {
+                throw new BadRequestException(`สินค้า ${product.name} มีสต็อกไม่เพียงพอ (คงเหลือ ${stockQty})`);
             }
+
+            product.stockQuantity = stockQty - orderQty;
+            await this.productRepository.save(product);
         }
 
-        // 2. ตัดสต็อกสินค้า
-        for (const item of createOrderDto.products) {
-            const pId = item.productId || item.id;
-            const product = await this.productRepository.findOne({ where: { id: pId } });
-            if (product) {
-                product.stockQuantity -= item.quantity;
-                await this.productRepository.save(product);
-            }
-        }
-
-        // 3. สร้างเลขออเดอร์ให้มีความเฉพาะเจาะจง (ORD + ปี พ.ศ. สองหลัก + เดือน + วัน + เวลา)
-        // ใช้เวลาประเทศไทย (UTC+7)
+        // 3. สร้างเลขออเดอร์ (ORD + YYMMDD + HHMMSS + Random3)
         const now = new Date();
         const thTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
 
@@ -47,25 +44,43 @@ export class OrdersService {
         const day = thTime.getDate().toString().padStart(2, '0');
         const hours = thTime.getHours().toString().padStart(2, '0');
         const minutes = thTime.getMinutes().toString().padStart(2, '0');
+        const seconds = thTime.getSeconds().toString().padStart(2, '0');
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
 
-        // ตัวอย่าง: ORD6903121909
-        const orderNumber = `ORD${yearBE}${month}${day}${hours}${minutes}`;
+        const orderNumber = `ORD${yearBE}${month}${day}${hours}${minutes}${seconds}${random}`;
 
-        const newOrder = this.ordersRepository.create({
-            ...createOrderDto,
-            orderNumber,
-            status: createOrderDto.status || 'pending_confirm',
-        });
-        return this.ordersRepository.save(newOrder);
+        try {
+            const newOrder = this.ordersRepository.create({
+                ...createOrderDto,
+                orderNumber,
+                status: createOrderDto.status || 'pending_confirm',
+            });
+            return await this.ordersRepository.save(newOrder);
+        } catch (error: any) {
+            console.error('Error saving order:', error);
+            if (error.code === '23505') {
+                throw new BadRequestException('เลขออเดอร์ซ้ำซ้อน กรุณาลองใหม่');
+            }
+            throw new InternalServerErrorException(`ไม่สามารถบันทึกออเดอร์ได้: ${error.message}`);
+        }
     }
 
     findAll(): Promise<Order[]> {
         return this.ordersRepository.find({
             select: [
-                'id', 'orderNumber', 'customerName', 'products',
-                'totalAmount', 'status', 'address',
-                'phone', 'createdAt', 'updatedAt', 'trackingNumber', 'customerId',
-                'cancelReason'
+                'id',
+                'orderNumber',
+                'customerName',
+                'products',
+                'totalAmount',
+                'status',
+                'address',
+                'phone',
+                'createdAt',
+                'updatedAt',
+                'trackingNumber',
+                'customerId',
+                'cancelReason',
             ],
             order: {
                 createdAt: 'DESC',
@@ -83,10 +98,9 @@ export class OrdersService {
     }
 
     async findOne(id: string): Promise<Order> {
-        // findOne should return all fields including paymentSlip
         const order = await this.ordersRepository.findOne({ where: { id } });
         if (!order) {
-            throw new NotFoundException(`Order #${id} not found`);
+            throw new NotFoundException(`ไม่พบออเดอร์รหัส ${id}`);
         }
         return order;
     }
@@ -104,19 +118,19 @@ export class OrdersService {
             order.cancelReason = cancelReason;
         }
 
-        // คืนสต็อกสินค้าหากออเดอร์ถูกยกเลิก (และก่อนหน้านี้ยังไม่ได้ยกเลิก)
+        // คืนสต็อกสินค้าหากออเดอร์ถูกยกเลิก
         if (status === 'cancelled' && previousStatus !== 'cancelled') {
             for (const item of order.products) {
                 const pId = item.productId || item.id;
                 const product = await this.productRepository.findOne({ where: { id: pId } });
                 if (product) {
-                    product.stockQuantity += item.quantity;
+                    product.stockQuantity = Number(product.stockQuantity || 0) + Number(item.quantity || 0);
                     await this.productRepository.save(product);
                 }
             }
         }
 
-        return this.ordersRepository.save(order);
+        return await this.ordersRepository.save(order);
     }
 
     findByCustomerId(customerId: string): Promise<Order[]> {

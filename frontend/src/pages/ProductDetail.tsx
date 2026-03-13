@@ -52,14 +52,14 @@ export const ProductDetail: React.FC = () => {
                         setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
                         setTotalReviews(reviewsData.length);
                     } else {
-                        setAverageRating(data.rating || 0);
-                        setTotalReviews(data.reviewCount || 0);
+                        setAverageRating(Number(data.rating) || 0);
+                        setTotalReviews(Number(data.reviewCount) || 0);
                     }
                 } catch (reviewError) {
                     console.error('Error fetching reviews:', reviewError);
                     // Use product's existing rating if API fails
-                    setAverageRating(data.rating || 0);
-                    setTotalReviews(data.reviewCount || 0);
+                    setAverageRating(Number(data.rating) || 0);
+                    setTotalReviews(Number(data.reviewCount) || 0);
                 }
             } catch (error) {
                 console.error('Error fetching product:', error);
@@ -284,10 +284,10 @@ export const ProductDetail: React.FC = () => {
 
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="flex items-center gap-1">
-                                            {renderStars(averageRating || product.rating || 5.0)}
+                                            {renderStars(Number(averageRating || product.rating || 5.0))}
                                         </div>
                                         <span className="text-lg font-semibold text-[#1f502c]">
-                                            {(averageRating || product.rating || 5.0).toFixed(1)}/5.0
+                                            {Number(averageRating || product.rating || 5.0).toFixed(1)}/5.0
                                         </span>
                                         <Link to={`/review/${id}`} className="text-gray-600 underline hover:text-[#1f502c] transition-colors">
                                             ({totalReviews || product.reviewCount || 0} รีวิว)

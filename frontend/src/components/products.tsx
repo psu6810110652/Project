@@ -39,12 +39,12 @@ export const Products = (props: ExtendedProductCard) => {
             const reviewsResponse = await api.get(`/product/${productId}/reviews`);
             const reviewsData = reviewsResponse.data;
 
-            let averageRating = productDetail.rating || 0;
-            let totalReviews = productDetail.reviewCount || 0;
+            let averageRating = Number(productDetail.rating) || 0;
+            let totalReviews = Number(productDetail.reviewCount) || 0;
 
             // Calculate average rating from reviews like ProductDetail
             if (reviewsData && reviewsData.length > 0) {
-                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
+                const totalRating = reviewsData.reduce((sum: number, review: any) => sum + Number(review.rating || 0), 0);
                 averageRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
                 totalReviews = reviewsData.length;
             }

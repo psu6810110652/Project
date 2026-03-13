@@ -48,7 +48,7 @@ const ReviewPage: React.FC = () => {
   }, [productId]);
 
   const averageRating = existingReviews.length > 0
-    ? existingReviews.reduce((sum, r) => sum + r.rating, 0) / existingReviews.length
+    ? existingReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / existingReviews.length
     : 0;
 
   // Show all reviews including our own on this page
