@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload, CheckCircle } from 'lucide-react';
 import api from '../services/api';
@@ -26,6 +26,7 @@ const PaymentPage: React.FC = () => {
     name: 'ไม่ระบุชื่อ',
     phone: '-'
   });
+  const userDataRef = useRef({ name: 'ไม่ระบุชื่อ', phone: '-' });
 
   const cartItems: CartItem[] = location.state?.cartItems || [];
   const totalPrice: number = location.state?.totalPrice || 0;
@@ -50,7 +51,9 @@ const PaymentPage: React.FC = () => {
           if (userRes.data) {
             userName = userRes.data.name || userRes.data.username || 'ไม่ระบุชื่อ';
             userPhone = userRes.data.phone || '-';
-            setUserData({ name: userName, phone: userPhone });
+            const newUserData = { name: userName, phone: userPhone };
+            userDataRef.current = newUserData;
+            setUserData(newUserData);
           }
         } catch (uErr) {
           console.warn('ไม่สามารถดึงข้อมูล user API ได้ ใช้ข้อมูลจาก localStorage ถ้ามี', uErr);
@@ -102,7 +105,7 @@ const PaymentPage: React.FC = () => {
   const handleAddressSelect = (address: any) => {
     setSelectedAddressId(address.id);
 
-    const fullAddress = `${userData.name} เบอร์โทร: ${userData.phone}\n` +
+    const fullAddress = `${userDataRef.current.name} เบอร์โทร: ${userDataRef.current.phone}\n` +
       `เลขที่: ${address.houseNumber || ''} ถนน/ซอย: ${address.streetSoi || ''}\n` +
       `ตำบล: ${address.subDistrict || ''} อำเภอ: ${address.district || ''}\n` +
       `จังหวัด: ${address.province || ''} รหัสไปรษณีย์ ${address.postalCode || ''}`;
@@ -227,11 +230,11 @@ const PaymentPage: React.FC = () => {
           const currentProductResponse = await api.get(`/product/${item.id}`);
           const currentProduct = currentProductResponse.data;
           const newSoldCount = (currentProduct.soldCount || 0) + item.quantity;
-          
+
           await api.patch(`/product/${item.id}/stats`, {
             soldCount: newSoldCount
           });
-          
+
           console.log(`Updated sold count for ${item.name}: ${newSoldCount}`);
         }
       } catch (soldCountError) {
@@ -250,7 +253,7 @@ const PaymentPage: React.FC = () => {
 
     } catch (error: any) {
       console.error('เกิดข้อผิดพลาดในการสั่งซื้อ:', error);
-      
+
       // แสดงข้อมูลข้อผิดพลาดเพิ่มเติมเพื่อการ debug
       if (error.response) {
         console.error('Response error:', {
@@ -323,7 +326,7 @@ const PaymentPage: React.FC = () => {
             <div className="mt-4">
               <h3 className="text-xl font-bold text-[#256D45] mb-2">สถานที่จัดส่ง</h3>
               <div className="relative">
-                <div 
+                <div
                   className={`border-2 border-[#256D45]/30 rounded-2xl p-4 bg-[#F8FBF8] ${savedAddresses.length > 1 ? 'cursor-pointer hover:border-[#256D45]/60 transition-colors' : ''}`}
                   onClick={toggleAddressDropdown}
                 >
