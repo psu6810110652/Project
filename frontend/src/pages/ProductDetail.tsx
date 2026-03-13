@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Star, Share2 } from 'lucide-react';
+import { Star, Share2, ChevronLeft, ChevronRight } from 'lucide-react'; // 🌟 เพิ่มไอคอน Chevron
 import type { Product } from '../types';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -20,6 +20,14 @@ export const ProductDetail: React.FC = () => {
     const [averageRating, setAverageRating] = useState(0);
     const [totalReviews, setTotalReviews] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+    const [relatedLoading, setRelatedLoading] = useState(false);
+
+    // State สำหรับเปิด-ปิด Modal ดูรูปภาพทั้งหมด
+    const [showAllImagesModal, setShowAllImagesModal] = useState(false);
+
+    // 🌟 เพิ่ม useRef สำหรับ Carousel
+    const carouselRef = React.useRef<HTMLDivElement>(null);
 
     // Fetch product data
     useEffect(() => {
@@ -71,6 +79,53 @@ export const ProductDetail: React.FC = () => {
 
         fetchProduct();
     }, [id]);
+
+    // Fetch related products
+    useEffect(() => {
+        const fetchRelatedProducts = async () => {
+            if (!product?.category?.id) return;
+
+            setRelatedLoading(true);
+            try {
+                const response = await api.get(`/product`);
+                const allProducts = response.data;
+
+                // Filter products: same category, exclude current product
+                const related = allProducts
+                    .filter((p: Product) =>
+                        p.category?.id === product.category?.id && p.id !== id
+                    )
+                    .slice(0, 8); // Limit to 8 products
+
+                setRelatedProducts(related);
+            } catch (error) {
+                console.error('Error fetching related products:', error);
+                setRelatedProducts([]);
+            } finally {
+                setRelatedLoading(false);
+            }
+        };
+
+        fetchRelatedProducts();
+    }, [product?.category?.id, id]);
+
+    // 🌟 เพิ่ม useEffect สำหรับเลื่อน Carousel เมื่อ `selectedImageIndex` เปลี่ยน
+    useEffect(() => {
+        if (carouselRef.current) {
+            const carousel = carouselRef.current;
+            const scrollX = selectedImageIndex * carousel.offsetWidth;
+            carousel.scrollTo({ left: scrollX, behavior: 'smooth' });
+        }
+    }, [selectedImageIndex]);
+
+    // 🌟 เพิ่มฟังก์ชันสำหรับจัดการ Prev/Next ปุ่มใน Carousel
+    const handleImageNavigation = (direction: 'prev' | 'next') => {
+        if (direction === 'prev') {
+            setSelectedImageIndex(prev => (prev === 0 ? displayImages.length - 1 : prev - 1));
+        } else {
+            setSelectedImageIndex(prev => (prev === displayImages.length - 1 ? 0 : prev + 1));
+        }
+    };
 
     const handleAddToCart = async () => {
         if (!id || !product) {
@@ -180,9 +235,7 @@ export const ProductDetail: React.FC = () => {
         '/api/placeholder/320/320',
         '/api/placeholder/320/320',
         '/api/placeholder/320/320'
-    ] : currentImages; 
-
-    const currentImage = displayImages[selectedImageIndex] || '/api/placeholder/320/320';
+    ] : currentImages;
 
     return (
         <div className="min-h-screen bg-[#DCEDC1]">
@@ -211,46 +264,99 @@ export const ProductDetail: React.FC = () => {
                     <div className="container mx-auto px-4 max-w-6xl text-left flex justify-start">
                         <button
                             onClick={() => navigate(-1)}
-                            className="bg-[#fdfcf6] text-[#2a6b3b] font-bold py-2 px-6 rounded-xl shadow-sm hover:bg-gray-50"
+                            className="bg-[#fdfcf6] text-[#2a6b3b] font-bold !py-2 !px-6 rounded-xl shadow-sm hover:bg-gray-50"
                         >
                             กลับ
                         </button>
                     </div>
                     <div className="container mx-auto px-4 max-w-6xl">
-                        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-                            <div className="flex flex-col md:flex-row gap-8">
-                                <div className="flex gap-4">
-                                    <div className="flex flex-col gap-3">
-                                        {displayImages.map((image, index) => (
-                                            <div
-                                                key={index}
-                                                onClick={() => setSelectedImageIndex(index)}
-                                                className={`w-20 h-20 border-2 rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer ${index === selectedImageIndex ? 'border-[#2a6b3b]' : 'border-gray-300'
-                                                    }`}
-                                            >
-                                                {image && image.includes('/api/placeholder/') ? (
-                                                    <div className="text-gray-400 text-center">
-                                                        <span className="text-2xl"></span>
-                                                    </div>
-                                                ) : (
-                                                    <img src={image || ''} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="w-80 h-80 border-2 border-gray-200 rounded-xl flex items-center justify-center bg-gray-50 overflow-hidden">
-                                        {currentImage ? (
-                                            <img src={currentImage} alt={product.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="text-gray-400 text-center">
-                                                <span className="text-4xl mb-2 block">📦</span>
-                                                <span>ไม่มีรูปภาพ</span>
-                                            </div>
+                        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left">
+                            <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+
+                                {/* ================= เริ่มส่วนรูปภาพที่ปรับแก้ใหม่ ================= */}
+                                {/* 🌟 ปรับขนาดรูปให้ใหญ่ขึ้นโดยขยายความกว้างฝั่งซ้าย (เช่น md:w-[500px] หรือ md:w-1/2) */}
+                                <div className="flex flex-col w-full md:w-[450px] lg:w-[500px] flex-shrink-0">
+
+                                    {/* รูปใหญ่ */}
+                                    <div className="relative w-full aspect-square border-2 border-gray-200 rounded-xl bg-gray-50 overflow-hidden group">
+                                        <div
+                                            className="w-full h-full p-4 flex items-center justify-center cursor-pointer"
+                                            onClick={() => setShowAllImagesModal(true)}
+                                        >
+                                            {displayImages[selectedImageIndex] && displayImages[selectedImageIndex].includes('/api/placeholder/') ? (
+                                                <div className="text-gray-400 text-center">
+                                                    <span className="text-6xl mb-4 block">📦</span>
+                                                    <span className="text-lg">ไม่มีรูปภาพ</span>
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={displayImages[selectedImageIndex]}
+                                                    alt={`${product.name} รูปที่ ${selectedImageIndex + 1}`}
+                                                    className="max-w-full max-h-full object-contain"
+                                                />
+                                            )}
+                                        </div>
+
+                                        {/* 🌟 ปุ่มเลื่อนซ้าย-ขวา แก้ให้ตำแหน่ง Fixed ไม่กระโดดไปมา */}
+                                        {displayImages.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleImageNavigation('prev'); }}
+                                                    className={`absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md transition-all z-10 ${selectedImageIndex === 0 ? 'invisible' : 'visible'}`}
+                                                >
+                                                    <ChevronLeft size={24} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleImageNavigation('next'); }}
+                                                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md transition-all z-10 ${selectedImageIndex === displayImages.length - 1 ? 'invisible' : 'visible'}`}
+                                                >
+                                                    <ChevronRight size={24} />
+                                                </button>
+                                            </>
                                         )}
                                     </div>
-                                </div>
 
-                                <div className="flex-1 text-left">
+                                    {/* 🌟 รูปล่าง 5 รูปแนวนอน พร้อมรูปเพิ่มเติม (+X) */}
+                                    <div className="grid grid-cols-5 gap-2 mt-4">
+                                        {displayImages.slice(0, 5).map((image, index) => {
+                                            // เช็คว่าเป็นรูปที่ 5 และมีรูปทั้งหมดมากกว่า 5 หรือไม่
+                                            const isLastAndMore = index === 4 && displayImages.length > 5;
+                                            const remainingCount = displayImages.length - 5;
+
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => {
+                                                        if (isLastAndMore) {
+                                                            setShowAllImagesModal(true);
+                                                        } else {
+                                                            setSelectedImageIndex(index);
+                                                        }
+                                                    }}
+                                                    className={`relative aspect-square border-2 rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer overflow-hidden transition-all ${index === selectedImageIndex && !isLastAndMore ? 'border-[#2a6b3b]' : 'border-transparent hover:border-gray-300'
+                                                        }`}
+                                                >
+                                                    {image && image.includes('/api/placeholder/') ? (
+                                                        <span className="text-xl text-gray-400">📦</span>
+                                                    ) : (
+                                                        <img src={image || ''} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                                                    )}
+
+                                                    {/* Overlay สำหรับรูปที่ 5 ถ้ามีรูปเพิ่มเติม */}
+                                                    {isLastAndMore && (
+                                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white backdrop-blur-[1px]">
+                                                            <span className="text-xl sm:text-2xl font-bold">+{remainingCount}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                {/* ================= จบส่วนรูปภาพ ================= */}
+
+                                {/* ================= ส่วนข้อมูลสินค้า (ดั้งเดิมของคุณ 100%) ================= */}
+                                <div className="flex-1">
                                     <div className="flex justify-between items-start mb-2">
                                         <h1 className="text-3xl font-bold text-[#1f502c]">{product.name}</h1>
                                         <div className="flex gap-2">
@@ -284,10 +390,10 @@ export const ProductDetail: React.FC = () => {
 
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="flex items-center gap-1">
-                                            {renderStars(Number(averageRating || product.rating || 5.0))}
+                                            {renderStars(Number(averageRating || product.rating) || 5.0)}
                                         </div>
                                         <span className="text-lg font-semibold text-[#1f502c]">
-                                            {Number(averageRating || product.rating || 5.0).toFixed(1)}/5.0
+                                            {(Number(averageRating || product.rating) || 5.0).toFixed(1)}/5.0
                                         </span>
                                         <Link to={`/review/${id}`} className="text-gray-600 underline hover:text-[#1f502c] transition-colors">
                                             ({totalReviews || product.reviewCount || 0} รีวิว)
@@ -320,20 +426,18 @@ export const ProductDetail: React.FC = () => {
                                                 value={quantity}
                                                 onChange={(e) => {
                                                     const inputValue = e.target.value;
-                                                    // Allow empty input or valid numbers
                                                     if (inputValue === '' || /^\d+$/.test(inputValue)) {
                                                         setQuantity(inputValue === '' ? 0 : parseInt(inputValue));
                                                     }
                                                 }}
                                                 onBlur={(e) => {
-                                                    // Ensure valid value on blur
                                                     const value = parseInt(e.target.value) || 1;
                                                     const stockLimit = product?.stockQuantity ?? product?.stock ?? 999;
                                                     const finalQuantity = Math.max(1, Math.min(value, stockLimit));
                                                     setQuantity(finalQuantity);
                                                 }}
                                                 onFocus={(e) => {
-                                                    e.target.select(); // Select all text on focus for easy replacement
+                                                    e.target.select();
                                                 }}
                                                 className="w-20 h-10 text-center border-2 border-[#2a6b3b] font-bold text-lg focus:outline-none focus:border-green-600 rounded"
                                             />
@@ -358,15 +462,16 @@ export const ProductDetail: React.FC = () => {
                                         🛒 {isLoading ? 'กำลังเพิ่ม...' : 'เพิ่มไปยังรถเข็น'}
                                     </button>
                                 </div>
+                                {/* ================= จบส่วนข้อมูลสินค้า ================= */}
                             </div>
                         </div>
 
-                        {/* Tabs Section */}
+                        {/* Tabs Section (ของคุณเหมือนเดิม) */}
                         <div>
                             <div className="flex gap-1">
                                 <button
                                     onClick={() => setActiveTab('description')}
-                                    className={`font-bold py-3 px-8 rounded-t-xl transition-colors ${activeTab === 'description'
+                                    className={`font-bold !py-3 !px-8 rounded-t-xl transition-colors ${activeTab === 'description'
                                         ? 'bg-[#3a7c50] text-white'
                                         : 'bg-gray-200 text-gray-600'
                                         }`}
@@ -375,12 +480,12 @@ export const ProductDetail: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('pricing')}
-                                    className={`font-bold py-3 px-8 rounded-t-xl transition-colors ${activeTab === 'pricing'
+                                    className={`font-bold !py-3 !px-8 rounded-t-xl transition-colors ${activeTab === 'pricing'
                                         ? 'bg-[#3a7c50] text-white'
                                         : 'bg-gray-200 text-gray-600'
                                         }`}
                                 >
-                                    เงื่อนไขราคาส่ง
+                                    รวมราคาสินค้า
                                 </button>
                             </div>
                             <div className="bg-[#fdfcf6] border-t-4 border-[#3a7c50] rounded-b-xl shadow-sm p-6 text-left">
@@ -435,11 +540,89 @@ export const ProductDetail: React.FC = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* ================= เริ่มส่วนสินค้าแนะนำเพิ่มเติม ================= */}
+                            {!relatedLoading && relatedProducts.length > 0 && (
+                                <div className="mt-12 mb-8">
+                                    <div className="flex flex-col items-center justify-center mb-6">
+                                        <h2 className="text-3xl font-bold text-[#1f502c]">สินค้าที่คล้ายกัน</h2>
+                                        {/* เส้นใต้สีเขียว (ปรับความกว้างที่ w-24 หรือ w-32 ได้ตามชอบ) */}
+                                        <div className="h-[3px] w-256 bg-[#1f502c] mt-2 rounded-full"></div>
+                                    </div>
+
+                                    {/* เลย์เอาต์แบบ Grid แสดงสินค้า 4 ชิ้นต่อแถว */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                                        {relatedProducts.slice(0, 4).map((item) => (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => navigate(`/product/${item.id}`)}
+                                                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer border border-gray-100 group"
+                                            >
+                                                <div className="aspect-square bg-gray-50 overflow-hidden relative">
+                                                    {/* ⚠️ เช็คชื่อ Field รูปภาพให้ตรงกับ Backend ของคุณ */}
+                                                    <img
+                                                        src={item.image || item.imageUrls?.[0] || '/api/placeholder/150/150'}
+                                                        alt={item.name}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    />
+                                                </div>
+                                                <div className="p-4 text-left">
+                                                    <h3 className="font-medium text-gray-800 line-clamp-2 text-sm sm:text-base mb-2 group-hover:text-[#2a6b3b] transition-colors">
+                                                        {item.name}
+                                                    </h3>
+                                                    <div className="text-lg font-bold text-[#1f502c]">
+                                                        ฿{item.isPromotion ? item.promotionPrice : item.price}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {/* ================= จบส่วนสินค้าแนะนำเพิ่มเติม ================= */}
+
                         </div>
 
                     </div>
                 </div>
             )}
+
+            {/* Modal รูปภาพทั้งหมด (ของคุณเหมือนเดิม) */}
+            {showAllImagesModal && (
+                <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="p-4 border-b flex justify-between items-center bg-white">
+                            <h3 className="text-xl font-bold text-[#1f502c]">รูปภาพทั้งหมด ({displayImages.length})</h3>
+                            <button
+                                onClick={() => setShowAllImagesModal(false)}
+                                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {displayImages.map((image, idx) => (
+                                <div
+                                    key={idx}
+                                    onClick={() => {
+                                        setSelectedImageIndex(idx);
+                                        setShowAllImagesModal(false);
+                                    }}
+                                    className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer ${idx === selectedImageIndex ? 'border-[#2a6b3b]' : 'border-transparent hover:border-gray-300'
+                                        }`}
+                                >
+                                    {image && image.includes('/api/placeholder/') ? (
+                                        <div className="bg-gray-100 w-full h-full flex items-center justify-center text-3xl">📦</div>
+                                    ) : (
+                                        <img src={image} alt={`รูปที่ ${idx + 1}`} className="w-full h-full object-cover" />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
-};
+}

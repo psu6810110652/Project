@@ -9,6 +9,11 @@ import api from '../services/api';
 import { type ProductCard, type Category as CategoryType } from '../types.ts';
 
 import Seeds from '../assets/images/seed.png';
+import Tools from '../assets/images/tool.png';
+import Chemicals from '../assets/images/Chemical.png';
+import Fertilizers from '../assets/images/Fertilizer.png';
+import Other from '../assets/images/Other.png';
+import DefaultBanner from '../assets/images/Home.png';
 
 const Category: React.FC = () => {
 
@@ -16,6 +21,21 @@ const Category: React.FC = () => {
     const navigate = useNavigate();
 
     const decodedSlug = categorySlug ? decodeURIComponent(categorySlug) : "";
+
+    // 🌟 ฟังก์ชันเลือกรูป banner ตามหมวดหมู่
+    const getBannerImage = (categoryName?: string) => {
+        if (!categoryName) return DefaultBanner;
+        
+        const name = categoryName.toLowerCase();
+        
+        if (name.includes('seed') || name.includes('เมล็ด')) return Seeds;
+        if (name.includes('tool') || name.includes('อุปกรณ์')) return Tools;
+        if (name.includes('chemical') || name.includes('สาร') || name.includes('ยา')) return Chemicals;
+        if (name.includes('fertilizer') || name.includes('ปุ๋ย')) return Fertilizers;
+        if (name.includes('other') || name.includes('อื่นๆ')) return Other;
+        
+        return DefaultBanner;
+    };
 
     const [products, setProducts] = useState<ProductCard[]>([]);
     const [categoryInfo, setCategoryInfo] = useState<CategoryType | null>(null);
@@ -125,7 +145,7 @@ const Category: React.FC = () => {
         <div className="min-h-screen bg-(--color-bg-main) text-(--color-text-main) pb-20">
 
             <section className="z-0 w-full h-72 md:h-120 lg:h-150 relative">
-                <img className="absolute inset-0 w-full h-full object-cover" alt="Background Image" src={Seeds} />
+                <img className="absolute inset-0 w-full h-full object-cover" alt="Background Image" src={getBannerImage(categoryInfo?.name)} />
                 <div className="absolute top-1/2 -translate-y-1/2 w-full h-32 md:h-48 lg:h-73 bg-[#fffef280]" />
                 <div className="absolute top-1/2 -translate-y-1/2 w-full h-16 md:h-24 lg:h-35 bg-[#fffef2bf]" />
                 <h2 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [text-shadow:0px_4px_20px_#00000040] text-[#256d45] text-4xl sm:text-5xl md:text-6xl lg:text-[5rem] text-center font-semibold [-webkit-text-stroke:1px_#256d45] md:[-webkit-text-stroke:2.5px_#256d45] lg:[-webkit-text-stroke:3.5px_#256d45] tracking-[0.05em] leading-[normal] w-full px-4 wrap-break-words">
