@@ -34,6 +34,7 @@ const Home: React.FC = () => {
       } catch (error) {
         console.error(`Error fetching reviews for ${productId}:`, error);
       }
+      // Return 0 when no reviews exist or API fails - don't use potentially incorrect product data
       return { rating: 0, reviewCount: 0 };
     };
 
@@ -49,10 +50,10 @@ const Home: React.FC = () => {
               stock: p.stockQuantity ?? p.stock ?? 0,
               isRecommend: p.isFeatured,
               isPromotion: true,
-              // ดึงข้อมูลจริงจาก Supabase + คำนวณจากรีวิว
-              rating: ratingData.rating || Number(p.rating) || 0,
+              // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
+              rating: ratingData.rating,
               favoriteCount: Number(p.favoriteCount) || 0,
-              reviewCount: ratingData.reviewCount || Number(p.reviewCount) || 0,
+              reviewCount: ratingData.reviewCount,
               soldCount: Number(p.soldCount) || 0
             };
           })
@@ -73,10 +74,10 @@ const Home: React.FC = () => {
               stock: p.stockQuantity ?? p.stock ?? 0,
               isRecommend: true,
               isPromotion: p.isPromotion || false,
-              // ดึงข้อมูลจริงจาก Supabase + คำนวณจากรีวิว
-              rating: ratingData.rating || Number(p.rating) || 0,
+              // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
+              rating: ratingData.rating,
               favoriteCount: Number(p.favoriteCount) || 0,
-              reviewCount: ratingData.reviewCount || Number(p.reviewCount) || 0,
+              reviewCount: ratingData.reviewCount,
               soldCount: Number(p.soldCount) || 0
             };
           })
@@ -97,10 +98,10 @@ const Home: React.FC = () => {
               stock: p.stockQuantity ?? p.stock ?? 0,
               isRecommend: p.isFeatured || false,
               isPromotion: p.isPromotion || false,
-              // ดึงข้อมูลจริงจาก Supabase + คำนวณจากรีวิว
-              rating: ratingData.rating || Number(p.rating) || 0,
+              // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
+              rating: ratingData.rating,
               favoriteCount: Number(p.favoriteCount) || 0,
-              reviewCount: ratingData.reviewCount || Number(p.reviewCount) || 0,
+              reviewCount: ratingData.reviewCount,
               soldCount: Number(p.soldCount) || 0
             };
           })

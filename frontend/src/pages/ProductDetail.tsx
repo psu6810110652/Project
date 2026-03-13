@@ -53,21 +53,22 @@ export const ProductDetail: React.FC = () => {
                     const reviewsData = reviewsResponse.data;
                     setReviews(reviewsData);
 
-                    // Calculate average rating
+                    // Calculate average rating from actual reviews only
                     if (reviewsData && reviewsData.length > 0) {
                         const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
                         const avgRating = totalRating / reviewsData.length;
                         setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
                         setTotalReviews(reviewsData.length);
                     } else {
-                        setAverageRating(Number(data.rating) || 0);
-                        setTotalReviews(Number(data.reviewCount) || 0);
+                        // Only set to 0 if no reviews exist - don't use potentially incorrect product data
+                        setAverageRating(0);
+                        setTotalReviews(0);
                     }
                 } catch (reviewError) {
                     console.error('Error fetching reviews:', reviewError);
-                    // Use product's existing rating if API fails
-                    setAverageRating(Number(data.rating) || 0);
-                    setTotalReviews(Number(data.reviewCount) || 0);
+                    // Set to 0 when reviews API fails - don't use potentially incorrect product data
+                    setAverageRating(0);
+                    setTotalReviews(0);
                 }
             } catch (error) {
                 console.error('Error fetching product:', error);
@@ -390,13 +391,13 @@ export const ProductDetail: React.FC = () => {
 
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="flex items-center gap-1">
-                                            {renderStars(Number(averageRating || product.rating) || 5.0)}
+                                            {renderStars(averageRating)}
                                         </div>
                                         <span className="text-lg font-semibold text-[#1f502c]">
-                                            {(Number(averageRating || product.rating) || 5.0).toFixed(1)}/5.0
+                                            {averageRating.toFixed(1)}/5.0
                                         </span>
                                         <Link to={`/review/${id}`} className="text-gray-600 underline hover:text-[#1f502c] transition-colors">
-                                            ({totalReviews || product.reviewCount || 0} รีวิว)
+                                            ({totalReviews} รีวิว)
                                         </Link>
                                     </div>
 
