@@ -350,9 +350,9 @@ const PaymentPage: React.FC = () => {
                         onClick={() => handleAddressSelect(address)}
                       >
                         <div className="text-sm text-[#256D45] font-medium">
-                          <div className="font-bold">{address.name || 'ไม่ระบุชื่อ'}</div>
+                          <div className="font-bold">{userDataRef.current.name}</div>
                           <div className="text-xs mt-1">
-                            เบอร์โทร: {address.phone || '-'}
+                            เบอร์โทร: {userDataRef.current.phone}
                           </div>
                           <div className="text-xs mt-1">
                             เลขที่: {address.houseNumber || ''} {address.streetSoi ? `ถนน/ซอย: ${address.streetSoi}` : ''}
