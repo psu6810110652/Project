@@ -74,6 +74,33 @@ const Category: React.FC = () => {
             try {
                 setLoading(true);
 
+                // ฟังก์ชันช่วยจัดการรูปภาพ (เพราะ API ส่งมาเป็น Array)
+                const getFirstImage = (p: any) => {
+                    const urls = p.thumbnailUrls || p.imageUrls || p.thumbnailUrl || p.imageUrl;
+                    return Array.isArray(urls) ? urls[0] : urls;
+                };
+
+                // ฟังก์ชันดึงข้อมูลรีวิวเพื่อคำนวณคะแนน (เหมือนใน Home.tsx)
+                const fetchReviewsAndCalculateRating = async (productId: string) => {
+                    try {
+                        const reviewsResponse = await api.get(`/product/${productId}/reviews`);
+                        const reviewsData = reviewsResponse.data;
+                        
+                        if (reviewsData && reviewsData.length > 0) {
+                            const totalRating = reviewsData.reduce((sum: number, review: any) => sum + Number(review.rating || 0), 0);
+                            const avgRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
+                            return {
+                                rating: avgRating,
+                                reviewCount: reviewsData.length
+                            };
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching reviews for ${productId}:`, error);
+                    }
+                    // Return 0 when no reviews exist or API fails - don't use potentially incorrect product data
+                    return { rating: 0, reviewCount: 0 };
+                };
+
                 const response = await api.get(`/category`);
                 const allCategories: CategoryType[] = response.data;
 
@@ -94,32 +121,29 @@ const Category: React.FC = () => {
                     const detailResponse = await api.get(`/category/${targetCategory.id}`);
                     const detailedData = detailResponse.data;
 
-                    const mappedProducts = (detailedData.products || []).map((p: any) => {
-                        // 💡 แก้ไขตรงนี้: ดึงรูปภาพตำแหน่งที่ 0 ออกมาจาก Array
-                        let firstImage = null;
-                        if (p.thumbnailUrls && p.thumbnailUrls.length > 0) {
-                            firstImage = p.thumbnailUrls[0];
-                        } else if (p.imageUrls && p.imageUrls.length > 0) {
-                            firstImage = p.imageUrls[0];
-                        }
-
-                        return {
-                            ...p,
-                            image: firstImage, // ส่งเป็น String URL เดียว ไม่ใช่ Array
-                            stock: p.stockQuantity,
-                            type: p.type,
-                            rating: p.rating || 0,
-                            favoriteCount: p.favoriteCount || 0,
-                            reviewCount: p.reviewCount || 0,
-                            soldCount: p.soldCount || 0
-                        };
-                    });
+                    // ใช้ logic เหมือน Home.tsx เพื่อให้ข้อมูลตรงกัน
+                    const productsWithRating = await Promise.all(
+                        (detailedData.products || []).map(async (p: any) => {
+                            const ratingData = await fetchReviewsAndCalculateRating(p.id);
+                            return {
+                                ...p,
+                                image: getFirstImage(p),
+                                stock: p.stockQuantity ?? p.stock ?? 0,
+                                type: p.type,
+                                // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
+                                rating: ratingData.rating,
+                                favoriteCount: Number(p.favoriteCount) || 0,
+                                reviewCount: ratingData.reviewCount,
+                                soldCount: Number(p.soldCount) || 0
+                            };
+                        })
+                    );
                     
-                    setProducts(mappedProducts);
+                    setProducts(productsWithRating);
 
                     // Find max price to set the limit
-                    if (mappedProducts.length > 0) {
-                        const max = Math.max(...mappedProducts.map((p: any) => p.price || 0));
+                    if (productsWithRating.length > 0) {
+                        const max = Math.max(...productsWithRating.map((p: any) => p.price || 0));
                         setMaxPriceLimit(max);
                         setPriceRange([0, max]);
                     } else {
