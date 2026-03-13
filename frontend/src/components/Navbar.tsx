@@ -17,6 +17,7 @@ interface Notification {
   path?: string;
   productId?: string;
   productName?: string;
+  orderId?: string;
 }
 
 interface Product {
@@ -116,7 +117,7 @@ function Navbar() {
             lowStockProducts.slice(0, 3).forEach((product: Product, index: number) => {
               newNotifs.push({
                 id: `low-stock-${product.id}-${index}`,
-                message: `${product.name} (เหลือ ${product.stockQuantity || product.stock || 0} ชิ้น)`,
+                message: `⚠️ ${product.name} - เหลือ ${product.stockQuantity || product.stock || 0} ชิ้น`,
                 time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
                 type: 'low_stock',
                 path: `/admin/products/${product.category?.id || 'all'}/${product.id}`,
@@ -126,13 +127,46 @@ function Navbar() {
             });
           }
           if (hasPendingOrders) {
-            newNotifs.push({
-              id: `pending-orders-${Date.now()}`,
-              message: 'มีคำสั่งซื้อใหม่ / รอจัดส่ง',
-              time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-              type: 'pending_orders',
-              path: '/admin/orders'
-            });
+            const pendingOrdersList = ordersRes.data.filter((o: any) =>
+              o.status === 'pending_confirm' || o.status === 'pending_delivery' || !o.status
+            );
+            
+            // แสดงรายละเอียดคำสั่งซื้อที่รอจัดส่ง
+            if (pendingOrdersList.length > 0) {
+              // แสดง 2 ออเดอร์แรกที่มีรายละเอียด
+              pendingOrdersList.slice(0, 2).forEach((order: any, index: number) => {
+                // สร้างรายการสินค้าจากออเดอร์
+                const productNames = order.items && order.items.length > 0 
+                  ? order.items.slice(0, 2).map((item: any) => 
+                      item.product?.name || 
+                      item.productName || 
+                      item.name || 
+                      item.product_name || 
+                      'สินค้าไม่ระบุ'
+                    ).join(', ')
+                  : 'ไม่มีรายการสินค้า';
+                
+                newNotifs.push({
+                  id: `pending-order-${order.id}-${index}`,
+                  message: `ออเดอร์ #${order.orderNumber || order.id.toString().substring(0, 8)}: ${productNames}`,
+                  time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+                  type: 'pending_orders',
+                  path: '/admin/orders',
+                  orderId: order.id
+                });
+              });
+              
+              // ถ้ามีมากกว่า 2 ออเดอร์ ให้แสดงจำนวนรวม
+              if (pendingOrdersList.length > 2) {
+                newNotifs.push({
+                  id: `pending-orders-summary-${Date.now()}`,
+                  message: `และอีก ${pendingOrdersList.length - 2} คำสั่งซื้อรอจัดส่ง`,
+                  time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+                  type: 'pending_orders',
+                  path: '/admin/orders'
+                });
+              }
+            }
           }
 
           setNotifications(newNotifs);
@@ -304,7 +338,7 @@ function Navbar() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      navigate(`/admin/products/${notif.productId}`);
+                                      navigate(`/admin/products?search=${encodeURIComponent(notif.productName || '')}`);
                                       setIsNotifOpen(false);
                                     }}
                                     className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline"
