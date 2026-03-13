@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, InternalServerError
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
+import { SoldProduct } from './entities/sold-product.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Product } from '../product/entities/product.entity';
 
@@ -12,6 +13,8 @@ export class OrdersService {
         private ordersRepository: Repository<Order>,
         @InjectRepository(Product)
         private productRepository: Repository<Product>,
+        @InjectRepository(SoldProduct)
+        private soldProductRepository: Repository<SoldProduct>,
     ) { }
 
     async create(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -120,6 +123,9 @@ export class OrdersService {
 
         // อัปเดต soldCount เมื่อออเดอร์สำเร็จ
         if (status === 'completed' && previousStatus !== 'completed') {
+            // สร้างข้อมูลในตาราง sold_products สำหรับใช้ใน banner
+            await this.createSoldProducts(order);
+            
             for (const item of order.products) {
                 const pId = item.productId || item.id;
                 const product = await this.productRepository.findOne({ where: { id: pId } });
@@ -149,6 +155,76 @@ export class OrdersService {
         return this.ordersRepository.find({
             where: { customerId },
             order: { createdAt: 'DESC' },
+        });
+    }
+
+    private async createSoldProducts(order: Order): Promise<void> {
+        for (const item of order.products) {
+            const pId = item.productId || item.id;
+            const product = await this.productRepository.findOne({ 
+                where: { id: pId },
+                relations: ['category']
+            });
+
+            if (product) {
+                const unitPrice = Number(item.price || product.price || 0);
+                const quantity = Number(item.quantity || 1);
+                const totalPrice = unitPrice * quantity;
+
+                const soldProduct = new SoldProduct();
+                soldProduct.orderId = order.id;
+                soldProduct.productId = product.id;
+                soldProduct.productName = product.name;
+                soldProduct.quantity = quantity;
+                soldProduct.unitPrice = unitPrice;
+                soldProduct.totalPrice = totalPrice;
+                soldProduct.productImageUrl = product.thumbnailUrls?.[0] || product.imageUrls?.[0] || '';
+                soldProduct.categoryId = product.category?.id?.toString() || '';
+                soldProduct.categoryName = product.category?.name || '';
+
+                await this.soldProductRepository.save(soldProduct);
+            }
+        }
+    }
+
+    // ดึงข้อมูลสินค้าที่ขายได้ล่าสุดสำหรับ banner
+    async getRecentSoldProducts(limit: number = 10): Promise<SoldProduct[]> {
+        return await this.soldProductRepository.find({
+            order: { createdAt: 'DESC' },
+            take: limit,
+            relations: ['product']
+        });
+    }
+
+    // ดึงข้อมูลสินค้าที่ขายได้มากที่สุดสำหรับ banner
+    async getTopSellingProducts(limit: number = 10): Promise<any[]> {
+        const result = await this.soldProductRepository
+            .createQueryBuilder('sp')
+            .select([
+                'sp.productId as productId',
+                'sp.productName as productName', 
+                'sp.productImageUrl as productImageUrl',
+                'sp.categoryId as categoryId',
+                'sp.categoryName as categoryName',
+                'SUM(sp.quantity) as totalSold',
+                'SUM(sp.totalPrice) as totalRevenue',
+                'COUNT(DISTINCT sp.orderId) as orderCount'
+            ])
+            .groupBy('sp.productId, sp.productName, sp.productImageUrl, sp.categoryId, sp.categoryName')
+            .orderBy('totalSold', 'DESC')
+            .limit(limit)
+            .getRawMany();
+
+        return result;
+    }
+
+    // ดึงข้อมูลสินค้าที่ขายได้ล่าสุดตามหมวดหมู่
+    async getRecentSoldProductsByCategory(categoryId: string, limit: number = 5): Promise<SoldProduct[]> {
+        return await this.soldProductRepository.find({
+            where: { categoryId },
+            order: { createdAt: 'DESC' },
+            take: limit,
+            relations: ['product']
         });
     }
 }

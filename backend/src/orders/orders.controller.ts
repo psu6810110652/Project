@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, UseGuards, Request, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -131,5 +131,27 @@ export class OrdersController {
             console.error('Error in OrdersController.confirmReceived:', error);
             throw error;
         }
+    }
+
+    // Banner endpoints - สำหรับดึงข้อมูลสินค้าที่ขายได้สำหรับแสดงใน banner
+    @Get('banner/recent-sold')
+    async getRecentSoldProducts(@Param('limit') limit?: string) {
+        const limitNum = limit ? parseInt(limit, 10) : 10;
+        return await this.ordersService.getRecentSoldProducts(limitNum);
+    }
+
+    @Get('banner/top-selling')
+    async getTopSellingProducts(@Param('limit') limit?: string) {
+        const limitNum = limit ? parseInt(limit, 10) : 10;
+        return await this.ordersService.getTopSellingProducts(limitNum);
+    }
+
+    @Get('banner/recent-sold/:categoryId')
+    async getRecentSoldProductsByCategory(
+        @Param('categoryId') categoryId: string,
+        @Query('limit') limit?: string
+    ) {
+        const limitNum = limit ? parseInt(limit, 10) : 5;
+        return await this.ordersService.getRecentSoldProductsByCategory(categoryId, limitNum);
     }
 }
