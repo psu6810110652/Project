@@ -6,15 +6,33 @@ import { AuthContext } from '../../context/AuthContext';
 import { Save, ImagePlus, X, Package, Hash, Coins, Database, FileText, Tag, FolderTree } from 'lucide-react';
 import { message } from 'antd';
 
+interface InputBoxProps {
+    label: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
+}
+
+const InputBox: React.FC<InputBoxProps> = ({ label, icon, children }) => (
+    <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-2 text-[#256D45] font-bold text-lg">
+            {icon} {label}
+        </label>
+        {children}
+    </div>
+);
+
 const ManagerProduct: React.FC = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const { categoryId, code: productId } = useParams();
     const navigate = useNavigate();
     const auth = useContext(AuthContext);
+    
     const user = auth?.user;
     const isAdmin = user?.role === 'Admin';
     const isEditMode = !!productId && productId !== 'new';
     const [loading, setLoading] = useState(false);
+
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -31,9 +49,14 @@ const ManagerProduct: React.FC = () => {
     });
 
     const [existingTypes, setExistingTypes] = useState<{ value: string }[]>([]);
+    
+    // 🌟 State สำหรับเก็บข้อความ Error ใต้กล่องรหัสสินค้า
+    const [codeError, setCodeError] = useState<string>('');
 
+    const inputStyleClasses = "w-full px-5 py-3 bg-[#F8F8F8] border-2 border-[#E8E8E8] rounded-[15px] text-[1.1rem] outline-none transition-all duration-300 focus:border-[#256D45] focus:bg-white focus:shadow-[0_0_10px_rgba(37,109,69,0.1)]";
+
+    // ดึงข้อมูลเริ่มต้น
     useEffect(() => {
-        // redirect non-admin users away
         if (!isAdmin) {
             messageApi.error('คุณไม่มีสิทธิ์แก้ไขข้อมูลสินค้า');
             navigate('/');
@@ -43,8 +66,10 @@ const ManagerProduct: React.FC = () => {
         if (categoryId) {
             api.get(`/product/category/${categoryId}`)
                 .then(res => {
-                    const uniqueTypes = [...new Set(res.data.map((p: any) => p.type).filter((t: any) => t))];
-                    setExistingTypes(uniqueTypes.map((t: any) => ({ value: t })));
+                    const uniqueTypes = Array.from(
+                        new Set(res.data.map((p: any) => p.type).filter(Boolean))
+                    ) as string[];
+                    setExistingTypes(uniqueTypes.map(t => ({ value: t })));
                 })
                 .catch(err => console.error("Error fetching types:", err));
         }
@@ -58,22 +83,65 @@ const ManagerProduct: React.FC = () => {
                     isPromotion: res.data.isPromotion || false,
                     promotionPrice: res.data.promotionPrice || 0,
                     isFeatured: res.data.isFeatured || false,
-                    // 🌟 ดึงข้อมูลมาเป็น Array
                     imageUrls: res.data.imageUrls || (res.data.imageUrl ? [res.data.imageUrl] : []),
                     thumbnailUrls: res.data.thumbnailUrls || (res.data.thumbnailUrl ? [res.data.thumbnailUrl] : []),
                     type: res.data.type || ''
                 });
             }).catch(() => messageApi.error("ดึงข้อมูลสินค้าไม่สำเร็จ"));
         }
-    }, [productId, isEditMode, categoryId, isAdmin]);
+    }, [productId, isEditMode, categoryId, isAdmin, navigate, messageApi]);
+
+    // 🌟 ฟังก์ชันตรวจสอบรหัสซ้ำแบบ Real-time (ทำงานทุกครั้งที่พิมพ์รหัสใหม่)
+    useEffect(() => {
+        // ถ้ารหัสว่าง หรือเป็นรหัสเดิมตอนโหมดแก้ไข ไม่ต้องเช็คซ้ำ
+        if (!formData.code.trim() || formData.code === productId) {
+            setCodeError('');
+            return;
+        }
+
+        const checkDuplicateCode = async () => {
+            try {
+                const res = await api.get(`/product/${formData.code}`);
+                // ถ้ามีข้อมูลตอบกลับมา แปลว่ามีรหัสนี้อยู่แล้ว
+                if (res.data) {
+                    setCodeError('รหัสสินค้านี้มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น');
+                }
+            } catch (error: any) {
+                // ถ้าเป็น 404 (Not Found) แปลว่ารหัสนี้ยังว่างอยู่ ใช้งานได้
+                if (axios.isAxiosError(error) && error.response?.status === 404) {
+                    setCodeError('');
+                }
+            }
+        };
+
+        // หน่วงเวลา 500ms ป้องกันการยิง API ถี่เกินไปขณะที่ผู้ใช้กำลังพิมพ์
+        const delayTimer = setTimeout(() => {
+            checkDuplicateCode();
+        }, 500);
+
+        return () => clearTimeout(delayTimer);
+    }, [formData.code, productId]);
 
     const handleSave = async () => {
+        if (!formData.name.trim()) {
+            messageApi.warning('กรุณาระบุชื่อสินค้า');
+            return;
+        }
+        if (!formData.code.trim()) {
+            messageApi.warning('กรุณาระบุรหัสสินค้า');
+            return;
+        }
+        
+        // 🌟 ดักการกดบันทึก ถ้ายังมี error เรื่องรหัสซ้ำอยู่
+        if (codeError) {
+            messageApi.error('กรุณาแก้ไขรหัสสินค้าที่ซ้ำกันก่อนบันทึก');
+            return;
+        }
+
         setLoading(true);
-        console.log('handleSave called', { isAdmin, categoryId, productId, formData });
         try {
-            if (!isAdmin) {
-                throw new Error('Unauthorized');
-            }
+            if (!isAdmin) throw new Error('Unauthorized');
+            
             const payload = {
                 name: formData.name,
                 id: formData.code,
@@ -84,8 +152,7 @@ const ManagerProduct: React.FC = () => {
                 stockQuantity: formData.stock,
                 description: formData.description,
                 type: formData.type,
-                category: { id: Number(categoryId) },
-                // 🌟 ส่งค่าเป็น Array ไปให้ Backend
+                category: categoryId ? { id: Number(categoryId) } : undefined,
                 imageUrls: formData.imageUrls,
                 thumbnailUrls: formData.thumbnailUrls,
             };
@@ -97,10 +164,13 @@ const ManagerProduct: React.FC = () => {
                 await api.post(`/product`, payload);
                 messageApi.success("เพิ่มสินค้าใหม่เรียบร้อย");
             }
-            navigate(-1);
+            setTimeout(() => navigate(-1), 1000); 
         } catch (err: any) {
             if (axios.isAxiosError(err) && err.response?.status === 413) {
                 messageApi.error("ไฟล์ภาพมีขนาดใหญ่เกินไป กรุณาลดขนาดไฟล์");
+            } else if (axios.isAxiosError(err) && err.response?.status === 409) {
+                setCodeError("รหัสสินค้านี้มีอยู่ในระบบแล้ว"); // 🌟 อัปเดต Error ใต้ช่อง input
+                messageApi.error("รหัสสินค้านี้มีอยู่ในระบบแล้ว");
             } else if (err.message === 'Unauthorized' || (axios.isAxiosError(err) && [401, 403].includes(err.response?.status || 0))) {
                 messageApi.error('คุณไม่มีสิทธิ์ดำเนินการ โปรดเข้าสู่ระบบใหม่');
             } else {
@@ -112,13 +182,12 @@ const ManagerProduct: React.FC = () => {
         }
     };
 
-    // 🌟 ฟังก์ชันจัดการรูปใหม่ (รองรับหลายรูปพร้อมกัน)
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
         const processImage = (file: File): Promise<{ main: string, thumb: string }> => {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
@@ -140,28 +209,62 @@ const ManagerProduct: React.FC = () => {
 
                         resolve({ main: resizeImage(800), thumb: resizeImage(300) });
                     };
+                    img.onerror = () => reject(new Error('Failed to load image'));
                     img.src = event.target?.result as string;
                 };
+                reader.onerror = () => reject(new Error('Failed to read file'));
                 reader.readAsDataURL(file);
             });
         };
 
-        const processedImages = await Promise.all(files.map(processImage));
-
-        setFormData(prev => ({
-            ...prev,
-            imageUrls: [...prev.imageUrls, ...processedImages.map(img => img.main)],
-            thumbnailUrls: [...prev.thumbnailUrls, ...processedImages.map(img => img.thumb)]
-        }));
+        try {
+            const processedImages = await Promise.all(files.map(processImage));
+            setFormData(prev => ({
+                ...prev,
+                imageUrls: [...prev.imageUrls, ...processedImages.map(img => img.main)],
+                thumbnailUrls: [...prev.thumbnailUrls, ...processedImages.map(img => img.thumb)]
+            }));
+        } catch (error) {
+            messageApi.error("ไม่สามารถประมวลผลรูปภาพได้บางรูป กรุณาลองใหม่");
+        }
     };
 
-    // 🌟 ฟังก์ชันลบรูป (ลบตาม index)
     const handleRemoveImage = (indexToRemove: number) => {
         setFormData(prev => ({
             ...prev,
             imageUrls: prev.imageUrls.filter((_, index) => index !== indexToRemove),
             thumbnailUrls: prev.thumbnailUrls.filter((_, index) => index !== indexToRemove)
         }));
+    };
+
+    const handleDragStart = (index: number) => {
+        setDraggedIndex(index);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+    };
+
+    const handleDrop = (targetIndex: number) => {
+        if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+        setFormData(prev => {
+            const newImageUrls = [...prev.imageUrls];
+            const newThumbnailUrls = [...prev.thumbnailUrls];
+
+            const [movedImage] = newImageUrls.splice(draggedIndex, 1);
+            const [movedThumb] = newThumbnailUrls.splice(draggedIndex, 1);
+
+            newImageUrls.splice(targetIndex, 0, movedImage);
+            newThumbnailUrls.splice(targetIndex, 0, movedThumb);
+
+            return {
+                ...prev,
+                imageUrls: newImageUrls,
+                thumbnailUrls: newThumbnailUrls
+            };
+        });
+        setDraggedIndex(null);
     };
 
     return (
@@ -175,7 +278,6 @@ const ManagerProduct: React.FC = () => {
                     >
                         กลับ
                     </button>
-
                     <h1 className="text-4xl font-black text-[#256D45]">
                         {isEditMode ? 'แก้ไขรายละเอียดสินค้า' : 'เพิ่มสินค้าใหม่'}
                     </h1>
@@ -184,7 +286,7 @@ const ManagerProduct: React.FC = () => {
                 <button
                     onClick={handleSave}
                     disabled={loading}
-                    className="flex items-center gap-2 bg-[#256D45] text-white px-10! py-3! rounded-full font-bold text-xl shadow-lg hover:bg-[#1a4d31] transition-all disabled:bg-gray-400"
+                    className="flex items-center gap-2 bg-[#256D45] text-white !px-10 !py-3 rounded-full font-bold text-xl shadow-lg hover:bg-[#1a4d31] transition-all disabled:bg-gray-400"
                 >
                     <Save size={24} />
                     {loading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
@@ -196,22 +298,35 @@ const ManagerProduct: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <InputBox label="ชื่อสินค้า" icon={<Package size={20} />}>
                             <input
-                                className="input-style"
+                                className={inputStyleClasses}
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                             />
                         </InputBox>
+                        
+                        {/* 🌟 แสดง Error ใต้กล่องรหัสสินค้า */}
                         <InputBox label="รหัสสินค้า" icon={<Hash size={20} />}>
-                            <input
-                                className="input-style"
-                                value={formData.code}
-                                onChange={e => setFormData({ ...formData, code: e.target.value })}
-                            />
+                            <div className="flex flex-col gap-1">
+                                <input
+                                    // เปลี่ยนสีขอบกรอบเป็นสีแดง ถ้ามี codeError
+                                    className={`${inputStyleClasses} ${codeError ? '!border-red-500 focus:!shadow-[0_0_10px_rgba(239,68,68,0.2)]' : ''}`}
+                                    value={formData.code}
+                                    onChange={e => {
+                                        setFormData({ ...formData, code: e.target.value });
+                                        if (codeError) setCodeError(''); // ซ่อน error ชั่วคราวตอนกำลังพิมพ์
+                                    }}
+                                />
+                                {codeError && (
+                                    <span className="text-red-500 text-sm font-semibold pl-2">
+                                        * {codeError}
+                                    </span>
+                                )}
+                            </div>
                         </InputBox>
 
                         <InputBox label="ประเภทสินค้า" icon={<FolderTree size={20} />}>
                             <input
-                                className="input-style"
+                                className={inputStyleClasses}
                                 placeholder="ระบุหรือเลือกประเภทสินค้า"
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
@@ -227,7 +342,7 @@ const ManagerProduct: React.FC = () => {
                         <InputBox label="ราคาสินค้าปกติ (บาท)" icon={<Coins size={20} />}>
                             <input
                                 type="number"
-                                className="input-style"
+                                className={inputStyleClasses}
                                 value={formData.price}
                                 onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
                             />
@@ -236,7 +351,7 @@ const ManagerProduct: React.FC = () => {
                         <InputBox label="จำนวนสินค้าในคลัง" icon={<Database size={20} />}>
                             <input
                                 type="number"
-                                className="input-style"
+                                className={inputStyleClasses}
                                 value={formData.stock}
                                 onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
                             />
@@ -260,7 +375,7 @@ const ManagerProduct: React.FC = () => {
                                     <InputBox label="ราคาโปรโมชั่น (บาท)" icon={<Tag size={20} className="text-red-500" />}>
                                         <input
                                             type="number"
-                                            className="input-style border-red-200! focus:border-red-500! bg-white"
+                                            className={`${inputStyleClasses} !border-red-200 focus:!border-red-500 bg-white`}
                                             placeholder="ใส่ราคาที่ลดแล้ว"
                                             value={formData.promotionPrice}
                                             onChange={e => setFormData({ ...formData, promotionPrice: Number(e.target.value) })}
@@ -286,7 +401,7 @@ const ManagerProduct: React.FC = () => {
                             <InputBox label="รายละเอียดสินค้า" icon={<FileText size={20} />}>
                                 <textarea
                                     rows={6}
-                                    className="input-style"
+                                    className={inputStyleClasses}
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 />
@@ -295,25 +410,48 @@ const ManagerProduct: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 🌟 IMAGE UPLOAD SECTION: รองรับหลายรูป */}
                 <div className="bg-white p-8 rounded-[40px] border-4 border-[#256D45] shadow-xl flex flex-col relative group min-h-80">
-                    <h2 className="text-2xl font-bold text-[#256D45] mb-6 flex items-center gap-2">
-                        <ImagePlus /> รูปภาพสินค้า ({formData.imageUrls.length} รูป)
-                    </h2>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-[#256D45] flex items-center gap-2">
+                            <ImagePlus /> รูปภาพสินค้า ({formData.imageUrls.length} รูป)
+                        </h2>
+                        {formData.imageUrls.length > 1 && (
+                            <span className="text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                สามารถคลิกลากรูปเพื่อจัดเรียงลำดับได้
+                            </span>
+                        )}
+                    </div>
 
                     <div className="flex flex-wrap gap-6">
                         {formData.imageUrls.map((url, index) => (
-                            <div key={index} className="relative w-40 h-40 group">
-                                <img src={url} className="w-full h-full object-cover rounded-2xl border-2 border-[#E8E8E8] shadow-md group-hover:brightness-90 transition-all" alt={`product-${index}`} />
+                            <div 
+                                key={index} 
+                                draggable
+                                onDragStart={() => handleDragStart(index)}
+                                onDragOver={handleDragOver}
+                                onDrop={() => handleDrop(index)}
+                                onDragEnd={() => setDraggedIndex(null)}
+                                className={`relative w-40 h-40 group cursor-move transition-all duration-300 ${
+                                    draggedIndex === index ? 'opacity-40 scale-95 border-dashed' : 'opacity-100'
+                                }`}
+                            >
+                                <img 
+                                    src={url} 
+                                    className="w-full h-full object-cover rounded-2xl border-2 border-[#E8E8E8] shadow-md group-hover:brightness-90 pointer-events-none" 
+                                    alt={`product-${index}`} 
+                                />
                                 <button
-                                    onClick={() => handleRemoveImage(index)}
-                                    className="absolute -top-3 -right-3 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 hover:scale-110 transition-all z-10"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); 
+                                        handleRemoveImage(index);
+                                    }}
+                                    className="absolute -top-3 -right-3 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 hover:scale-110 transition-all z-10 cursor-pointer"
                                     title="ลบรูปนี้"
                                 >
                                     <X size={18} />
                                 </button>
                                 {index === 0 && (
-                                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#256D45] text-white text-xs px-2 py-1 rounded-full shadow-md whitespace-nowrap">
+                                    <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#256D45] text-white text-xs px-3 py-1.5 rounded-full shadow-md whitespace-nowrap font-bold pointer-events-none z-10">
                                         รูปปก
                                     </span>
                                 )}
@@ -332,38 +470,11 @@ const ManagerProduct: React.FC = () => {
                             />
                         </label>
                     </div>
-                    <span className="text-sm text-gray-400 mt-6">รองรับไฟล์ JPG, PNG สามารถเลือกทีละหลายรูปได้ (รูปแรกจะถูกใช้เป็นรูปปก)</span>
+                    <span className="text-sm text-gray-400 mt-6">รองรับไฟล์ JPG, PNG สามารถเลือกทีละหลายรูปได้</span>
                 </div>
             </div>
-
-            <style>{`
-                .input-style {
-                    width: 100%;
-                    padding: 12px 20px;
-                    background-color: #F8F8F8;
-                    border: 2px solid #E8E8E8;
-                    border-radius: 15px;
-                    font-size: 1.1rem;
-                    outline: none;
-                    transition: all 0.3s;
-                }
-                .input-style:focus {
-                    border-color: #256D45;
-                    background-color: white;
-                    box-shadow: 0 0 10px rgba(37, 109, 69, 0.1);
-                }
-            `}</style>
         </div>
     );
 };
-
-const InputBox = ({ label, icon, children }: any) => (
-    <div className="flex flex-col gap-2">
-        <label className="flex items-center gap-2 text-[#256D45] font-bold text-lg">
-            {icon} {label}
-        </label>
-        {children}
-    </div>
-);
 
 export default ManagerProduct;

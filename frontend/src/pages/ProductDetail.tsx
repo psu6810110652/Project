@@ -16,6 +16,7 @@ export const ProductDetail: React.FC = () => {
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [activeTab, setActiveTab] = useState<'description' | 'pricing'>('description');
+    const [showFullDescription, setShowFullDescription] = useState(false);
     const [, setReviews] = useState<any[]>([]);
     const [averageRating, setAverageRating] = useState(0);
     const [totalReviews, setTotalReviews] = useState(0);
@@ -236,6 +237,13 @@ export const ProductDetail: React.FC = () => {
         '/api/placeholder/320/320',
         '/api/placeholder/320/320'
     ] : currentImages;
+
+    const descriptionText = product?.description || '';
+    const descriptionLines = descriptionText.split('\n');
+    const isLongDescription = descriptionLines.length > 10;
+    const displayedDescription = isLongDescription && !showFullDescription
+        ? descriptionLines.slice(0, 10).join('\n')
+        : descriptionText;
 
     return (
         <div className="min-h-screen bg-[#DCEDC1]">
@@ -492,8 +500,19 @@ export const ProductDetail: React.FC = () => {
                                 {activeTab === 'description' ? (
                                     <div>
                                         <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                                            {product.description || 'ไม่มีคำอธิบายสินค้า'}
+                                            {displayedDescription || 'ไม่มีคำอธิบายสินค้า'}
                                         </p>
+
+                                        {isLongDescription && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowFullDescription(prev => !prev)}
+                                                className="mt-2 text-sm font-semibold text-[#1f502c] hover:text-[#2a6b3b]"
+                                            >
+                                                {showFullDescription ? 'แสดงน้อยลง' : 'ดูเพิ่มเติม'}
+                                            </button>
+                                        )}
+
                                         {product.description && (
                                             <p className="text-sm text-gray-600 mt-4">
                                                 <span className="font-medium">รหัสสินค้า:</span> {product.id}
