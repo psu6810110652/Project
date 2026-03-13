@@ -151,7 +151,7 @@ function Navbar() {
                   message: `ออเดอร์ #${order.orderNumber || order.id.toString().substring(0, 8)}: ${productNames}`,
                   time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
                   type: 'pending_orders',
-                  path: '/admin/orders',
+                  path: `/admin/orders/${order.id}`,
                   orderId: order.id
                 });
               });
