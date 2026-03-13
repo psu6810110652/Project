@@ -38,6 +38,27 @@ export class OrdersController {
         return this.ordersService.findAll(); // Could be refined to only return all types of pending
     }
 
+    @Get('today-sales')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(UserRole.ADMIN)
+    getTodaySales() {
+        return this.ordersService.getTodaySales();
+    }
+
+    @Get('pending-count')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(UserRole.ADMIN)
+    getPendingCount() {
+        return this.ordersService.getPendingOrdersCount();
+    }
+
+    @Get('weekly-sales')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(UserRole.ADMIN)
+    getWeeklySales() {
+        return this.ordersService.getWeeklySales();
+    }
+
     // 👤 User ดึง orders ของตัวเอง (GET /api/admin/orders/my-orders)
     @Get('my-orders')
     @UseGuards(AuthGuard('jwt'))

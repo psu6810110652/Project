@@ -151,4 +151,52 @@ export class OrdersService {
             order: { createdAt: 'DESC' },
         });
     }
+
+    async getTodaySales(): Promise<number> {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const result = await this.ordersRepository
+            .createQueryBuilder('order')
+            .where('order.createdAt >= :today', { today })
+            .andWhere('order.status != :cancelled', { cancelled: 'cancelled' })
+            .select('SUM(order.totalAmount)', 'sum')
+            .getRawOne();
+        return parseFloat(result?.sum) || 0;
+    }
+
+    async getPendingOrdersCount(): Promise<number> {
+        const pendingStatuses = ['pending_confirm', 'pending_delivery', 'pending_received'];
+        let total = 0;
+        for (const status of pendingStatuses) {
+            total += await this.ordersRepository.count({ where: { status } });
+        }
+        return total;
+    }
+
+    async getWeeklySales(): Promise<{ date: string; total: number }[]> {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const rows = await this.ordersRepository
+            .createQueryBuilder('order')
+            .where('order.createdAt >= :from', { from: sevenDaysAgo })
+            .andWhere('order.status != :cancelled', { cancelled: 'cancelled' })
+            .select("DATE(order.createdAt)", 'date')
+            .addSelect('SUM(order.totalAmount)', 'total')
+            .groupBy("DATE(order.createdAt)")
+            .orderBy('date', 'ASC')
+            .getRawMany();
+
+        // เติมวันที่ขาดหายเป็น 0
+        const result: { date: string; total: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+            const found = rows.find((r) => r.date?.toString().startsWith(key));
+            result.push({ date: key, total: found ? parseFloat(found.total) : 0 });
+        }
+        return result;
+    }
 }
