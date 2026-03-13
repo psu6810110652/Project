@@ -5,6 +5,13 @@ import type { Product } from '../types';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
 
+import Seeds from '../assets/images/seed.png';
+import Tools from '../assets/images/tool.png';
+import Chemicals from '../assets/images/Chemical.png';
+import Fertilizers from '../assets/images/Fertilizer.png';
+import Other from '../assets/images/Other.png';
+import DefaultBanner from '../assets/images/Home.png';
+
 export const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -243,6 +250,19 @@ export const ProductDetail: React.FC = () => {
                 className={i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
             />
         ));
+    };
+
+    const getCategoryBannerImage = (categoryName?: string) => {
+        if (!categoryName) return DefaultBanner;
+
+        const name = categoryName.toLowerCase();
+        if (name.includes('seed') || name.includes('เมล็ด')) return Seeds;
+        if (name.includes('tool') || name.includes('อุปกรณ์')) return Tools;
+        if (name.includes('chemical') || name.includes('สาร') || name.includes('ยา')) return Chemicals;
+        if (name.includes('fertilizer') || name.includes('ปุ๋ย')) return Fertilizers;
+        if (name.includes('other') || name.includes('อื่นๆ')) return Other;
+
+        return DefaultBanner;
     };
 
     // 🌟 ปรับเงื่อนไขการเช็คเล็กน้อยเพื่อความปลอดภัยของ TypeScript
@@ -582,10 +602,21 @@ export const ProductDetail: React.FC = () => {
                             {/* ================= เริ่มส่วนสินค้าแนะนำเพิ่มเติม ================= */}
                             {!relatedLoading && relatedProducts.length > 0 && (
                                 <div className="mt-12 mb-8">
-                                    <div className="flex flex-col items-center justify-center mb-6">
-                                        <h2 className="text-3xl font-bold text-[#1f502c]">สินค้าที่คล้ายกัน</h2>
-                                        {/* เส้นใต้สีเขียว (ปรับความกว้างที่ w-24 หรือ w-32 ได้ตามชอบ) */}
-                                        <div className="h-[3px] w-256 bg-[#1f502c] mt-2 rounded-full"></div>
+
+                                    {/* Banner ของหมวดหมู่ */}
+                                    <div className="relative h-40 rounded-2xl overflow-hidden mb-4 border border-gray-200 shadow-sm">
+                                    <img
+                                            src={getCategoryBannerImage(product.category?.name)}
+                                            alt={`Banner หมวดหมู่ ${product.category?.name || ''}`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/2 via-black/20 to-transparent" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="w-full !py-4 text-center shadow-md bg-white/80">
+                                                <h3 className="text-2xl font-bold text-[#2a6b3b]">{product.category?.name || 'หมวดหมู่สินค้า'}</h3>
+                                                <p className="text-sm md:text-base text-[#166534]">แสดงสินค้าที่คล้ายกันจากหมวดหมู่นี้</p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* เลย์เอาต์แบบ Grid แสดงสินค้า 4 ชิ้นต่อแถว */}
