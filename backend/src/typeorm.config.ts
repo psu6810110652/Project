@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { Product } from './product/entities/product.entity';
 import { Category } from './category/entities/category.entity';
 import { User } from './users/entities/user.entity';
+import { Favorite } from './users/entities/favorite.entity';
 import { Order } from './orders/entities/order.entity';
 import { SoldProduct } from './orders/entities/sold-product.entity';
 import { Address } from './addresses/entities/address.entity';
@@ -17,6 +18,9 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'teerayut_dev',
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   migrations: ['src/migrations/*.ts'],
-  synchronize: false,
-  logging: true,
+  synchronize: false, // Disabled for safety with Supabase
+  logging: process.env.NODE_ENV === 'development',
+  ssl: {
+    rejectUnauthorized: false // Required for Supabase
+  }
 });

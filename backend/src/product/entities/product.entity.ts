@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
 import { SoldProduct } from '../../orders/entities/sold-product.entity';
+import { Favorite } from '../../users/entities/favorite.entity';
 
 @Entity('products')
 export class Product {
@@ -59,9 +60,6 @@ export class Product {
     @Column({ name: 'sold_count', default: 0 }) // int, default 0
     soldCount: number;
 
-    @Column({ name: 'favorite_count', default: 0 }) // int, default 0
-    favoriteCount: number;
-
     @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 }) // decimal(3,2), default 0
     rating: number;
 
@@ -77,4 +75,7 @@ export class Product {
 
     @OneToMany(() => SoldProduct, (soldProduct) => soldProduct.product)
     soldProducts: SoldProduct[];
+
+    @OneToMany(() => Favorite, (favorite) => favorite.product)
+    favorites: Favorite[];
 }
