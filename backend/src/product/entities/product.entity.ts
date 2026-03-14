@@ -5,8 +5,10 @@ import {
     ManyToOne,
     JoinColumn,
     PrimaryColumn,
+    OneToMany,
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
+import { SoldProduct } from '../../orders/entities/sold-product.entity';
 
 @Entity('products')
 export class Product {
@@ -72,4 +74,7 @@ export class Product {
     @ManyToOne(() => Category, (category) => category.products)
     @JoinColumn({ name: 'category_id' })
     category: Category;
+
+    @OneToMany(() => SoldProduct, (soldProduct) => soldProduct.product)
+    soldProducts: SoldProduct[];
 }

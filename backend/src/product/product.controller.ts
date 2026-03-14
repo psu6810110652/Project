@@ -167,6 +167,23 @@ export class ProductController {
     }
   }
 
+  @Get('seed/add-favorite-count-column')
+  async addFavoriteCountColumn() {
+    console.log('🔄 Adding favorite_count column to products table...');
+    try {
+      // Execute raw SQL to add the column
+      await this.productService.query(
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS favorite_count INTEGER DEFAULT 0`
+      );
+      
+      console.log('✅ favorite_count column added successfully!');
+      return { message: 'favorite_count column added successfully!' };
+    } catch (error) {
+      console.error('❌ Error adding favorite_count column:', error);
+      throw new Error(`Failed to add favorite_count column: ${error.message}`);
+    }
+  }
+
   @Get('seed/reset-sold-counts')
   async resetSoldCounts() {
     console.log('🔄 Resetting all sold counts to 0...');
