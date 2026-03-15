@@ -24,7 +24,7 @@ export class Review {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @Column()
+    @Column({nullable: true})
     rating: number;
 
     @Column('text')
