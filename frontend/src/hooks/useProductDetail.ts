@@ -47,13 +47,20 @@ export const useProductDetail = (id: string | undefined) => {
 
     // Fetch related products
     useEffect(() => {
+        // 🌟 1. ดึงค่า categoryId ออกมาเก็บไว้ในตัวแปรก่อน
+        const categoryId = product?.category?.id;
+
         const fetchRelatedProducts = async () => {
-            if (!product?.category?.id) return;
+            // 🌟 2. ดักเช็คจากตัวแปรนี้แทน ถ้าไม่มีให้หยุดการทำงาน
+            if (!categoryId || !id) return;
 
             setRelatedLoading(true);
             try {
                 // Fetch recommended only 5 items from the same category to save Egress
-                const response = await api.get(`/product/category/${product.category.id}?limit=6`);
+                // 🌟 3. เรียกใช้ตัวแปร categoryId ที่ถูกรับรองแล้วว่ามีค่าแน่นอน (เป็น number 100%)
+                const response = await api.get(`/product/category/${categoryId}?limit=6`);
+                
+                // รองรับทั้งแบบ API ส่งมาเป็น Object { items: [...] } และแบบ Array ตรงๆ
                 const items = response.data.items || response.data;
 
                 // Filter out current product
@@ -70,9 +77,11 @@ export const useProductDetail = (id: string | undefined) => {
             }
         };
 
-        fetchRelatedProducts();
+        // เรียกใช้งานเฉพาะเมื่อมี categoryId
+        if (categoryId) {
+            fetchRelatedProducts();
+        }
     }, [product?.category?.id, id]);
-
     const toggleFavorite = async () => {
         if (!id) return;
 
