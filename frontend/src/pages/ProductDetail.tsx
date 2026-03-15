@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Star, Share2, ChevronLeft, ChevronRight } from 'lucide-react'; // 🌟 เพิ่มไอคอน Chevron
-import type { Product } from '../types';
-import api from '../services/api';
+import { Star, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useProductDetail } from '../hooks/useProductDetail';
+import { optimizeImage } from '../utils/imageUtils';
 
 import Seeds from '../assets/images/seed.png';
 import Tools from '../assets/images/tool.png';
@@ -16,107 +16,29 @@ export const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { addToCart } = useCart();
+
+    const {
+        product,
+        productLoading,
+        message,
+        setMessage,
+        averageRating,
+        totalReviews,
+        isFavorite,
+        toggleFavorite,
+        relatedProducts,
+        relatedLoading
+    } = useProductDetail(id);
+
     const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [product, setProduct] = useState<Product | null>(null);
-    const [productLoading, setProductLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [activeTab, setActiveTab] = useState<'description' | 'pricing'>('description');
     const [showFullDescription, setShowFullDescription] = useState(false);
-    const [, setReviews] = useState<any[]>([]);
-    const [averageRating, setAverageRating] = useState(0);
-    const [totalReviews, setTotalReviews] = useState(0);
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-    const [relatedLoading, setRelatedLoading] = useState(false);
-
-    // State สำหรับเปิด-ปิด Modal ดูรูปภาพทั้งหมด
     const [showAllImagesModal, setShowAllImagesModal] = useState(false);
 
     // 🌟 เพิ่ม useRef สำหรับ Carousel
     const carouselRef = React.useRef<HTMLDivElement>(null);
-
-    // Fetch product data
-    useEffect(() => {
-        const fetchProduct = async () => {
-            if (!id) {
-                setMessage('ไม่พบ ID สินค้า');
-                setProductLoading(false);
-                return;
-            }
-
-            try {
-                const response = await api.get(`/product/${id}`);
-                const data = response.data;
-                setProduct(data);
-
-                // Check if product is in favorites
-                const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-                setIsFavorite(favorites.includes(id));
-
-                // Fetch reviews for this product to calculate average rating
-                try {
-                    const reviewsResponse = await api.get(`/product/${id}/reviews`);
-                    const reviewsData = reviewsResponse.data;
-                    setReviews(reviewsData);
-
-                    // Calculate average rating from actual reviews only
-                    if (reviewsData && reviewsData.length > 0) {
-                        const totalRating = reviewsData.reduce((sum: number, review: any) => sum + review.rating, 0);
-                        const avgRating = totalRating / reviewsData.length;
-                        setAverageRating(Math.round(avgRating * 10) / 10); // Round to 1 decimal place
-                        setTotalReviews(reviewsData.length);
-                    } else {
-                        // Only set to 0 if no reviews exist - don't use potentially incorrect product data
-                        setAverageRating(0);
-                        setTotalReviews(0);
-                    }
-                } catch (reviewError) {
-                    console.error('Error fetching reviews:', reviewError);
-                    // Set to 0 when reviews API fails - don't use potentially incorrect product data
-                    setAverageRating(0);
-                    setTotalReviews(0);
-                }
-            } catch (error) {
-                console.error('Error fetching product:', error);
-                setMessage(`ไม่สามารถโหลดข้อมูลสินค้าได้: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            } finally {
-                setProductLoading(false);
-            }
-        };
-
-        fetchProduct();
-    }, [id]);
-
-    // Fetch related products
-    useEffect(() => {
-        const fetchRelatedProducts = async () => {
-            if (!product?.category?.id) return;
-
-            setRelatedLoading(true);
-            try {
-                const response = await api.get(`/product`);
-                const allProducts = response.data;
-
-                // Filter products: same category, exclude current product
-                const related = allProducts
-                    .filter((p: Product) =>
-                        p.category?.id === product.category?.id && p.id !== id
-                    )
-                    .slice(0, 8); // Limit to 8 products
-
-                setRelatedProducts(related);
-            } catch (error) {
-                console.error('Error fetching related products:', error);
-                setRelatedProducts([]);
-            } finally {
-                setRelatedLoading(false);
-            }
-        };
-
-        fetchRelatedProducts();
-    }, [product?.category?.id, id]);
 
     // 🌟 เพิ่ม useEffect สำหรับเลื่อน Carousel เมื่อ `selectedImageIndex` เปลี่ยน
     useEffect(() => {
@@ -146,7 +68,6 @@ export const ProductDetail: React.FC = () => {
         setMessage('');
 
         try {
-            // 🌟 ปรับตรงนี้ให้ดึงรูปลงตะกร้าได้ถูกต้อง
             const cartItem = {
                 id: product.id,
                 name: product.name,
@@ -158,12 +79,9 @@ export const ProductDetail: React.FC = () => {
                 promotionPrice: product.promotionPrice
             };
 
-            // Use CartContext to add to cart
             addToCart(cartItem);
-
             setMessage('เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว');
             setTimeout(() => setMessage(''), 3000);
-
         } catch (error) {
             console.error('Error adding to cart:', error);
             setMessage(`เกิดข้อผิดพลาด: ${error instanceof Error ? error.message : 'ไม่สามารถเพิ่มสินค้าได้'}`);
@@ -180,46 +98,6 @@ export const ProductDetail: React.FC = () => {
         }
     };
 
-    const toggleFavorite = async () => {
-        if (!id) return;
-
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        const newFavoriteStatus = !isFavorite;
-
-        if (isFavorite) {
-            // Remove from favorites
-            const newFavorites = favorites.filter((favId: string) => favId !== id);
-            localStorage.setItem('favorites', JSON.stringify(newFavorites));
-            setIsFavorite(false);
-            setMessage('ลบออกจากรายการโปรดแล้ว');
-        } else {
-            // Add to favorites
-            favorites.push(id);
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-            setIsFavorite(true);
-            setMessage('เพิ่มไปยังรายการโปรดแล้ว');
-        }
-
-        // Update favorite count on backend
-        try {
-            // Fetch current product data to get accurate favorite count
-            const productResponse = await api.get(`/product/${id}`);
-            const currentProduct = productResponse.data;
-            const currentFavoriteCount = Number(currentProduct.favoriteCount) || 0;
-            
-            const newFavoriteCount = newFavoriteStatus ? currentFavoriteCount + 1 : Math.max(0, currentFavoriteCount - 1);
-            
-            // Update backend
-            await api.patch(`/product/${id}/stats`, {
-                favoriteCount: newFavoriteCount
-            });
-        } catch (error) {
-            console.error('Error updating favorite count:', error);
-        }
-
-        setTimeout(() => setMessage(''), 2000);
-    };
-
     const handleShare = async () => {
         if (navigator.share) {
             try {
@@ -234,13 +112,11 @@ export const ProductDetail: React.FC = () => {
                 }
             }
         } else {
-            // Fallback: Copy to clipboard
             navigator.clipboard.writeText(window.location.href);
             setMessage('คัดลอกลิงก์แล้วเป๊ะ!');
             setTimeout(() => setMessage(''), 2000);
         }
     };
-
 
     const renderStars = (rating: number = 0) => {
         return Array.from({ length: 5 }, (_, i) => (
@@ -265,7 +141,6 @@ export const ProductDetail: React.FC = () => {
         return DefaultBanner;
     };
 
-    // 🌟 ปรับเงื่อนไขการเช็คเล็กน้อยเพื่อความปลอดภัยของ TypeScript
     const currentImages = (product?.imageUrls && product.imageUrls.length > 0)
         ? product.imageUrls
         : (product?.imageUrl ? [product.imageUrl] : []);
@@ -320,11 +195,8 @@ export const ProductDetail: React.FC = () => {
                         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left">
                             <div className="flex flex-col md:flex-row gap-8 md:gap-12">
 
-                                {/* ================= เริ่มส่วนรูปภาพที่ปรับแก้ใหม่ ================= */}
-                                {/* 🌟 ปรับขนาดรูปให้ใหญ่ขึ้นโดยขยายความกว้างฝั่งซ้าย (เช่น md:w-[500px] หรือ md:w-1/2) */}
+                                {/* รูปภาพ */}
                                 <div className="flex flex-col w-full md:w-[450px] lg:w-[500px] flex-shrink-0">
-
-                                    {/* รูปใหญ่ */}
                                     <div className="relative w-full aspect-square border-2 border-gray-200 rounded-xl bg-gray-50 overflow-hidden group">
                                         <div
                                             className="w-full h-full p-4 flex items-center justify-center cursor-pointer"
@@ -337,7 +209,7 @@ export const ProductDetail: React.FC = () => {
                                                 </div>
                                             ) : (
                                                 <img
-                                                    src={displayImages[selectedImageIndex]}
+                                                    src={optimizeImage(displayImages[selectedImageIndex], { width: 800, quality: 85 })}
                                                     alt={`${product.name} รูปที่ ${selectedImageIndex + 1}`}
                                                     className="max-w-full max-h-full object-contain"
                                                 />
@@ -386,10 +258,9 @@ export const ProductDetail: React.FC = () => {
                                                     {image && image.includes('/api/placeholder/') ? (
                                                         <span className="text-xl text-gray-400">📦</span>
                                                     ) : (
-                                                        <img src={image || ''} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                                                        <img src={optimizeImage(image, { width: 150, quality: 70 })} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
                                                     )}
 
-                                                    {/* Overlay สำหรับรูปที่ 5 ถ้ามีรูปเพิ่มเติม */}
                                                     {isLastAndMore && (
                                                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white backdrop-blur-[1px]">
                                                             <span className="text-xl sm:text-2xl font-bold">+{remainingCount}</span>
@@ -400,9 +271,8 @@ export const ProductDetail: React.FC = () => {
                                         })}
                                     </div>
                                 </div>
-                                {/* ================= จบส่วนรูปภาพ ================= */}
 
-                                {/* ================= ส่วนข้อมูลสินค้า (ดั้งเดิมของคุณ 100%) ================= */}
+                                {/* ข้อมูลสินค้า */}
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-2">
                                         <h1 className="text-3xl font-bold text-[#1f502c]">{product.name}</h1>
@@ -469,7 +339,7 @@ export const ProductDetail: React.FC = () => {
                                             <input
                                                 type="text"
                                                 min="1"
-                                                max={product?.stockQuantity ?? product?.stock ?? 999}
+                                                max={product.stockQuantity ?? product.stock ?? 999}
                                                 value={quantity}
                                                 onChange={(e) => {
                                                     const inputValue = e.target.value;
@@ -479,25 +349,22 @@ export const ProductDetail: React.FC = () => {
                                                 }}
                                                 onBlur={(e) => {
                                                     const value = parseInt(e.target.value) || 1;
-                                                    const stockLimit = product?.stockQuantity ?? product?.stock ?? 999;
+                                                    const stockLimit = product.stockQuantity ?? product.stock ?? 999;
                                                     const finalQuantity = Math.max(1, Math.min(value, stockLimit));
                                                     setQuantity(finalQuantity);
-                                                }}
-                                                onFocus={(e) => {
-                                                    e.target.select();
                                                 }}
                                                 className="w-20 h-10 text-center border-2 border-[#2a6b3b] font-bold text-lg focus:outline-none focus:border-green-600 rounded"
                                             />
                                             <button
                                                 onClick={() => handleQuantityChange(quantity + 1)}
-                                                disabled={!product || quantity >= (product.stockQuantity ?? product.stock ?? 0)}
+                                                disabled={!product || quantity >= ((product as any).stockQuantity ?? (product as any).stock ?? 0)}
                                                 className="w-10 h-10 rounded-full bg-green-200 border-2 border-[#2a6b3b] flex items-center justify-center hover:bg-[#2a6b3b] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <span className="text-lg font-bold">+</span>
                                             </button>
                                         </div>
                                         <span className="text-base font-medium text-gray-700 ml-4">
-                                            มีสินค้าทั้งหมด {product?.stockQuantity ?? product?.stock ?? 0} ชิ้น
+                                            มีสินค้าทั้งหมด {product.stockQuantity ?? product.stock ?? 0} ชิ้น
                                         </span>
                                     </div>
 
@@ -509,11 +376,10 @@ export const ProductDetail: React.FC = () => {
                                         🛒 {isLoading ? 'กำลังเพิ่ม...' : 'เพิ่มไปยังรถเข็น'}
                                     </button>
                                 </div>
-                                {/* ================= จบส่วนข้อมูลสินค้า ================= */}
                             </div>
                         </div>
 
-                        {/* Tabs Section (ของคุณเหมือนเดิม) */}
+                        {/* Tabs Section */}
                         <div>
                             <div className="flex gap-1">
                                 <button
@@ -557,9 +423,9 @@ export const ProductDetail: React.FC = () => {
                                                 <span className="font-medium">รหัสสินค้า:</span> {product.id}
                                             </p>
                                         )}
-                                        {(product.Type || product.Type) && (
+                                        {product.Type && (
                                             <p className="text-sm text-gray-600 mt-1">
-                                                <span className="font-medium">ประเภท:</span> {product.Type || product.Type}
+                                                <span className="font-medium">ประเภท:</span> {product.Type}
                                             </p>
                                         )}
                                         {product.category && (
@@ -605,7 +471,7 @@ export const ProductDetail: React.FC = () => {
 
                                     {/* Banner ของหมวดหมู่ */}
                                     <div className="relative h-40 rounded-2xl overflow-hidden mb-4 border border-gray-200 shadow-sm">
-                                    <img
+                                        <img
                                             src={getCategoryBannerImage(product.category?.name)}
                                             alt={`Banner หมวดหมู่ ${product.category?.name || ''}`}
                                             className="w-full h-full object-cover"
@@ -628,9 +494,8 @@ export const ProductDetail: React.FC = () => {
                                                 className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer border border-gray-100 group"
                                             >
                                                 <div className="aspect-square bg-gray-50 overflow-hidden relative">
-                                                    {/* ⚠️ เช็คชื่อ Field รูปภาพให้ตรงกับ Backend ของคุณ */}
                                                     <img
-                                                        src={item.image || item.imageUrls?.[0] || '/api/placeholder/150/150'}
+                                                        src={optimizeImage(item.image || (item.imageUrls && item.imageUrls[0]), { width: 400, quality: 75 })}
                                                         alt={item.name}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                     />
@@ -648,15 +513,12 @@ export const ProductDetail: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                            {/* ================= จบส่วนสินค้าแนะนำเพิ่มเติม ================= */}
-
                         </div>
-
                     </div>
                 </div>
             )}
 
-            {/* Modal รูปภาพทั้งหมด (ของคุณเหมือนเดิม) */}
+            {/* Modal รูปภาพทั้งหมด */}
             {showAllImagesModal && (
                 <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -684,7 +546,7 @@ export const ProductDetail: React.FC = () => {
                                     {image && image.includes('/api/placeholder/') ? (
                                         <div className="bg-gray-100 w-full h-full flex items-center justify-center text-3xl">📦</div>
                                     ) : (
-                                        <img src={image} alt={`รูปที่ ${idx + 1}`} className="w-full h-full object-cover" />
+                                        <img src={optimizeImage(image, { width: 300, quality: 75 })} alt={`รูปที่ ${idx + 1}`} className="w-full h-full object-cover" />
                                     )}
                                 </div>
                             ))}
@@ -694,4 +556,4 @@ export const ProductDetail: React.FC = () => {
             )}
         </div>
     );
-}
+};

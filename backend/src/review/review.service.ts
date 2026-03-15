@@ -2,13 +2,34 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
+import { Product } from '../product/entities/product.entity';
 
 @Injectable()
 export class ReviewService {
   constructor(
     @InjectRepository(Review)
     private reviewRepository: Repository<Review>,
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>,
   ) { }
+
+  private async updateProductStats(productId: string) {
+    try {
+      const stats = await this.reviewRepository
+        .createQueryBuilder('review')
+        .select('AVG(review.rating)', 'avgRating')
+        .addSelect('COUNT(review.id)', 'reviewCount')
+        .where('review.productId = :productId', { productId })
+        .getRawOne();
+
+      await this.productRepository.update(productId, {
+        rating: parseFloat(stats.avgRating) || 0,
+        reviewCount: parseInt(stats.reviewCount, 10) || 0,
+      });
+    } catch (error) {
+      console.error(`Failed to update product stats for ${productId}:`, error);
+    }
+  }
 
   private isUuid(id: any): boolean {
     if (typeof id !== 'string') return false;
@@ -68,6 +89,12 @@ export class ReviewService {
 
       const finalId = (savedReview as any).id || (Array.isArray(savedReview) ? savedReview[0].id : 'unknown');
       console.log(`[ReviewService] Created new review: ${finalId}`);
+
+      // Update product stats asynchronously
+      if (data.productId) {
+        this.updateProductStats(data.productId);
+      }
+
       return savedReview;
     } catch (error) {
       console.error('CRITICAL ERROR in ReviewService.create:', error);
@@ -155,7 +182,15 @@ export class ReviewService {
       }
     }
 
-    return this.reviewRepository.save(review);
+    const result = await this.reviewRepository.save(review);
+
+    // Update product stats asynchronously
+    const productId = (review as any).productId || (review.product ? review.product.id : undefined);
+    if (productId) {
+      this.updateProductStats(productId);
+    }
+
+    return result;
   }
 
   async findByOrder(orderId: string, userId?: number) {

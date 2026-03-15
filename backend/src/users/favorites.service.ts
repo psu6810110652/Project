@@ -108,7 +108,7 @@ export class FavoritesService {
     async getFavoriteProducts(userId: number): Promise<any[]> {
         const favorites = await this.favoritesRepository.find({
             where: { userId },
-            relations: ['product', 'product.category']
+            relations: ['product', 'product.category', 'product.detail']
         });
 
         return favorites.map(fav => ({
@@ -116,7 +116,7 @@ export class FavoritesService {
             productId: fav.productId,
             productName: fav.product.name,
             price: fav.product.price,
-            imageUrls: fav.product.imageUrls,
+            imageUrls: fav.product.detail?.imageUrls || [],
             thumbnailUrls: fav.product.thumbnailUrls,
             category: fav.product.category,
             addedAt: fav.createdAt,

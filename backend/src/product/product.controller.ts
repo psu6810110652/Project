@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -29,19 +29,19 @@ export class ProductController {
 
 
   @Get('promotions')
-  findPromotions() {
-    return this.productService.findPromotions();
+  findPromotions(@Query('limit') limit: string) {
+    return this.productService.findPromotions(+limit || 10);
   }
 
   @Get('featured')
-  findFeatured() {
-    return this.productService.findFeatured();
+  findFeatured(@Query('limit') limit: string) {
+    return this.productService.findFeatured(+limit || 10);
   }
 
 
   @Get()
-  findAll() {
-    return this.productService.findAll();
+  async findAll(@Query('page') page: string, @Query('limit') limit: string) {
+    return this.productService.findAll(+page || 1, +limit || 20);
   }
 
 
@@ -52,8 +52,8 @@ export class ProductController {
 
 
   @Get('category/:categoryId')
-  async findByCategory(@Param('categoryId') categoryId: string) {
-    return this.productService.findAllByCategory(+categoryId);
+  async findByCategory(@Param('categoryId') categoryId: string, @Query('limit') limit: string) {
+    return this.productService.findAllByCategory(+categoryId, +limit || 10);
   }
 
 
@@ -89,8 +89,8 @@ export class ProductController {
   async updateRealSoldCounts() {
     console.log('🔄 Calculating real sold counts from actual orders...');
     try {
-      // Get all products
-      const products = await this.productService.findAll();
+      // Get all products (unpaginated for seeding)
+      const { items: products } = await this.productService.findAll(1, 1000) as any;
       
       for (const product of products) {
         // Calculate real sold count from completed orders
@@ -141,7 +141,7 @@ export class ProductController {
     console.log('🔄 Updating with REAL Supabase data only...');
     try {
       // Get all products
-      const products = await this.productService.findAll();
+      const { items: products } = await this.productService.findAll(1, 1000) as any;
       
       for (const product of products) {
         // Calculate real sold count from completed orders
@@ -190,7 +190,7 @@ export class ProductController {
     console.log('🔄 Resetting all sold counts to 0...');
     try {
       // Get all products
-      const products = await this.productService.findAll();
+      const { items: products } = await this.productService.findAll(1, 1000) as any;
       
       for (const product of products) {
         // Reset sold count to 0
@@ -214,7 +214,7 @@ export class ProductController {
     console.log('🔄 Updating product statistics...');
     try {
       // Get all products
-      const products = await this.productService.findAll();
+      const { items: products } = await this.productService.findAll(1, 1000) as any;
       
       for (const product of products) {
         // ใช้ข้อมูลจริงจาก Supabase ถ้าไม่มีให้เป็น 0

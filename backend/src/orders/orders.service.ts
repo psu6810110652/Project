@@ -159,12 +159,17 @@ export class OrdersService {
     }
 
     async getTodaySales(): Promise<number> {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const confirmedStatuses = ['pending_delivery', 'pending_received', 'completed'];
+
+        // หาจุดเริ่มต้นของวันนี้ในเวลาประเทศไทย (Asia/Bangkok)
+        const now = new Date();
+        const bangkokDateString = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // "YYYY-MM-DD"
+        const startOfToday = new Date(`${bangkokDateString}T00:00:00.000+07:00`);
+
         const result = await this.ordersRepository
             .createQueryBuilder('order')
-            .where('order.createdAt >= :today', { today })
-            .andWhere('order.status != :cancelled', { cancelled: 'cancelled' })
+            .where('order.createdAt >= :startOfToday', { startOfToday })
+            .andWhere('order.status IN (:...statuses)', { statuses: confirmedStatuses })
             .select('SUM(order.totalAmount)', 'sum')
             .getRawOne();
         return parseFloat(result?.sum) || 0;
@@ -180,27 +185,40 @@ export class OrdersService {
     }
 
     async getWeeklySales(): Promise<{ date: string; total: number }[]> {
-        const sevenDaysAgo = new Date();
+        const confirmedStatuses = ['pending_delivery', 'pending_received', 'completed'];
+
+        // หาวันที่ 7 วันที่แล้วแบบเริ่มต้นวัน (นับถอยหลัง 6 วันรวมวันนี้เป็น 7)
+        const now = new Date();
+        const bangkokDateString = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        const startOfToday = new Date(`${bangkokDateString}T00:00:00.000+07:00`);
+        
+        const sevenDaysAgo = new Date(startOfToday);
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-        sevenDaysAgo.setHours(0, 0, 0, 0);
 
         const rows = await this.ordersRepository
             .createQueryBuilder('order')
             .where('order.createdAt >= :from', { from: sevenDaysAgo })
-            .andWhere('order.status != :cancelled', { cancelled: 'cancelled' })
-            .select("DATE(order.createdAt)", 'date')
+            .andWhere('order.status IN (:...statuses)', { statuses: confirmedStatuses })
+            .select("DATE(order.createdAt AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Bangkok')", 'date')
             .addSelect('SUM(order.totalAmount)', 'total')
-            .groupBy("DATE(order.createdAt)")
+            .groupBy("date")
             .orderBy('date', 'ASC')
             .getRawMany();
 
         // เติมวันที่ขาดหายเป็น 0
         const result: { date: string; total: number }[] = [];
         for (let i = 6; i >= 0; i--) {
-            const d = new Date();
+            const d = new Date(startOfToday);
             d.setDate(d.getDate() - i);
-            const key = d.toISOString().split('T')[0]; // "YYYY-MM-DD"
-            const found = rows.find((r) => r.date?.toString().startsWith(key));
+            const key = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // "YYYY-MM-DD"
+            
+            // Postgres DATE() might return string, Date object, or something else depending on driver.
+            // We check for exact match or startWith.
+            const found = rows.find((r) => {
+                const rDate = r.date instanceof Date ? r.date.toISOString().split('T')[0] : r.date?.toString();
+                return rDate === key || rDate?.startsWith(key);
+            });
+            
             result.push({ date: key, total: found ? parseFloat(found.total) : 0 });
         }
         return result;
@@ -211,7 +229,7 @@ export class OrdersService {
             const pId = item.productId || item.id;
             const product = await this.productRepository.findOne({ 
                 where: { id: pId },
-                relations: ['category']
+                relations: ['category', 'detail']
             });
 
             if (product) {
@@ -226,7 +244,7 @@ export class OrdersService {
                 soldProduct.quantity = quantity;
                 soldProduct.unitPrice = unitPrice;
                 soldProduct.totalPrice = totalPrice;
-                soldProduct.productImageUrl = product.thumbnailUrls?.[0] || product.imageUrls?.[0] || '';
+                soldProduct.productImageUrl = product.thumbnailUrls?.[0] || product.detail?.imageUrls?.[0] || '';
                 soldProduct.categoryId = product.category?.id?.toString() || '';
                 soldProduct.categoryName = product.category?.name || '';
 

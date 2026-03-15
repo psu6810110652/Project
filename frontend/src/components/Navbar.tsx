@@ -92,23 +92,30 @@ function Navbar() {
         try {
           // 1. เช็คสินค้าที่มีสต็อกใกล้หมด (<= 5)
           const productsRes = await api.get('/product');
-          setAllProducts(productsRes.data || []);
-          const hasLowStock = productsRes.data.some((p: any) => {
+          const productData = productsRes.data;
+          const productItems = Array.isArray(productData?.items) 
+            ? productData.items 
+            : (Array.isArray(productData) ? productData : []);
+          setAllProducts(productItems);
+          
+          const hasLowStock = productItems.some((p: any) => {
             const currentStock = typeof p.stock === 'number' ? p.stock : (p.stockQuantity ?? 0);
             return currentStock <= 5;
           });
 
           // 2. เช็คคำสั่งซื้อใหม่ / รอจัดส่ง
           const ordersRes = await api.get('/api/admin/orders/all-pending');
-          setAllOrders(ordersRes.data || []);
-          const hasPendingOrders = ordersRes.data.some((o: any) =>
+          const orderItems = Array.isArray(ordersRes.data) ? ordersRes.data : [];
+          setAllOrders(orderItems);
+          
+          const hasPendingOrders = orderItems.some((o: any) =>
             o.status === 'pending_confirm' || o.status === 'pending_delivery' || !o.status
           );
 
           const newNotifs: Notification[] = [];
           if (hasLowStock) {
             // หาสินค้าที่มีสต็อกต่ำและเพิ่มเข้าไปใน notifications
-            const lowStockProducts = productsRes.data.filter((p: Product) => {
+            const lowStockProducts = productItems.filter((p: Product) => {
               const currentStock = typeof p.stock === 'number' ? p.stock : (p.stockQuantity ?? 0);
               return currentStock <= 5;
             });
@@ -127,7 +134,7 @@ function Navbar() {
             });
           }
           if (hasPendingOrders) {
-            const pendingOrdersList = ordersRes.data.filter((o: any) =>
+            const pendingOrdersList = orderItems.filter((o: any) =>
               o.status === 'pending_confirm' || o.status === 'pending_delivery' || !o.status
             );
             
@@ -184,7 +191,7 @@ function Navbar() {
     const term = searchTerm.toLowerCase();
 
     // ค้นหาสินค้า
-    const matchedProducts = allProducts.filter(p =>
+    const matchedProducts = (Array.isArray(allProducts) ? allProducts : []).filter(p =>
       p.id?.toLowerCase().includes(term) || p.name?.toLowerCase().includes(term)
     ).slice(0, 4).map(p => ({
       id: `p-${p.id}`,
@@ -195,7 +202,7 @@ function Navbar() {
     }));
 
     // ค้นหาคำสั่งซื้อ
-    const matchedOrders = allOrders.filter(o =>
+    const matchedOrders = (Array.isArray(allOrders) ? allOrders : []).filter(o =>
       o.id?.toLowerCase().includes(term) ||
       o.orderNumber?.toLowerCase().includes(term) ||
       o.customerName?.toLowerCase().includes(term)
@@ -395,11 +402,11 @@ function Navbar() {
           <div className="hidden lg:flex items-center">
             <div className="h-10 w-0.5 bg-[#256D45] mx-6"></div>
             <nav className="flex gap-6 xl:gap-8 items-center">
-              <Link to="/fertilizers" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">ปุ๋ย</Link>
-              <Link to="/tools" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">อุปกรณ์</Link>
-              <Link to="/seeds" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">เมล็ด</Link>
-              <Link to="/chemicals" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">สารเคมี</Link>
-              <Link to="/others" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">อื่นๆ</Link>
+              <Link to="/ปุ๋ย" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">ปุ๋ย</Link>
+              <Link to="/อุปกรณ์" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">อุปกรณ์</Link>
+              <Link to="/เมล็ดพันธุ์" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">เมล็ดพันธุ์</Link>
+              <Link to="/สารเคมี" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">สารเคมี</Link>
+              <Link to="/อื่นๆ" className="text-[#256D45] text-lg font-medium hover:opacity-80 whitespace-nowrap">อื่นๆ</Link>
             </nav>
           </div>
         </div>
@@ -442,11 +449,11 @@ function Navbar() {
       {/* แถวล่าง: Navigation Links (สำหรับมือถือ) */}
       <div className="lg:hidden w-full px-4 pb-3">
         <nav className="flex overflow-x-auto gap-6 items-center w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <Link to="/fertilizers" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">ปุ๋ย</Link>
-          <Link to="/tools" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">อุปกรณ์</Link>
-          <Link to="/seeds" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">เมล็ด</Link>
-          <Link to="/chemicals" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">สารเคมี</Link>
-          <Link to="/others" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">อื่นๆ</Link>
+          <Link to="/ปุ๋ย" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">ปุ๋ย</Link>
+          <Link to="/อุปกรณ์" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">อุปกรณ์</Link>
+          <Link to="/เมล็ดพันธุ์" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">เมล็ดพันธุ์</Link>
+          <Link to="/สารเคมี" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">สารเคมี</Link>
+          <Link to="/อื่นๆ" className="text-[#256D45] text-base font-medium hover:opacity-80 whitespace-nowrap shrink-0">อื่นๆ</Link>
         </nav>
       </div>
 

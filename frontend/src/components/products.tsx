@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FavoritesService } from '../services/favoritesService';
 import api from '../services/api';
+import { optimizeImage } from '../utils/imageUtils';
 
 type ExtendedProductCard = ProductCard & {
     imageUrls?: string[] | string;
@@ -81,29 +82,42 @@ export const Products = (props: ExtendedProductCard) => {
         }
     };
 
-    // ฟังก์ชันจัดการรูปภาพแบบฉลาดสุดๆ (อัปเดตใหม่)
+    // ฟังก์ชันจัดการรูปภาพแบบฉลาดสุดๆ (พร้อม Image Transformation และ Thumbnail)
     const getDisplayImage = () => {
         let finalImage = '';
-        if (props.imageUrls) {
+        
+        // 1. ลองใช้ Thumbnail ก่อน (ประหยัดสุด)
+        const thumbnails = props.thumbnailUrls;
+        if (thumbnails) {
+            if (Array.isArray(thumbnails) && thumbnails.length > 0) {
+                finalImage = thumbnails[0];
+            } else if (typeof thumbnails === 'string' && thumbnails.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(thumbnails);
+                    if (Array.isArray(parsed) && parsed.length > 0) finalImage = parsed[0];
+                } catch (e) {}
+            } else if (typeof thumbnails === 'string') {
+                finalImage = thumbnails;
+            }
+        }
+
+        // 2. ถ้าไม่มี Thumbnail ค่อยใช้รูปเต็ม (ถ้ามี)
+        if (!finalImage && props.imageUrls) {
             if (Array.isArray(props.imageUrls) && props.imageUrls.length > 0) {
-                finalImage = props.imageUrls[0]; // <--- ตรงนี้แหละครับที่มันหยิบรูปแรกมาใช้!
-            } else if (typeof props.imageUrls === 'string') {
+                finalImage = props.imageUrls[0];
+            } else if (typeof props.imageUrls === 'string' && props.imageUrls.startsWith('[')) {
                 try {
                     const parsed = JSON.parse(props.imageUrls);
                     if (Array.isArray(parsed) && parsed.length > 0) finalImage = parsed[0];
-                } catch (e) {
-                    finalImage = props.imageUrls;
-                }
+                } catch (e) {}
             }
         }
+
         if (!finalImage) finalImage = props.imageUrl || props.image || '';
         if (!finalImage) return 'https://placehold.co/290x290/f1f5f9/94a3b8?text=No+Image';
-        if (finalImage.includes('api/placeholder')) return 'https://placehold.co/290x290/e2e8f0/64748b?text=Mock+Product';
-        if (finalImage.startsWith('/uploads') || finalImage.startsWith('/images') || finalImage.startsWith('/api')) {
-            const API_BASE_URL = 'http://localhost:3000';
-            return `${API_BASE_URL}${finalImage}`;
-        }
-        return finalImage;
+        
+        // ใช้ Image Transformation เพื่อลด Egress (Resize เป็น 400px สำหรับ Thumbnail)
+        return optimizeImage(finalImage, { width: 400, quality: 80 });
     };
 
     const displayImage = getDisplayImage();
@@ -122,6 +136,7 @@ export const Products = (props: ExtendedProductCard) => {
                         className="w-full h-full p-2 object-contain"
                         alt={props.name || "Product"}
                         src={displayImage}
+                        loading="lazy"
                         onError={(e) => {
                             e.currentTarget.src = 'https://placehold.co/290x290/fee2e2/ef4444?text=Error';
                         }}

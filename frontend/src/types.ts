@@ -12,6 +12,7 @@ export interface ProductCard {
     favoriteCount?: number;
     reviewCount?: number;
     soldCount?: number;
+    thumbnailUrls?: string[] | string;
 }
 
 export interface Product {
@@ -39,6 +40,9 @@ export interface Product {
     isRecommend: boolean;
     isPromotion: boolean;
     stockQuantity?: number;
+    favoriteCount?: number;
+    specifications?: Record<string, any>;
+    howToUse?: string;
 }
 
 export interface Category {
@@ -91,16 +95,6 @@ export interface CartItem {
     quantity: number;
     imageUrl?: string;
     stockQuantity?: number;
-    isPromotion?: boolean;
-    promotionPrice?: number;
-}
-
-export interface CartItem {
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    imageUrl?: string;
     isPromotion?: boolean;
     promotionPrice?: number;
 }

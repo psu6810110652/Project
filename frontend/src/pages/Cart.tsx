@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { optimizeImage } from '../utils/imageUtils';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ const Cart = () => {
                       <div key={item.id} className="flex items-center gap-6 pb-4 border-b border-gray-200 last:border-b-0">
                         <div className="shrink-0">
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.name} className="w-20 h-20 object-cover rounded-lg bg-gray-300" />
+                            <img src={optimizeImage(item.imageUrl, { width: 100, quality: 70 })} alt={item.name} className="w-20 h-20 object-cover rounded-lg bg-gray-300" />
                           ) : (
                             <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
                               <span className="text-2xl text-gray-400">📦</span>

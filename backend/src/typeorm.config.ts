@@ -19,7 +19,7 @@ export const AppDataSource = new DataSource({
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   migrations: ['src/migrations/*.ts'],
   synchronize: false, // Disabled for safety with Supabase
-  logging: process.env.NODE_ENV === 'development',
+  logging: false,
   ssl: {
     rejectUnauthorized: false // Required for Supabase
   }

@@ -22,10 +22,10 @@ import { ReviewModule } from './review/review.module';
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       autoLoadEntities: true,
-      synchronize: false, // Disabled for safety with Supabase
-      logging: process.env.NODE_ENV === 'development',
+      synchronize: false,
+      logging: false,
       ssl: {
-        rejectUnauthorized: false // Required for Supabase
+        rejectUnauthorized: false
       }
     }),
   }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule, AddressesModule, CartsModule, ReviewModule],

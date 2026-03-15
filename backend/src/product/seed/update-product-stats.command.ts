@@ -9,7 +9,8 @@ export class UpdateProductStatsCommand {
     console.log('🔄 Updating product statistics...');
     try {
       // Get all products
-      const products = await this.productService.findAll();
+      const response = await this.productService.findAll(1, 1000);
+      const products = response.items;
       
       for (const product of products) {
         // Add random sold count (0-200)

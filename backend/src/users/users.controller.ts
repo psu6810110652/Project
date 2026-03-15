@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, Request, ForbiddenException, InternalServerErrorException, HttpException } from '@nestjs/common';
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete, 
+  UseGuards, 
+  ParseIntPipe, 
+  Request, 
+  ForbiddenException, 
+  InternalServerErrorException, 
+  HttpException 
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -16,6 +30,25 @@ export class UsersController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
+
+  // ====================================================================
+  // 🟢 ส่วนที่เพิ่มเข้ามาใหม่: API สำหรับลืมรหัสผ่าน (Public)
+  // ====================================================================
+
+  @Post('forgot-password')
+  forgotPassword(@Body('email') email: string) {
+    return this.usersService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  resetPassword(
+    @Body('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    return this.usersService.resetPassword(token, newPassword);
+  }
+
+  // ====================================================================
 
   // Protected: Find all users (Admin only)
   @UseGuards(AuthGuard('jwt'), RolesGuard)

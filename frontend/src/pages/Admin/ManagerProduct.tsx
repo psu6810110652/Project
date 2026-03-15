@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import axios from 'axios';
 import { AuthContext } from '../../context/AuthContext';
-import { Save, ImagePlus, X, Package, Hash, Coins, Database, FileText, Tag, FolderTree } from 'lucide-react';
+import { Save, ImagePlus, X, Package, Hash, Coins, Database, FileText, Tag, FolderTree, BookOpen, Plus } from 'lucide-react';
 import { message } from 'antd';
 
 interface InputBoxProps {
@@ -45,7 +45,9 @@ const ManagerProduct: React.FC = () => {
         description: '',
         imageUrls: [] as string[],
         thumbnailUrls: [] as string[],
-        type: ''
+        type: '',
+        specifications: {} as Record<string, string>,
+        howToUse: ''
     });
 
     const [existingTypes, setExistingTypes] = useState<{ value: string }[]>([]);
@@ -85,7 +87,9 @@ const ManagerProduct: React.FC = () => {
                     isFeatured: res.data.isFeatured || false,
                     imageUrls: res.data.imageUrls || (res.data.imageUrl ? [res.data.imageUrl] : []),
                     thumbnailUrls: res.data.thumbnailUrls || (res.data.thumbnailUrl ? [res.data.thumbnailUrl] : []),
-                    type: res.data.type || ''
+                    type: res.data.type || '',
+                    specifications: typeof res.data.specifications === 'string' ? JSON.parse(res.data.specifications) : (res.data.specifications || {}),
+                    howToUse: res.data.howToUse || ''
                 });
             }).catch(() => messageApi.error("ดึงข้อมูลสินค้าไม่สำเร็จ"));
         }
@@ -155,6 +159,8 @@ const ManagerProduct: React.FC = () => {
                 category: categoryId ? { id: Number(categoryId) } : undefined,
                 imageUrls: formData.imageUrls,
                 thumbnailUrls: formData.thumbnailUrls,
+                specifications: formData.specifications,
+                howToUse: formData.howToUse,
             };
 
             if (isEditMode) {
@@ -398,14 +404,84 @@ const ManagerProduct: React.FC = () => {
                         </div>
 
                         <div className="col-span-1 md:col-span-2">
-                            <InputBox label="รายละเอียดสินค้า" icon={<FileText size={20} />}>
+                            <InputBox label="รายละเอียดสินค้า (Description)" icon={<FileText size={20} />}>
                                 <textarea
-                                    rows={6}
+                                    rows={4}
                                     className={inputStyleClasses}
+                                    placeholder="ใส่รายละเอียดสินค้าที่นี่..."
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 />
                             </InputBox>
+                        </div>
+
+                        <div className="col-span-1 md:col-span-2">
+                            <InputBox label="วิธีใช้งาน (How to use)" icon={<BookOpen size={20} className="text-blue-500" />}>
+                                <textarea
+                                    rows={4}
+                                    className={inputStyleClasses}
+                                    placeholder="ใส่ขั้นตอนหรือวิธีใช้งานที่นี่..."
+                                    value={formData.howToUse}
+                                    onChange={e => setFormData({ ...formData, howToUse: e.target.value })}
+                                />
+                            </InputBox>
+                        </div>
+
+                        <div className="col-span-1 md:col-span-2">
+                            <div className="flex flex-col gap-4 p-6 bg-[#f8faf8] rounded-[30px] border-2 border-[#256D45]/20">
+                                <label className="flex items-center gap-2 text-[#256D45] font-bold text-lg">
+                                    <Database size={20} /> คุณสมบัติสินค้า (Specifications)
+                                </label>
+                                
+                                <div className="flex flex-col gap-3">
+                                    {Object.entries(formData.specifications).map(([key, value], idx) => (
+                                        <div key={idx} className="flex gap-3">
+                                            <input 
+                                                className={`${inputStyleClasses} !py-2 flex-1`}
+                                                placeholder="หัวข้อ (เช่น ขนาด, น้ำหนัก)"
+                                                value={key}
+                                                onChange={(e) => {
+                                                    const newSpecs = { ...formData.specifications };
+                                                    const oldVal = newSpecs[key];
+                                                    delete newSpecs[key];
+                                                    newSpecs[e.target.value] = oldVal;
+                                                    setFormData({ ...formData, specifications: newSpecs });
+                                                }}
+                                            />
+                                            <input 
+                                                className={`${inputStyleClasses} !py-2 flex-2`}
+                                                placeholder="รายละเอียด"
+                                                value={value}
+                                                onChange={(e) => {
+                                                    setFormData({ 
+                                                        ...formData, 
+                                                        specifications: { ...formData.specifications, [key]: e.target.value } 
+                                                    });
+                                                }}
+                                            />
+                                            <button 
+                                                onClick={() => {
+                                                    const newSpecs = { ...formData.specifications };
+                                                    delete newSpecs[key];
+                                                    setFormData({ ...formData, specifications: newSpecs });
+                                                }}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            >
+                                                <X size={20} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button 
+                                        onClick={() => setFormData({ 
+                                            ...formData, 
+                                            specifications: { ...formData.specifications, '': '' } 
+                                        })}
+                                        className="mt-2 py-2 px-4 border-2 border-dashed border-[#256D45]/30 text-[#256D45] rounded-xl hover:bg-[#256D45]/5 transition-all font-semibold flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={18} /> เพิ่มรายการคุณสมบัติ
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

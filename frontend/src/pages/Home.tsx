@@ -11,104 +11,74 @@ const Home: React.FC = () => {
   const [allProducts, setAllProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    // ฟังก์ชันช่วยจัดการรูปภาพ (เพราะ API ส่งมาเป็น Array)
+    // ฟังก์ชันช่วยจัดการรูปภาพ
     const getFirstImage = (p: any) => {
       const urls = p.thumbnailUrls || p.imageUrls || p.thumbnailUrl || p.imageUrl;
       return Array.isArray(urls) ? urls[0] : urls;
     };
 
-    // ฟังก์ชันดึงข้อมูลรีวิวเพื่อคำนวณคะแนน
-    const fetchReviewsAndCalculateRating = async (productId: string) => {
+    const fetchData = async () => {
       try {
-        const reviewsResponse = await api.get(`/product/${productId}/reviews`);
-        const reviewsData = reviewsResponse.data;
-        
-        if (reviewsData && reviewsData.length > 0) {
-          const totalRating = reviewsData.reduce((sum: number, review: any) => sum + Number(review.rating || 0), 0);
-          const avgRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
-          return {
-            rating: avgRating,
-            reviewCount: reviewsData.length
-          };
-        }
-      } catch (error) {
-        console.error(`Error fetching reviews for ${productId}:`, error);
+        // Fetch all data in parallel to save time, with specific limits to save Egress
+        const [promosRes, featuredRes, allRes] = await Promise.all([
+          api.get('/product/promotions?limit=10'),
+          api.get('/product/featured?limit=8'),
+          api.get('/product?page=1&limit=20') // Reduce from 50 to 20 to save Egress
+        ]);
+
+        // Process Promotions
+        const processedPromos = promosRes.data.map((p: any) => ({
+          ...p,
+          image: getFirstImage(p),
+          stock: p.stockQuantity ?? p.stock ?? 0,
+          isRecommend: p.isFeatured,
+          isPromotion: true,
+          rating: Number(p.rating) || 0,
+          reviewCount: Number(p.reviewCount) || 0,
+          favoriteCount: Number(p.favoriteCount) || 0,
+          soldCount: Number(p.soldCount) || 0
+        }));
+        setPromotions(processedPromos);
+
+        // Process Featured
+        const processedFeatured = featuredRes.data.map((p: any) => ({
+          ...p,
+          image: getFirstImage(p),
+          stock: p.stockQuantity ?? p.stock ?? 0,
+          isRecommend: true,
+          isPromotion: p.isPromotion || false,
+          rating: Number(p.rating) || 0,
+          reviewCount: Number(p.reviewCount) || 0,
+          favoriteCount: Number(p.favoriteCount) || 0,
+          soldCount: Number(p.soldCount) || 0
+        }));
+        setFeatured(processedFeatured);
+
+        // Process All Products
+        const allData = allRes.data;
+        const items = Array.isArray(allData?.items) 
+          ? allData.items 
+          : (Array.isArray(allData) ? allData : []);
+          
+        const processedAll = items.map((p: any) => ({
+          ...p,
+          image: getFirstImage(p),
+          stock: p.stockQuantity ?? p.stock ?? 0,
+          isRecommend: p.isFeatured || false,
+          isPromotion: p.isPromotion || false,
+          rating: Number(p.rating) || 0,
+          reviewCount: Number(p.reviewCount) || 0,
+          favoriteCount: Number(p.favoriteCount) || 0,
+          soldCount: Number(p.soldCount) || 0
+        }));
+        setAllProducts(processedAll);
+
+      } catch (err) {
+        console.error("Error fetching homepage data:", err);
       }
-      // Return 0 when no reviews exist or API fails - don't use potentially incorrect product data
-      return { rating: 0, reviewCount: 0 };
     };
 
-    // 1. Fetch products that are on promotion
-    api.get('/product/promotions')
-      .then(async res => {
-        const productsWithRating = await Promise.all(
-          res.data.map(async (p: any) => {
-            const ratingData = await fetchReviewsAndCalculateRating(p.id);
-            return {
-              ...p,
-              image: getFirstImage(p),
-              stock: p.stockQuantity ?? p.stock ?? 0,
-              isRecommend: p.isFeatured,
-              isPromotion: true,
-              // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
-              rating: ratingData.rating,
-              favoriteCount: Number(p.favoriteCount) || 0,
-              reviewCount: ratingData.reviewCount,
-              soldCount: Number(p.soldCount) || 0
-            };
-          })
-        );
-        setPromotions(productsWithRating);
-      })
-      .catch(err => console.error("Error fetching promotions:", err));
-
-    // 2. Fetch products that are featured (สินค้าแนะนำ)
-    api.get('/product/featured')
-      .then(async res => {
-        const productsWithRating = await Promise.all(
-          res.data.map(async (p: any) => {
-            const ratingData = await fetchReviewsAndCalculateRating(p.id);
-            return {
-              ...p,
-              image: getFirstImage(p),
-              stock: p.stockQuantity ?? p.stock ?? 0,
-              isRecommend: true,
-              isPromotion: p.isPromotion || false,
-              // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
-              rating: ratingData.rating,
-              favoriteCount: Number(p.favoriteCount) || 0,
-              reviewCount: ratingData.reviewCount,
-              soldCount: Number(p.soldCount) || 0
-            };
-          })
-        );
-        setFeatured(productsWithRating);
-      })
-      .catch(err => console.error("Error fetching featured products:", err));
-
-    // 3. Fetch all products
-    api.get('/product')
-      .then(async res => {
-        const productsWithRating = await Promise.all(
-          res.data.map(async (p: any) => {
-            const ratingData = await fetchReviewsAndCalculateRating(p.id);
-            return {
-              ...p,
-              image: getFirstImage(p),
-              stock: p.stockQuantity ?? p.stock ?? 0,
-              isRecommend: p.isFeatured || false,
-              isPromotion: p.isPromotion || false,
-              // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
-              rating: ratingData.rating,
-              favoriteCount: Number(p.favoriteCount) || 0,
-              reviewCount: ratingData.reviewCount,
-              soldCount: Number(p.soldCount) || 0
-            };
-          })
-        );
-        setAllProducts(productsWithRating);
-      })
-      .catch(err => console.error("Error fetching all products:", err));
+    fetchData();
   }, []);
 
   return (
