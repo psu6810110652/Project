@@ -130,8 +130,8 @@ const PaymentPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       // 1. สร้าง URL ชั่วคราวไว้โชว์บนหน้าเว็บ (UI)
-      const imageUrl = URL.createObjectURL(file);
-      setSlipImage(imageUrl);
+      const imageUrls = URL.createObjectURL(file);
+      setSlipImage(imageUrls);
 
       // 2. แปลงไฟล์รูปภาพเป็น Base64 string เพื่อส่งไปเซฟใน Database
       const reader = new FileReader();

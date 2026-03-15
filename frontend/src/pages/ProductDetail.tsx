@@ -3,14 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Star, Share2, ChevronLeft, ChevronRight, Heart, ChevronDown, ChevronUp } from 'lucide-react'; 
 import api from '../services/api';
 
-// 🌟 ถ้าใช้งาน CartContext อยู่ อย่าลืมเอาคอมเมนต์ออกนะครับ
-// import { useCart } from '../context/CartContext'; 
+// 🌟 1. นำเอา Comment ออก เพื่อเรียกใช้งานระบบตะกร้า
+import { useCart } from '../context/CartContext'; 
 
 export const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     
-    // const { addToCart } = useCart(); 
+    // 🌟 2. นำเอา Comment ออก เพื่อใช้งานฟังก์ชัน addToCart
+    const { addToCart } = useCart(); 
 
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -135,6 +136,7 @@ export const ProductDetail: React.FC = () => {
         }
     };
 
+    // 🌟 3. ปรับโค้ดให้สั้นและสะอาดขึ้น โดยส่งข้อมูลไปให้ Context จัดการทั้งหมด
     const handleAddToCart = async () => {
         if (!id || !product) {
             setMessage('ไม่พบข้อมูลสินค้า');
@@ -145,9 +147,6 @@ export const ProductDetail: React.FC = () => {
         setMessage('');
 
         try {
-            const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-            const existingItemIndex = existingCart.findIndex((item: any) => item.id === id);
-
             const cartItem = {
                 id: product.id,
                 name: product.name,
@@ -159,16 +158,8 @@ export const ProductDetail: React.FC = () => {
                 promotionPrice: product.promotionPrice
             };
 
-            if (existingItemIndex >= 0) {
-                existingCart[existingItemIndex].quantity += quantity;
-            } else {
-                existingCart.push(cartItem);
-            }
-
-            localStorage.setItem('cart', JSON.stringify(existingCart));
-            window.dispatchEvent(new StorageEvent('storage', { key: 'cart', newValue: JSON.stringify(existingCart) }));
-
-            // if (addToCart) addToCart(cartItem);
+            // เรียกใช้งาน Context!
+            addToCart(cartItem);
 
             setMessage('เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว');
             setTimeout(() => setMessage(''), 3000);
