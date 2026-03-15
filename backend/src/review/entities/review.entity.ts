@@ -24,14 +24,10 @@ export class Review {
     @UpdateDateColumn()
     updatedAt: Date;
 
-<<<<<<< HEAD
-    @Column({nullable: true})
-=======
     @Column({ type: 'decimal', precision: 3, scale: 1, default: 0, transformer: {
         to: (value: number) => value,
         from: (value: string) => parseFloat(value)
     } })
->>>>>>> main
     rating: number;
 
     @Column('text')
