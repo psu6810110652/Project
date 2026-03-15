@@ -3,6 +3,7 @@ import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { OrdersService } from '../orders/orders.service';
+import { FavoritesService } from '../users/favorites.service';
 
 
 import { AuthGuard } from '@nestjs/passport';
@@ -14,7 +15,8 @@ import { UserRole } from '../users/entities/user.entity';
 export class ProductController {
   constructor(
     private readonly productService: ProductService,
-    private readonly ordersService: OrdersService
+    private readonly ordersService: OrdersService,
+    private readonly favoritesService: FavoritesService
   ) { }
 
 
@@ -144,14 +146,13 @@ export class ProductController {
       for (const product of products) {
         // Calculate real sold count from completed orders
         const soldCount = await this.calculateRealSoldCount(product.id);
-        const favoriteCount = product.favoriteCount || 0;
+        const favoriteCount = await this.favoritesService.getFavoriteCount(product.id);
         const rating = product.rating || 0;
         const reviewCount = product.reviewCount || 0;
         
         // Update product with real stats only
         await this.productService.update(product.id, {
           soldCount,
-          favoriteCount,
           rating,
           reviewCount,
         });
@@ -219,14 +220,13 @@ export class ProductController {
         // ใช้ข้อมูลจริงจาก Supabase ถ้าไม่มีให้เป็น 0
         // ถ้ายังไม่มีข้อมูล ให้ใช้ค่า 0 (ไม่สุ่ม)
         const soldCount = product.soldCount || 0;
-        const favoriteCount = product.favoriteCount || 0;
+        const favoriteCount = await this.favoritesService.getFavoriteCount(product.id);
         const rating = product.rating || 0;
         const reviewCount = product.reviewCount || 0;
         
         // Update product with new stats
         await this.productService.update(product.id, {
           soldCount,
-          favoriteCount,
           rating,
           reviewCount,
         });

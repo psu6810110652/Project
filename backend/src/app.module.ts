@@ -12,16 +12,22 @@ import { CartsModule } from './carts/carts.module';
 import { ReviewModule } from './review/review.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot({
-    type: 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    username: process.env.DB_USERNAME || 'admin',
-    password: process.env.DB_PASSWORD || 'password123',
-    database: process.env.DB_NAME || 'teerayut_dev',
-    entities: [__dirname + '/**/*.entity{.ts,.js}'],
-    autoLoadEntities: true,
-    synchronize: true,
+  imports: [TypeOrmModule.forRootAsync({
+    useFactory: () => ({
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      autoLoadEntities: true,
+      synchronize: false, // Disabled for safety with Supabase
+      logging: process.env.NODE_ENV === 'development',
+      ssl: {
+        rejectUnauthorized: false // Required for Supabase
+      }
+    }),
   }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule, AddressesModule, CartsModule, ReviewModule],
   controllers: [AppController],
   providers: [AppService],
