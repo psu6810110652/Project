@@ -58,4 +58,24 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   resetPasswordExpire: Date;
+
+  // ===== PDPA Consent Fields =====
+
+  @Column({ name: 'agreed_to_terms', default: false })
+  agreedToTerms: boolean;               // บังคับ — ยอมรับ Terms & Privacy Policy
+
+  @Column({ name: 'terms_version', nullable: true })
+  termsVersion: string;                 // เวอร์ชันที่ยอมรับ เช่น "1.0"
+
+  @Column({ name: 'terms_agreed_at', type: 'timestamp', nullable: true })
+  termsAgreedAt: Date;                  // เวลาที่กด ยอมรับ
+
+  @Column({ name: 'marketing_consent', default: false })
+  marketingConsent: boolean;            // ไม่บังคับ — รับโปรโมชัน
+
+  @Column({ name: 'marketing_consent_at', type: 'timestamp', nullable: true })
+  marketingConsentAt: Date;             // เวลาที่ติ๊กรับข่าวสาร
+
+  @Column({ name: 'consent_ip_address', nullable: true })
+  consentIpAddress: string;             // IP ที่ใช้สมัคร (หลักฐานตาม PDPA)
 }
