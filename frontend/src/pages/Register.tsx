@@ -16,7 +16,7 @@ const Register = () => {
 
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState<'terms' | 'privacy' | false>(false);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -204,8 +204,8 @@ const Register = () => {
             {errors.confirmPassword && <p className="text-red-500 text-sm px-2">{errors.confirmPassword}</p>}
           </div>
 
-          <div className="flex flex-col gap-3 mt-4 px-2">
-            <label className="flex items-start gap-3 cursor-pointer group">
+          <div className="flex flex-col gap-4 mt-2 border-t border-[#e0e0c8] pt-5 w-full">
+            <label className="flex items-start gap-3 cursor-pointer group text-left w-full">
               <input
                 type="checkbox"
                 checked={agreedToTerms}
@@ -213,12 +213,12 @@ const Register = () => {
                 className="mt-1 w-5 h-5 rounded border-gray-300 text-[#256D45] focus:ring-[#256D45] cursor-pointer"
               />
               <span className="text-sm text-gray-700 leading-relaxed">
-                ฉันตกลงยอมรับ <button type="button" onClick={() => setShowModal(true)} className="text-[#256D45] underline font-medium hover:text-[#1a4a2e]">เงื่อนไขการใช้งาน</button> และ <button type="button" onClick={() => setShowModal(true)} className="text-[#256D45] underline font-medium hover:text-[#1a4a2e]">นโยบายความเป็นส่วนตัว</button> ของระบบ
+                ฉันตกลงยอมรับ <button type="button" onClick={() => setShowModal('terms')} className="text-[#256D45] underline font-medium hover:text-[#1a4a2e]">เงื่อนไขการใช้งาน</button> และ <button type="button" onClick={() => setShowModal('privacy')} className="text-[#256D45] underline font-medium hover:text-[#1a4a2e]">นโยบายความเป็นส่วนตัว</button> ของระบบ
               </span>
             </label>
-            {errors.agreedToTerms && <p className="text-red-500 text-sm px-8">{errors.agreedToTerms}</p>}
+            {errors.agreedToTerms && <p className="text-red-500 text-xs pl-8 mt-0.5">{errors.agreedToTerms}</p>}
 
-            <label className="flex items-start gap-3 cursor-pointer group">
+            <label className="flex items-start gap-3 cursor-pointer text-left w-full">
               <input
                 type="checkbox"
                 checked={marketingConsent}
@@ -235,9 +235,9 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-xl md:text-2xl font-semibold px-8 h-12 rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              className="group relative bg-white border-2 border-[#256D45] text-[#256D45] text-2xl font-semibold w-48 h-14 rounded-2xl shadow-lg hover:bg-[#256D45] hover:text-white transition-all duration-300 flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'กำลังดำเนินการ...' : 'สมัครสมาชิก'}
+              <span className="relative z-10">{loading ? 'กำลังดำเนินการ...' : 'สมัครสมาชิก'}</span>
             </button>
           </div>
 
@@ -246,31 +246,136 @@ const Register = () => {
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowModal(false)}>
             <div
-              className="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto"
+              className="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto text-left"
               onClick={e => e.stopPropagation()}
             >
-              <h2 className="text-2xl font-bold text-[#256D45] mb-4 border-b pb-2">นโยบายและเงื่อนไขการใช้งาน (PDPA)</h2>
-              <div className="text-sm text-gray-700 space-y-4 leading-relaxed mb-6">
-                <p><strong>1. การเก็บรวบรวมข้อมูลส่วนบุคคล</strong><br />เรามีความจำเป็นต้องเก็บข้อมูลส่วนบุคคลของคุณ เช่น ชื่อผู้ใช้ อีเมล เพื่อใช้ในการให้บริการและยืนยันตัวตน</p>
-                <p><strong>2. การใช้ข้อมูลส่วนบุคคล</strong><br />ข้อมูลของคุณจะถูกใช้เพื่อวัตถุประสงค์ในการให้บริการของเว็บไซต์เท่านั้น จะไม่มีการเปิดเผยให้บุคคลที่สามโดยไม่ได้รับอนุญาต</p>
-                <p><strong>3. ความปลอดภัยของข้อมูล</strong><br />เราใช้มาตรการทางเทคนิคที่เหมาะสมเพื่อรักษาความปลอดภัยข้อมูลของคุณ ป้องกันการเข้าถึง เปลี่ยนแปลง หรือทำลายโดยมิชอบ</p>
-                <p><strong>4. สิทธิของเจ้าของข้อมูล</strong><br />คุณมีสิทธิในการขอเข้าถึง แก้ไข ปรับปรุง หรือลบข้อมูลส่วนบุคคลของคุณตามที่กฎหมายว่าด้วยการคุ้มครองข้อมูลส่วนบุคคล (PDPA) กำหนดไว้</p>
+              <h2 className="text-[#256D45] text-xl font-bold mb-4 border-b pb-2 text-left">
+                {showModal === 'terms' ? 'เงื่อนไขการใช้งาน (Terms of Service)' : 'นโยบายความเป็นส่วนตัว (Privacy Policy)'}
+              </h2>
+              <div className="overflow-y-auto py-2 text-sm text-[#444] leading-relaxed flex-1 text-left mb-6">
+                {showModal === 'terms' ? (
+                  <>
+                    <p className="text-xs text-gray-400 mb-4">ประกาศเมื่อวันที่: 15 มีนาคม 2569</p>
+                    <p className="mb-4">
+                      การเข้าใช้งานเว็บไซต์ "ธีรยุทธการเกษตร" ถือว่าท่านยอมรับข้อตกลงดังต่อไปนี้:
+                    </p>
+
+                    <div className="space-y-4">
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">1. การสั่งซื้อสินค้า</p>
+                        <p className="mt-1">
+                          ผู้ซื้อต้องตรวจสอบรายละเอียดสินค้า (ปุ๋ย, เมล็ดพันธุ์, อุปกรณ์)
+                          ให้ถูกต้องก่อนยืนยันคำสั่งซื้อ ราคาสินค้าเป็นราคาที่ตกลงกัน ณ ขณะทำรายการ
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">2. การชำระเงิน</p>
+                        <p className="mt-1">
+                          เราใช้ระบบการชำระเงินผ่าน PromptPay เท่านั้น โดยผู้ซื้อต้องอัปโหลดหลักฐานการโอนเงิน (Slip)
+                          ที่ชัดเจนผ่านระบบหน้าเว็บไซต์เพื่อยืนยันออเดอร์
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">3. การจัดส่ง</p>
+                        <p className="mt-1">
+                          ร้านจะดำเนินการจัดส่งผ่าน Kerry, Flash หรือไปรษณีย์ไทย ตามความเหมาะสม
+                          สินค้าเกษตรบางชนิดอาจมีข้อจำกัดเรื่องระยะเวลาการขนส่ง
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">4. ข้อจำกัดความรับผิดชอบ</p>
+                        <p className="mt-1">
+                          เนื่องจากผลผลิตทางการเกษตรขึ้นอยู่กับปัจจัยภายนอก (สภาพอากาศ, วิธีการปลูก, สภาพดิน)
+                          ทางร้านไม่สามารถรับประกันผลผลิต 100% จากการใช้สินค้าได้
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">5. นโยบายการเคลมสินค้า</p>
+                        <p className="mt-1">
+                          หากสินค้าเสียหายจากการขนส่ง หรือไม่ครบตามจำนวน ต้องแจ้งทางร้าน
+                          <span className="font-bold text-[#256D45]"> ภายใน 48 ชั่วโมง </span>
+                          นับจากวันที่ได้รับสินค้า พร้อมแนบวิดีโอหลักฐานขณะแกะกล่อง
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-4">
+                      ร้าน <span className="font-bold text-[#256D45]">ธีรยุทธการเกษตร</span> ("เรา")
+                      เคารพความเป็นส่วนตัวของผู้ใช้งาน ("ท่าน") และดำเนินการตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล
+                      พ.ศ. 2562 (PDPA) ดังนี้:
+                    </p>
+
+                    <div className="space-y-4">
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">1. ข้อมูลที่เราจัดเก็บ</p>
+                        <ul className="mt-1 space-y-1 pl-4 list-disc">
+                          <li><span className="font-medium">ข้อมูลเพื่อการจัดส่ง:</span> ชื่อ-นามสกุล, ที่อยู่, เบอร์โทรศัพท์ และอีเมล</li>
+                          <li><span className="font-medium">ข้อมูลการชำระเงิน:</span> ภาพสลิปโอนเงิน (เพื่อตรวจสอบยอดเงินเท่านั้น)</li>
+                          <li><span className="font-medium">ข้อมูลทางเทคนิค:</span> หมายเลข IP Address (เพื่อความปลอดภัยของระบบ)</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">2. วัตถุประสงค์การใช้ข้อมูล</p>
+                        <ul className="mt-1 space-y-1 pl-4 list-disc">
+                          <li>เพื่อดำเนินการตามคำสั่งซื้อและจัดส่งสินค้าผ่านผู้ให้บริการขนส่ง (Kerry, Flash, ไปรษณีย์ไทย)</li>
+                          <li>เพื่อติดต่อสื่อสารและแจ้งสถานะการจัดส่ง</li>
+                          <li>เพื่อปฏิบัติตามกฎหมายบัญชีและภาษี (เก็บรักษาข้อมูล 5 - 10 ปี)</li>
+                          <li>หากท่านให้ความยินยอมเพิ่มเติม เราจะส่งข้อมูลโปรโมชันสินค้าเกษตรผ่านช่องทางติดต่อที่ท่านระบุ</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">3. การรักษาความปลอดภัย</p>
+                        <p className="mt-1">
+                          เราเก็บข้อมูลของท่านในระบบฐานข้อมูลที่เข้ารหัสและจำกัดการเข้าถึงเฉพาะเจ้าหน้าที่ที่เกี่ยวข้องเท่านั้น
+                          เราจะ<span className="font-bold">ไม่ขาย</span>ข้อมูลส่วนบุคคลของท่านให้แก่บุคคลภายนอกโดยเด็ดขาด
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-[#256D45] text-left">4. สิทธิของท่าน</p>
+                        <p className="mt-1">
+                          ท่านมีสิทธิในการขอเข้าถึง, แก้ไขข้อมูลให้ถูกต้อง, ขอให้ลบข้อมูล (เมื่อสิ้นสุดความจำเป็นทางกฎหมาย),
+                          หรือถอนความยินยอมในการรับข่าวสารการตลาดได้ทุกเมื่อ
+                        </p>
+                      </div>
+
+                      <div className="bg-[#F8FBF8] rounded-xl p-4 border border-[#e0e0c8] mt-6">
+                        <p className="font-bold text-[#256D45] mb-2 text-left">5. ช่องทางการติดต่อ</p>
+                        <p>ร้านธีรยุทธการเกษตร</p>
+                        <p>เบอร์โทร: 099-9999999</p>
+                        <p>อีเมล: <a href="mailto:TEERAYUTKANKASED@gmail.com" className="text-[#256D45] underline">TEERAYUTKANKASED@gmail.com</a></p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
+              <div className="px-8 py-5 border-t border-[#e0e0c8] flex justify-between items-center">
+                {/* ปุ่มปิด — ซ้าย */}
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 rounded-xl text-gray-500 font-medium hover:bg-gray-100 transition-colors"
+                  className="text-sm font-semibold px-6 py-2.5 rounded-[12px] border-2 border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
                 >
                   ปิด
                 </button>
+
+                {/* ปุ่มยอมรับ — ขวา */}
                 <button
                   type="button"
                   onClick={() => {
                     setAgreedToTerms(true);
+                    setErrors(prev => { const { agreedToTerms: _, ...rest } = prev; return rest; });
                     setShowModal(false);
                   }}
-                  className="px-6 py-2 rounded-xl bg-[#256D45] text-white font-medium hover:bg-[#1a4a2e] shadow-md transition-colors"
+                  className="text-sm font-semibold px-8 py-2.5 rounded-[12px] bg-[#256D45] text-white hover:bg-[#1a4d30] transition-colors"
                 >
                   รับทราบและยอมรับ
                 </button>
