@@ -183,7 +183,7 @@ const Category: React.FC = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto px-6 md:px-10 lg:px-24 mt-6 md:mt-12 flex flex-col md:flex-row gap-8 w-full">
+            <div className="container mx-auto px-6 md:px-10 lg:px-24 mt-6 md:mt-12 flex flex-col md:flex-row gap-4 w-full">
 
                 <div className="md:hidden w-full px-4 mb-4 flex flex-col gap-4">
                     <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
@@ -203,7 +203,7 @@ const Category: React.FC = () => {
                     <RatingFilter selectedRating={selectedRating} onRatingChange={setSelectedRating} />
                 </div>
 
-                <aside className="hidden md:block w-72 shrink-0">
+                <aside className="hidden md:block w-80 shrink-0">
                     <div className="sticky top-24">
                         <div className="bg-(--color-bg-card) p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
                             <div className="mb-8">
@@ -238,7 +238,7 @@ const Category: React.FC = () => {
                 </aside>
 
                 <div className="flex-1 pl-4 md:pl-0 pr-4">
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4 md:gap-6 w-full">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-1 md:gap-4 w-full">
                         {filteredProducts.length > 0 ? (
                             filteredProducts.map((product) => (
                                 <Products
