@@ -135,52 +135,63 @@ export default function Dashboard() {
                     <h2 className="text-xl font-bold text-[#1E5631] mb-6">กราฟยอดขาย 7 วันล่าสุด</h2>
                     {loading ? (
                         <div className="flex-1 flex items-center justify-center text-gray-400">กำลังโหลด...</div>
-                    ) : chartData.every(d => d.ยอดขาย === 0) ? (
-                        <div className="flex-1 flex items-center justify-center text-gray-400">ยังไม่มีข้อมูลยอดขาย</div>
                     ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#1E5631" stopOpacity={0.2} />
-                                        <stop offset="95%" stopColor="#1E5631" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                <XAxis
-                                    dataKey="name"
-                                    tick={{ fill: '#1E5631', fontSize: 12, fontWeight: 600 }}
-                                    axisLine={{ stroke: '#1E5631' }}
-                                    tickLine={false}
-                                />
-                                <YAxis
-                                    tickFormatter={formatBaht}
-                                    tick={{ fill: '#6b7280', fontSize: 11 }}
-                                    axisLine={false}
-                                    tickLine={false}
-                                    width={60}
-                                />
-                                <Tooltip
-                                    formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'ยอดขาย']}
-                                    contentStyle={{
-                                        borderRadius: '0.75rem',
-                                        border: 'none',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                        backgroundColor: '#fff',
-                                    }}
-                                    labelStyle={{ color: '#1E5631', fontWeight: 700 }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="ยอดขาย"
-                                    stroke="#1E5631"
-                                    strokeWidth={2.5}
-                                    fill="url(#salesGradient)"
-                                    dot={{ fill: '#1E5631', r: 4 }}
-                                    activeDot={{ r: 6 }}
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        <div style={{ width: '100%', height: 300 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart
+                                    data={
+                                        weeklySales.length > 0
+                                            ? chartData
+                                            : Array.from({ length: 7 }, (_, i) => {
+                                                  const d = new Date();
+                                                  d.setDate(d.getDate() - (6 - i));
+                                                  return { name: formatDateTH(d.toISOString().split('T')[0]), ยอดขาย: 0 };
+                                              })
+                                    }
+                                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                >
+                                    <defs>
+                                        <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#1E5631" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#1E5631" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                    <XAxis
+                                        dataKey="name"
+                                        tick={{ fill: '#1E5631', fontSize: 12, fontWeight: 600 }}
+                                        axisLine={{ stroke: '#1E5631' }}
+                                        tickLine={false}
+                                    />
+                                    <YAxis
+                                        tickFormatter={formatBaht}
+                                        tick={{ fill: '#6b7280', fontSize: 11 }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        width={60}
+                                    />
+                                    <Tooltip
+                                        formatter={(value: any) => [`฿${Number(value).toLocaleString()}`, 'ยอดขาย']}
+                                        contentStyle={{
+                                            borderRadius: '0.75rem',
+                                            border: 'none',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                            backgroundColor: '#fff',
+                                        }}
+                                        labelStyle={{ color: '#1E5631', fontWeight: 700 }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="ยอดขาย"
+                                        stroke="#1E5631"
+                                        strokeWidth={2.5}
+                                        fill="url(#salesGradient)"
+                                        dot={{ fill: '#1E5631', r: 4 }}
+                                        activeDot={{ r: 6 }}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     )}
                 </div>
 
