@@ -362,7 +362,7 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="text-sm font-semibold px-6 py-2.5 rounded-[12px] border-2 border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+                  className="text-sm font-semibold text-gray-400 underline hover:text-gray-600 transition-colors bg-transparent border-none cursor-pointer"
                 >
                   ปิด
                 </button>
@@ -375,9 +375,9 @@ const Register = () => {
                     setErrors(prev => { const { agreedToTerms: _, ...rest } = prev; return rest; });
                     setShowModal(false);
                   }}
-                  className="text-sm font-semibold px-8 py-2.5 rounded-[12px] bg-[#256D45] text-white hover:bg-[#1a4d30] transition-colors"
+                  className="group relative bg-white border-2 border-[#256D45] text-[#256D45] text-sm font-semibold min-w-[80px] px-8 py-2.5 rounded-xl shadow-md hover:bg-[#256D45] hover:text-white transition-all duration-300 flex items-center justify-center active:scale-95"
                 >
-                  รับทราบและยอมรับ
+                  <span className="relative z-10">ยอมรับ</span>
                 </button>
               </div>
             </div>
