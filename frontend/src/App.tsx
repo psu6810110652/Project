@@ -3,6 +3,7 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { Menu, X, Loader2 } from 'lucide-react';
 import './App.css'
 
+
 // Lazy loaded components
 const Home = lazy(() => import('./pages/Home'));
 const Category = lazy(() => import('./pages/Category'));
@@ -22,6 +23,8 @@ const ViewProducts = lazy(() => import('./pages/Admin/Product'));
 const ManageProduct = lazy(() => import('./pages/Admin/ManagerProduct'));
 const ManagerOrder = lazy(() => import('./pages/Admin/ManagerOrder'));
 const PaymentPage = lazy(() => import('./pages/PaymentPage'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 import Navbar from './components/Navbar';
 import { AuthProvider } from './context/AuthContext';
@@ -37,7 +40,6 @@ const LoadingFallback = () => (
     <p className="text-xl font-medium">กำลังโหลดข้อมูล...</p>
   </div>
 );
-
 function UserLayout() {
   return (
     <CartProvider>
@@ -47,7 +49,9 @@ function UserLayout() {
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/:category" element={<Category />} />
+              {/* ย้าย /:category ลงไปไว้ล่างสุด */}
+              
+              {/* เส้นทางที่ระบุชื่อชัดเจน ให้เอาไว้ด้านบนทั้งหมด */}
               <Route path="/cart" element={<Cart />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/edit-profile" element={<EditProfile />} />
@@ -58,6 +62,13 @@ function UserLayout() {
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/review/:productId" element={<ReviewPage />} />
               <Route path="/profile/review/:orderId" element={<EditReviewPage />} />
+              
+              {/* 🟢 หน้าลืมรหัสผ่านของเรา */}
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+              {/* 🛑 เอาหลุมดำมาไว้ล่างสุดตรงนี้ครับ! */}
+              <Route path="/:category" element={<Category />} />
             </Routes>
           </Suspense>
         </div>

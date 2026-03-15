@@ -40,14 +40,14 @@ export class UsersController {
     return this.usersService.forgotPassword(email);
   }
 
-  @Post('reset-password')
+  // เปลี่ยนจาก @Post('reset-password') เป็นรับ :token ใน URL
+  @Post('reset-password/:token')
   resetPassword(
-    @Body('token') token: string,
+    @Param('token') token: string,
     @Body('newPassword') newPassword: string,
   ) {
     return this.usersService.resetPassword(token, newPassword);
   }
-
   // ====================================================================
 
   // Protected: Find all users (Admin only)
