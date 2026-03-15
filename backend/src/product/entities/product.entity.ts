@@ -6,9 +6,12 @@ import {
     JoinColumn,
     PrimaryColumn,
     OneToMany,
+    OneToOne,
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
-import { SoldProduct } from '../../orders/entities/sold-product.entity';
+import { Favorite } from '../../users/entities/favorite.entity';
+import { ProductDetail } from './product-detail.entity';
+import { Review } from '../../review/entities/review.entity';
 
 @Entity('products')
 export class Product {
@@ -19,17 +22,9 @@ export class Product {
     @Column()
     name: string;
 
-    @Column({ name: 'image_urls', type: 'json', nullable: true })
-    imageUrls: string[];
-
+    // เก็บรูป Thumbnail เล็กๆ สำหรับหน้าแรก
     @Column({ name: 'thumbnail_urls', type: 'json', nullable: true })
     thumbnailUrls: string[];
-
-    @Column({ nullable: true })
-    type: string;
-
-    @Column({ type: 'text', nullable: true })
-    description: string;
 
     @Column({
         type: 'decimal', precision: 10, scale: 2, transformer: {
@@ -56,25 +51,22 @@ export class Product {
     @Column({ name: 'is_featured', default: false, nullable: true })
     isFeatured: boolean;
 
-    @Column({ name: 'sold_count', default: 0 }) // int, default 0
-    soldCount: number;
-
-    @Column({ name: 'favorite_count', default: 0 }) // int, default 0
-    favoriteCount: number;
-
-    @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 }) // decimal(3,2), default 0
-    rating: number;
-
-    @Column({ name: 'review_count', default: 0 }) // int, default 0
-    reviewCount: number;
-
-    @CreateDateColumn({ name: 'created_at', nullable: true }) // timestamp
+    @CreateDateColumn({ name: 'created_at', nullable: true })
     createdAt: Date;
+
+    // --- Relations ---
 
     @ManyToOne(() => Category, (category) => category.products)
     @JoinColumn({ name: 'category_id' })
     category: Category;
 
-    @OneToMany(() => SoldProduct, (soldProduct) => soldProduct.product)
-    soldProducts: SoldProduct[];
+    @OneToMany(() => Favorite, (favorite) => favorite.product)
+    favorites: Favorite[];
+
+    // เชื่อมไปยังตารางรายละเอียดเชิงลึก
+    @OneToOne(() => ProductDetail, (detail) => detail.product, { cascade: true })
+    detail: ProductDetail;
+
+    @OneToMany(() => Review, (review) => review.product)
+    reviews: Review[];
 }

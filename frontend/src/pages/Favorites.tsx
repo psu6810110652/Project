@@ -163,22 +163,23 @@ const FavoritesPage = () => {
           </Button>
         </div>
       ) : (
-        /* Product Cards Grid */
-        <div className="flex flex-wrap gap-6 justify-start">
+        /* ✅ แก้ตรงนี้: เปลี่ยนจาก flex เป็น grid เพื่อจัดการขนาดการ์ด */
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 w-full">
           {productCards.map((product) => (
-            <Products
-              key={product.id}
-              id={product.id}
-              name={product.name}
-              price={product.price}
-              image={product.image}
-              stock={product.stock}
-              rating={product.rating}
-              reviewCount={product.reviewCount}
-              soldCount={product.soldCount}
-              favoriteCount={product.favoriteCount}
-              type={product.type}
-            />
+            <div key={product.id} className="w-full transition-transform hover:-translate-y-1 duration-300">
+              <Products
+                id={product.id}
+                name={product.name}
+                price={product.price}
+                image={product.image}
+                stock={product.stock}
+                rating={product.rating}
+                reviewCount={product.reviewCount}
+                soldCount={product.soldCount}
+                favoriteCount={product.favoriteCount}
+                type={product.type}
+              />
+            </div>
           ))}
         </div>
       )}

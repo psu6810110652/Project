@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { Exclude } from 'class-transformer'; 
+import { Exclude } from 'class-transformer';
 import { Address } from '../../addresses/entities/address.entity';
+import { Favorite } from './favorite.entity';
 
 export enum UserRole {
   USER = 'User',
@@ -16,7 +17,7 @@ export class User {
   username: string;
 
   @Column({ nullable: true })
-  @Exclude() 
+  @Exclude()
   password?: string;
 
   @Column({ unique: true })
@@ -27,9 +28,9 @@ export class User {
 
   @Column({ default: false })
   isGoogleLogin: boolean;
-  
+
   @Column({ nullable: true })
-  phone?: string; 
+  phone?: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -48,4 +49,13 @@ export class User {
 
   @OneToMany(() => Address, (address) => address.user)
   addresses: Address[];
+
+  @OneToMany(() => Favorite, (favorite) => favorite.user)
+  favorites: Favorite[];
+
+  @Column({ nullable: true })
+  resetPasswordToken: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordExpire: Date;
 }

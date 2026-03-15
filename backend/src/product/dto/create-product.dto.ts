@@ -70,4 +70,11 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   reviewCount?: number;
+
+  @IsOptional()
+  specifications?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  howToUse?: string;
 }

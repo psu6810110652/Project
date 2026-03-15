@@ -1,206 +1,128 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
+import { Product } from '../product/entities/product.entity';
 
 @Injectable()
 export class ReviewService {
   constructor(
     @InjectRepository(Review)
     private reviewRepository: Repository<Review>,
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>,
   ) { }
-
-  private isUuid(id: any): boolean {
-    if (typeof id !== 'string') return false;
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(id);
-  }
 
   async create(data: any) {
     try {
-      // 1. Safe check for existing review
-      const query = this.reviewRepository.createQueryBuilder('review')
-        .where('review.productId = :productId', { productId: data.productId })
-        .andWhere('review.userId = :userId', { userId: data.userId });
+      console.log('[ReviewService] Incoming Data:', JSON.stringify(data, null, 2));
 
-      // Only add orderID filter if it's present
-      if (data.orderID) {
-        query.andWhere('review.orderID = :orderID', { orderID: data.orderID });
+      const { productId, userId, orderID, rating, reviewContent, orderDate } = data;
+
+      // Extract numeric ratings and IDs safely
+      const parsedRating = parseFloat(String(rating));
+      const finalRating = isNaN(parsedRating) ? 5 : parsedRating;
+      const parsedUserId = parseInt(String(userId));
+
+      // Build a pure object for TypeORM create()
+      const reviewPayload: any = {
+        rating: finalRating,
+        reviewContent: String(reviewContent || ''),
+        product: productId ? { id: String(productId) } : undefined,
+        user: !isNaN(parsedUserId) ? { id: parsedUserId } : undefined
+      };
+
+      // Handle optional orderID
+      if (orderID && orderID !== 'null' && orderID !== 'undefined') {
+        reviewPayload.order = { id: String(orderID) };
       }
 
-      const existing = await query.getOne();
-
-      if (existing) {
-        console.log(`[ReviewService] Updating existing review: ${existing.id}`);
-        return this.update(existing.id, data);
+      // Handle optional orderDate
+      if (orderDate) {
+        const d = new Date(orderDate);
+        if (!isNaN(d.getTime())) {
+          reviewPayload.orderDate = d;
+        }
       }
 
-      // 2. Normalize relations for new record
-      const payload: any = { ...data };
-
-      if (data.productId) {
-        payload.product = { id: data.productId };
-        delete payload.productId;
-      }
-
-      if (data.userId && data.userId !== 'guest') {
-        payload.user = { id: data.userId };
-        delete payload.userId;
-      } else {
-        delete payload.userId; // Don't try to link to 'guest' user
-      }
-
-      // ONLY treat as relation if it's a valid UUID to avoid Postgres error 22P02
-      if (data.orderID && this.isUuid(data.orderID)) {
-        payload.order = { id: data.orderID };
-        delete payload.orderID;
-      } else if (data.orderID) {
-        // Keep as raw orderID string if not UUID
-        payload.orderID = data.orderID;
-      }
-
-      if (data.orderDate) {
-        payload.orderDate = new Date(data.orderDate);
-      }
-
-      const newReview = this.reviewRepository.create(payload);
-      const savedReview = await this.reviewRepository.save(newReview);
-
-      const finalId = (savedReview as any).id || (Array.isArray(savedReview) ? savedReview[0].id : 'unknown');
-      console.log(`[ReviewService] Created new review: ${finalId}`);
-      return savedReview;
+      console.log('[ReviewService] Creating review with payload:', JSON.stringify(reviewPayload));
+      const review = this.reviewRepository.create(reviewPayload);
+      
+      console.log('[ReviewService] Saving review entity...');
+      const result: any = await this.reviewRepository.save(review);
+      console.log('[ReviewService] Review saved successfully:', result.id);
+      return result;
     } catch (error) {
-      console.error('CRITICAL ERROR in ReviewService.create:', error);
+      console.error('[ReviewService] Error creating review:', error);
+      
+      if (error.code === '22P02') {
+        throw new BadRequestException(`Invalid ID format: ${error.message}`);
+      }
+      throw new InternalServerErrorException(`Review save failed: ${error.message}`);
+    }
+  }
+
+  async update(id: string, data: any) {
+    try {
+      const review = await this.reviewRepository.findOne({ where: { id } });
+      if (!review) throw new NotFoundException('ไม่พบรีวิว');
+
+      const { productId, userId, orderID, ...rest } = data;
+      
+      // Update properties
+      Object.assign(review, rest);
+      
+      // Update relations if provided
+      if (productId) review.product = { id: productId } as any;
+      if (userId) review.user = { id: Number(userId) } as any;
+      if (orderID) review.order = { id: orderID } as any;
+      if (data.orderDate) review.orderDate = new Date(data.orderDate);
+
+      return await this.reviewRepository.save(review);
+    } catch (error) {
+      console.error('[ReviewService] Error updating review:', error);
       throw error;
     }
   }
 
   async findByProduct(productId: string) {
-    try {
-      // Attempt to find with relations, but be ready for failures if UUIDs are malformed
-      let reviews: Review[];
-      try {
-        reviews = await this.reviewRepository.find({
-          where: { product: { id: productId } },
-          relations: ['user', 'order'],
-          order: { createdAt: 'DESC' },
-        });
-      } catch (err) {
-        console.warn(`[ReviewService] Relational find with 'order' failed for product ${productId}, falling back:`, err.message);
-        // Fallback 1: Try without 'order'
-        try {
-          reviews = await this.reviewRepository.find({
-            where: { product: { id: productId } },
-            relations: ['user'],
-            order: { createdAt: 'DESC' },
-          });
-        } catch (innerErr) {
-          console.warn(`[ReviewService] Relational find with 'user' failed, falling back to raw:`, innerErr.message);
-          // Fallback 2: Raw data only
-          reviews = await this.reviewRepository.find({
-            where: { product: { id: productId } },
-            order: { createdAt: 'DESC' },
-          });
-        }
-      }
+    const reviews = await this.reviewRepository.find({
+      where: { product: { id: productId } },
+      relations: ['user', 'order'],
+      order: { createdAt: 'DESC' }
+    });
 
-      return reviews.map(r => {
-        // Priority: Username -> User ID -> Fallback
-        const userId = r.user ? r.user.id : (r as any).userId;
-        const name = r.user ? r.user.username : (userId ? `User #${userId}` : 'ผู้ใช้ทั่วไป');
-
-        return {
-          id: r.id,
-          rating: r.rating || 0,
-          reviewContent: r.reviewContent || '',
-          userName: name,
-          customerName: name, // Add for compatibility
-          orderID: r.order ? (r.order as any).orderNumber : (r as any).orderID,
-          orderUuid: r.order ? r.order.id : (r as any).orderID,
-          orderDate: r.orderDate,
-          createdAt: r.createdAt,
-          userId: userId ? userId.toString() : 'guest', // Convert to string for frontend safety
-          productId: (r as any).productId || (r.product ? r.product.id : undefined),
-        };
-      });
-    } catch (error) {
-      console.error('Error in findByProduct fallback chain:', error.message);
-      return [];
-    }
+    // แมปข้อมูลให้ตรงกับที่ Frontend ต้องการ
+    return reviews.map(r => ({
+      id: r.id,
+      rating: r.rating,
+      reviewContent: r.reviewContent,
+      createdAt: r.createdAt,
+      orderDate: r.orderDate || (r.order ? r.order.createdAt : null),
+      orderID: r.orderID,
+      userId: r.userId,
+      userName: r.user?.name || r.user?.username || 'ผู้ใช้ทั่วไป'
+    }));
   }
 
-  async update(reviewId: string, updateDto: any) {
-    const review = await this.reviewRepository.findOne({
-      where: { id: reviewId },
-      relations: ['user', 'product', 'order']
-    }).catch(() => this.reviewRepository.findOne({ where: { id: reviewId } }));
-
-    if (!review) throw new NotFoundException('Review not found');
-
-    if (updateDto.rating !== undefined) review.rating = updateDto.rating;
-    if (updateDto.reviewContent !== undefined) review.reviewContent = updateDto.reviewContent;
-    if (updateDto.orderDate !== undefined) review.orderDate = new Date(updateDto.orderDate);
-
-    // allow changing associations via ids
-    if (updateDto.productId) review.product = { id: updateDto.productId } as any;
-    if (updateDto.userId && updateDto.userId !== 'guest') {
-      review.user = { id: updateDto.userId } as any;
-    }
-
-    if (updateDto.orderID) {
-      if (this.isUuid(updateDto.orderID)) {
-        review.order = { id: updateDto.orderID } as any;
-      } else {
-        (review as any).orderID = updateDto.orderID;
-      }
-    }
-
-    return this.reviewRepository.save(review);
+  async findByOrder(orderId: string, userId: number) {
+    return await this.reviewRepository.find({
+      where: {
+        order: { id: orderId },
+        user: { id: userId }
+      },
+      relations: ['product']
+    });
   }
 
-  async findByOrder(orderId: string, userId?: number) {
-    try {
-      const where: any = {};
+  async delete(id: string) {
+    const review = await this.reviewRepository.findOne({ where: { id } });
+    if (!review) throw new NotFoundException('ไม่พบรีวิว');
 
-      // If orderId is UUID, use relation, else use raw ID
-      if (this.isUuid(orderId)) {
-        where.order = { id: orderId };
-      } else {
-        where.orderID = orderId;
-      }
+    const productId = review.productId;
+    await this.reviewRepository.remove(review);
 
-      if (userId) {
-        where.user = { id: userId };
-      }
 
-      const reviews = await this.reviewRepository.find({
-        where,
-        relations: ['user', 'order', 'product'],
-        order: { createdAt: 'DESC' },
-      });
-
-      return reviews.map(r => {
-        const userId = r.user ? r.user.id : (r as any).userId;
-        const name = r.user ? r.user.username : (userId ? `User #${userId}` : 'ผู้ใช้ทั่วไป');
-
-        return {
-          id: r.id,
-          rating: r.rating || 0,
-          reviewContent: r.reviewContent || '',
-          userName: name,
-          customerName: name,
-          orderID: r.order ? (r.order as any).orderNumber : (r as any).orderID,
-          orderUuid: r.order ? r.order.id : (r as any).orderID,
-          orderDate: r.orderDate,
-          createdAt: r.createdAt,
-          userId: userId ? userId.toString() : 'guest',
-          productId: (r as any).productId || (r.product ? r.product.id : undefined),
-          productName: r.product ? r.product.name : undefined,
-        };
-      });
-    } catch (error) {
-      console.error('Error in findByOrder:', error.message);
-      return [];
-    }
+    return { message: 'ลบรีวิวเรียบร้อย' };
   }
 }

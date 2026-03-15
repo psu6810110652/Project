@@ -50,10 +50,13 @@ export default function Dashboard() {
 
             // สินค้าสต็อกต่ำ
             api.get('/product').then(res => {
-                const allProducts: Product[] = res.data;
-                const lowStock = allProducts
-                    .filter(p => (p.stockQuantity ?? 0) <= 5)
-                    .sort((a, b) => (a.stockQuantity ?? 0) - (b.stockQuantity ?? 0));
+                const productData = res.data;
+                const productItems = Array.isArray(productData?.items) 
+                    ? productData.items 
+                    : (Array.isArray(productData) ? productData : []);
+                const lowStock = productItems
+                    .filter((p: any) => (p.stockQuantity ?? 0) <= 5)
+                    .sort((a: any, b: any) => (a.stockQuantity ?? 0) - (b.stockQuantity ?? 0));
                 setLowStockItems(lowStock);
             }),
 

@@ -30,6 +30,6 @@ export class ReviewController {
   @UseGuards(AuthGuard('jwt'))
   getMyReviewsByOrder(@Param('orderId') orderId: string, @Request() req) {
     const userId = req.user.sub || req.user.userId;
-    return this.reviewService.findByOrder(orderId, userId);
+    return this.reviewService.findByOrder(orderId, +userId);
   }
 }
