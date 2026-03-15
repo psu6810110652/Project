@@ -1,17 +1,18 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete, 
-  UseGuards, 
-  ParseIntPipe, 
-  Request, 
-  ForbiddenException, 
-  InternalServerErrorException, 
-  HttpException 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  Request,
+  Req,
+  ForbiddenException,
+  InternalServerErrorException,
+  HttpException
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,6 +21,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from './entities/user.entity';
+import { Request as ExpressRequest } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -27,8 +29,15 @@ export class UsersController {
 
   // Usually left unprotected so new users can register
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(@Body() createUserDto: CreateUserDto, @Req() req: ExpressRequest) {
+    // ดึง IP จาก header (รองรับ proxy/nginx ด้วย)
+    const ipAddress = (
+      (req.headers['x-forwarded-for'] as string) ||
+      req.socket.remoteAddress ||
+      ''
+    ).split(',')[0].trim();
+
+    return this.usersService.create(createUserDto, ipAddress);
   }
 
   // ====================================================================

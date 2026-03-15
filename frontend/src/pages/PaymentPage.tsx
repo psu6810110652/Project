@@ -431,9 +431,17 @@ const PaymentPage: React.FC = () => {
                 <Upload size={32} className="text-[#256D45]" />
               )}
             </label>
-            {slipImage && (
-              <p className="text-sm text-[#256D45] mt-2 font-medium">อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)</p>
-            )}
+            {slipImage ? (
+              <p className="text-sm text-[#256D45] mt-2 font-medium text-center">
+                อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)
+              </p>
+            ) : null}
+
+            {/* PDPA Notice — แสดงเสมอ ไม่ว่าจะอัปโหลดแล้วหรือยัง */}
+            <p className="text-[10px] text-gray-400 mt-3 text-center max-w-xs leading-relaxed px-2">
+              🔒 ข้อมูลสลิปการโอนเงินจะถูกใช้เพื่อตรวจสอบยอดเงิน
+              และยืนยันการสั่งซื้อเท่านั้น ตามนโยบายความเป็นส่วนตัว (PDPA)
+            </p>
           </div>
         </div>
 
