@@ -170,11 +170,25 @@ export const Products = (props: ExtendedProductCard) => {
                     <div className="flex justify-between items-center mb-3">
                         <div className="flex items-center gap-1">
                             <div className="flex text-[#fbbf24] text-base">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <span key={star} className="text-base">
-                                        {star <= Math.round(productData.rating || 0) ? "★" : "☆"}
-                                    </span>
-                                ))}
+                                {[1, 2, 3, 4, 5].map((star) => {
+                                    const rating = Number(productData.rating || 0);
+                                    const isFull = star <= Math.floor(rating);
+                                    const isHalf = !isFull && star <= Math.ceil(rating) && (rating % 1 >= 0.5);
+                                    
+                                    return (
+                                        <div key={star} className="relative inline-block leading-none">
+                                            <span className="text-base text-gray-300">★</span>
+                                            {isFull && (
+                                                <span className="absolute top-0 left-0 text-base text-[#fbbf24]">★</span>
+                                            )}
+                                            {isHalf && (
+                                                <div className="absolute top-0 left-0 overflow-hidden w-[50%]">
+                                                    <span className="text-base text-[#fbbf24]">★</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                             <span className="text-sm font-semibold whitespace-nowrap">{Number(productData.rating || 0).toFixed(1)}/5.0</span>
                             <span className="text-xs text-gray-500 whitespace-nowrap">({productData.reviewCount || 0} รีวิว)</span>

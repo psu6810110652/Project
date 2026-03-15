@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Order } from './entities/order.entity';
-import { SoldProduct } from './entities/sold-product.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Product } from '../product/entities/product.entity';
 
@@ -13,8 +12,6 @@ export class OrdersService {
         private ordersRepository: Repository<Order>,
         @InjectRepository(Product)
         private productRepository: Repository<Product>,
-        @InjectRepository(SoldProduct)
-        private soldProductRepository: Repository<SoldProduct>,
     ) { }
 
     async create(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -66,6 +63,31 @@ export class OrdersService {
             }
             throw new InternalServerErrorException(`ไม่สามารถบันทึกออเดอร์ได้: ${error.message}`);
         }
+    }
+
+    async findAllPending(): Promise<Order[]> {
+        const pendingStatuses = ['pending_confirm', 'pending_delivery', 'pending_received'];
+        return this.ordersRepository.find({
+            where: { status: In(pendingStatuses) }, // Use In operator for multiple statuses
+            select: [
+                'id',
+                'orderNumber',
+                'customerName',
+                'products',
+                'totalAmount',
+                'status',
+                'address',
+                'phone',
+                'createdAt',
+                'updatedAt',
+                'trackingNumber',
+                'customerId',
+                'cancelReason',
+            ],
+            order: {
+                createdAt: 'DESC',
+            },
+        });
     }
 
     findAll(): Promise<Order[]> {
@@ -121,22 +143,11 @@ export class OrdersService {
             order.cancelReason = cancelReason;
         }
 
-        // อัปเดต soldCount เมื่อออเดอร์สำเร็จ
-        if (status === 'completed' && previousStatus !== 'completed') {
-            // สร้างข้อมูลในตาราง sold_products สำหรับใช้ใน banner
-            await this.createSoldProducts(order);
-            
-            for (const item of order.products) {
-                const pId = item.productId || item.id;
-                const product = await this.productRepository.findOne({ where: { id: pId } });
-                if (product) {
-                    product.soldCount = Number(product.soldCount || 0) + Number(item.quantity || 0);
-                    await this.productRepository.save(product);
-                }
-            }
-        }
+        const confirmedStatuses = ['pending_delivery', 'pending_received', 'completed'];
+        const wasConfirmed = confirmedStatuses.includes(previousStatus);
+        const isNowConfirmed = confirmedStatuses.includes(status);
 
-        // คืนสต็อกสินค้าหากออเดอร์ถูกยกเลิก
+        // คืนสต็อกสินค้าหากออเดอร์ถูกยกเลิก (และไม่ได้ถูกยกเลิกมาก่อนหน้า)
         if (status === 'cancelled' && previousStatus !== 'cancelled') {
             for (const item of order.products) {
                 const pId = item.productId || item.id;
@@ -191,7 +202,7 @@ export class OrdersService {
         const now = new Date();
         const bangkokDateString = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
         const startOfToday = new Date(`${bangkokDateString}T00:00:00.000+07:00`);
-        
+
         const sevenDaysAgo = new Date(startOfToday);
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
@@ -211,23 +222,23 @@ export class OrdersService {
             const d = new Date(startOfToday);
             d.setDate(d.getDate() - i);
             const key = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // "YYYY-MM-DD"
-            
+
             // Postgres DATE() might return string, Date object, or something else depending on driver.
             // We check for exact match or startWith.
             const found = rows.find((r) => {
                 const rDate = r.date instanceof Date ? r.date.toISOString().split('T')[0] : r.date?.toString();
                 return rDate === key || rDate?.startsWith(key);
             });
-            
+
             result.push({ date: key, total: found ? parseFloat(found.total) : 0 });
         }
         return result;
     }
-    
+
     private async createSoldProducts(order: Order): Promise<void> {
         for (const item of order.products) {
             const pId = item.productId || item.id;
-            const product = await this.productRepository.findOne({ 
+            const product = await this.productRepository.findOne({
                 where: { id: pId },
                 relations: ['category', 'detail']
             });
@@ -236,61 +247,7 @@ export class OrdersService {
                 const unitPrice = Number(item.price || product.price || 0);
                 const quantity = Number(item.quantity || 1);
                 const totalPrice = unitPrice * quantity;
-
-                const soldProduct = new SoldProduct();
-                soldProduct.orderId = order.id;
-                soldProduct.productId = product.id;
-                soldProduct.productName = product.name;
-                soldProduct.quantity = quantity;
-                soldProduct.unitPrice = unitPrice;
-                soldProduct.totalPrice = totalPrice;
-                soldProduct.productImageUrl = product.thumbnailUrls?.[0] || product.detail?.imageUrls?.[0] || '';
-                soldProduct.categoryId = product.category?.id?.toString() || '';
-                soldProduct.categoryName = product.category?.name || '';
-
-                await this.soldProductRepository.save(soldProduct);
             }
         }
-    }
-
-    // ดึงข้อมูลสินค้าที่ขายได้ล่าสุดสำหรับ banner
-    async getRecentSoldProducts(limit: number = 10): Promise<SoldProduct[]> {
-        return await this.soldProductRepository.find({
-            order: { createdAt: 'DESC' },
-            take: limit,
-            relations: ['product']
-        });
-    }
-
-    // ดึงข้อมูลสินค้าที่ขายได้มากที่สุดสำหรับ banner
-    async getTopSellingProducts(limit: number = 10): Promise<any[]> {
-        const result = await this.soldProductRepository
-            .createQueryBuilder('sp')
-            .select([
-                'sp.productId as productId',
-                'sp.productName as productName', 
-                'sp.productImageUrl as productImageUrl',
-                'sp.categoryId as categoryId',
-                'sp.categoryName as categoryName',
-                'SUM(sp.quantity) as totalSold',
-                'SUM(sp.totalPrice) as totalRevenue',
-                'COUNT(DISTINCT sp.orderId) as orderCount'
-            ])
-            .groupBy('sp.productId, sp.productName, sp.productImageUrl, sp.categoryId, sp.categoryName')
-            .orderBy('totalSold', 'DESC')
-            .limit(limit)
-            .getRawMany();
-
-        return result;
-    }
-
-    // ดึงข้อมูลสินค้าที่ขายได้ล่าสุดตามหมวดหมู่
-    async getRecentSoldProductsByCategory(categoryId: string, limit: number = 5): Promise<SoldProduct[]> {
-        return await this.soldProductRepository.find({
-            where: { categoryId },
-            order: { createdAt: 'DESC' },
-            take: limit,
-            relations: ['product']
-        });
     }
 }

@@ -24,13 +24,16 @@ export class Review {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @Column()
+    @Column({ type: 'decimal', precision: 3, scale: 1, default: 0, transformer: {
+        to: (value: number) => value,
+        from: (value: string) => parseFloat(value)
+    } })
     rating: number;
 
     @Column('text')
     reviewContent: string;
 
-    @ManyToOne(() => Product, (product) => (product as any).reviews, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Product, (product) => product.reviews, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'productId' })
     product: Product;
 

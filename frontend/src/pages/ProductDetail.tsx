@@ -119,13 +119,28 @@ export const ProductDetail: React.FC = () => {
     };
 
     const renderStars = (rating: number = 0) => {
-        return Array.from({ length: 5 }, (_, i) => (
-            <Star
-                key={i}
-                size={16}
-                className={i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
-            />
-        ));
+        return Array.from({ length: 5 }, (_, i) => {
+            const starValue = i + 1;
+            const isFull = starValue <= Math.floor(rating);
+            const isHalf = !isFull && starValue <= Math.ceil(rating) && (rating % 1 >= 0.5);
+
+            return (
+                <div key={i} className="relative inline-block leading-none">
+                    <Star
+                        size={16}
+                        className={isFull ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                    />
+                    {isHalf && (
+                        <div className="absolute top-0 left-0 overflow-hidden w-1/2">
+                            <Star
+                                size={16}
+                                className="fill-yellow-400 text-yellow-400"
+                            />
+                        </div>
+                    )}
+                </div>
+            );
+        });
     };
 
     const getCategoryBannerImage = (categoryName?: string) => {
@@ -404,35 +419,64 @@ export const ProductDetail: React.FC = () => {
                             <div className="bg-[#fdfcf6] border-t-4 border-[#3a7c50] rounded-b-xl shadow-sm p-6 text-left">
                                 {activeTab === 'description' ? (
                                     <div>
-                                        <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                                            {displayedDescription || 'ไม่มีคำอธิบายสินค้า'}
-                                        </p>
-
-                                        {isLongDescription && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowFullDescription(prev => !prev)}
-                                                className="mt-2 text-sm font-semibold text-[#1f502c] hover:text-[#2a6b3b]"
-                                            >
-                                                {showFullDescription ? 'แสดงน้อยลง' : 'ดูเพิ่มเติม'}
-                                            </button>
-                                        )}
-
                                         {product.description && (
-                                            <p className="text-sm text-gray-600 mt-4">
-                                                <span className="font-medium">รหัสสินค้า:</span> {product.id}
-                                            </p>
+                                            <div className="mb-6">
+                                                <h3 className="text-lg font-bold text-[#1f502c] mb-2">รายละเอียดสินค้า</h3>
+                                                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                                                    {displayedDescription || 'ไม่มีคำอธิบายสินค้า'}
+                                                </p>
+                                                {isLongDescription && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowFullDescription(prev => !prev)}
+                                                        className="mt-2 text-sm font-semibold text-[#1f502c] hover:text-[#2a6b3b]"
+                                                    >
+                                                        {showFullDescription ? 'แสดงน้อยลง' : 'ดูเพิ่มเติม'}
+                                                    </button>
+                                                )}
+                                            </div>
                                         )}
-                                        {product.Type && (
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                <span className="font-medium">ประเภท:</span> {product.Type}
-                                            </p>
+
+                                        {/* Specifications Section */}
+                                        {product.specifications && Object.keys(product.specifications).length > 0 && (
+                                            <div className="mb-6">
+                                                <h3 className="text-lg font-bold text-[#1f502c] mb-2">คุณสมบัติสินค้า</h3>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    {Object.entries(product.specifications).map(([key, value]) => (
+                                                        <div key={key} className="flex border-b border-gray-100 py-2">
+                                                            <span className="font-semibold text-gray-700 w-1/3 min-w-[100px]">{key}:</span>
+                                                            <span className="text-gray-600 flex-1">{String(value)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
-                                        {product.category && (
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                <span className="font-medium">หมวดหมู่:</span> {product.category.name}
-                                            </p>
+
+                                        {/* How to Use Section */}
+                                        {product.howToUse && (
+                                            <div className="mb-6">
+                                                <h3 className="text-lg font-bold text-[#1f502c] mb-2">วิธีใช้งาน</h3>
+                                                <p className="text-gray-600 leading-relaxed whitespace-pre-line bg-green-50/50 p-4 rounded-xl border border-green-100/50">
+                                                    {product.howToUse}
+                                                </p>
+                                            </div>
                                         )}
+
+                                        <div className="pt-4 border-t border-gray-100 space-y-1">
+                                            <p className="text-sm text-gray-500">
+                                                <span className="font-medium text-gray-700">รหัสสินค้า:</span> {product.id}
+                                            </p>
+                                            {(product.type || (product as any).Type) && (
+                                                <p className="text-sm text-gray-500">
+                                                    <span className="font-medium text-gray-700">ประเภท:</span> {product.type || (product as any).Type}
+                                                </p>
+                                            )}
+                                            {(product.category || (product as any).Category) && (
+                                                <p className="text-sm text-gray-500">
+                                                    <span className="font-medium text-gray-700">หมวดหมู่:</span> {product.category?.name || (product as any).Category}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 ) : (
                                     <div>
@@ -495,7 +539,7 @@ export const ProductDetail: React.FC = () => {
                                             >
                                                 <div className="aspect-square bg-gray-50 overflow-hidden relative">
                                                     <img
-                                                        src={optimizeImage(item.image || (item.imageUrls && item.imageUrls[0]), { width: 400, quality: 75 })}
+                                                        src={optimizeImage(item.image || (item.imageUrls && item.imageUrls[0]) || 'https://placehold.co/400x400/f1f5f9/94a3b8?text=No+Image', { width: 400, quality: 75 })}
                                                         alt={item.name}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                     />

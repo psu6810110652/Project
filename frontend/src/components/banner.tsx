@@ -17,7 +17,7 @@ const NavButton = ({ direction, onClick }: { direction: 'left' | 'right', onClic
   <button
     type="button"
     onClick={onClick}
-    className={`absolute top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-16 md:h-16 bg-white/80 shadow-md flex items-center justify-center transition-transform rounded-full hover:scale-105 active:scale-95 ${direction === 'left' ? '-left-4 md:-left-8' : '-right-4 md:-right-8'
+    className={`absolute top-1/2 -translate-y-1/2 z-20 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center transition-transform rounded-full hover:scale-105 active:scale-95 ${direction === 'left' ? '-left-4 md:-left-8' : '-right-4 md:-right-8'
       }`}
   >
     <img

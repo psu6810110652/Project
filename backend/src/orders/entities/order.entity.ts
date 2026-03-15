@@ -1,5 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { SoldProduct } from './sold-product.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('orders')
 export class Order {
@@ -48,7 +47,4 @@ export class Order {
 
     @Column({ name: 'cancel_reason', type: 'varchar', length: 255, nullable: true })
     cancelReason: string;
-
-    @OneToMany(() => SoldProduct, (soldProduct) => soldProduct.order)
-    soldProducts: SoldProduct[];
 }

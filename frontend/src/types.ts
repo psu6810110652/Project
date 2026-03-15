@@ -24,6 +24,7 @@ export interface Product {
     volumeDiscount?: string;
     Category?: string;
     Type?: string;
+    type?: string;
     category?: { id: number; name: string; description?: string };
     description?: string;
     rating?: number;

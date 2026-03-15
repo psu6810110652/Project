@@ -9,9 +9,9 @@ import {
     OneToOne,
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
-import { SoldProduct } from '../../orders/entities/sold-product.entity';
 import { Favorite } from '../../users/entities/favorite.entity';
 import { ProductDetail } from './product-detail.entity';
+import { Review } from '../../review/entities/review.entity';
 
 @Entity('products')
 export class Product {
@@ -51,18 +51,6 @@ export class Product {
     @Column({ name: 'is_featured', default: false, nullable: true })
     isFeatured: boolean;
 
-    @Column({ name: 'sold_count', default: 0 })
-    soldCount: number;
-
-    @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
-    rating: number;
-
-    @Column({ name: 'review_count', default: 0 })
-    reviewCount: number;
-
-    @Column({ name: 'favorite_count', default: 0 })
-    favoriteCount: number;
-
     @CreateDateColumn({ name: 'created_at', nullable: true })
     createdAt: Date;
 
@@ -72,13 +60,13 @@ export class Product {
     @JoinColumn({ name: 'category_id' })
     category: Category;
 
-    @OneToMany(() => SoldProduct, (soldProduct) => soldProduct.product)
-    soldProducts: SoldProduct[];
-
     @OneToMany(() => Favorite, (favorite) => favorite.product)
     favorites: Favorite[];
 
     // เชื่อมไปยังตารางรายละเอียดเชิงลึก
     @OneToOne(() => ProductDetail, (detail) => detail.product, { cascade: true })
     detail: ProductDetail;
+
+    @OneToMany(() => Review, (review) => review.product)
+    reviews: Review[];
 }

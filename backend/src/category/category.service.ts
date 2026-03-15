@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { ProductService } from '../product/product.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -12,6 +13,7 @@ export class CategoryService implements OnModuleInit {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepo: Repository<Category>,
+    private readonly productService: ProductService,
   ) { }
 
   // --- 1. ระบบ Seeding ข้อมูลเริ่มต้น (ทำงานตอน Start Server) ---
@@ -57,17 +59,23 @@ export class CategoryService implements OnModuleInit {
     });
   }
 
-  // --- 4. ดึงหมวดหมู่ตาม ID ---
+  // --- 4. ดึงหมวดหมู่ตาม ID พร้อมข้อมูลสินค้าที่มี Stats ---
   async findOne(id: number) {
     const category = await this.categoryRepo.findOne({
-      where: { id },
-      relations: ['products'] // ดึงข้อมูลสินค้าที่อยู่ในหมวดหมู่นี้ออกมาด้วย
+      where: { id }
     });
 
     if (!category) {
       throw new NotFoundException(`ไม่พบหมวดหมู่ ID #${id}`);
     }
-    return category;
+
+    // Use ProductService to fetch products with stats for this category
+    const productsWithStats = await this.productService.findAllByCategory(id, 20);
+
+    return {
+      ...category,
+      products: productsWithStats
+    };
   }
 
   // --- 5. อัปเดตหมวดหมู่ ---
