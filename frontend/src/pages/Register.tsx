@@ -25,7 +25,7 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  
+
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -102,7 +102,7 @@ const Register = () => {
         marketingConsent
       });
 
-  
+
       await Swal.fire({
         title: 'สมัครสมาชิกสำเร็จ!',
         text: 'คุณสามารถเข้าสู่ระบบได้แล้ว',
@@ -123,7 +123,7 @@ const Register = () => {
         confirmButtonText: 'ตกลง',
       });
 
-  // ยังเก็บ errors.general ไว้แสดงใน form ด้วย
+      // ยังเก็บ errors.general ไว้แสดงใน form ด้วย
       setErrors({ general: message });
 
     } finally {
@@ -134,8 +134,8 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-[#DCEDC1] flex flex-col items-center justify-center font-['Prompt'] p-4">
-      
-      <h1 
+
+      <h1
         className="text-[#256D45] text-5xl md:text-[80px] font-semibold mb-8 text-center"
         style={{ textShadow: '0px 4px 20px rgba(0, 0, 0, 0.25)' }}
       >
@@ -143,7 +143,7 @@ const Register = () => {
       </h1>
 
       <div className="bg-[#FFFEF2] w-full max-w-140 rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] p-8 md:p-12">
-        
+
         {errors.general && (
           <div className="bg-red-100 text-red-600 p-3 rounded-lg mb-6 text-center font-medium">
             {errors.general}
@@ -151,7 +151,7 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          
+
           <div className="flex flex-col gap-1.5">
             <label className="text-[#256D45] text-xl font-semibold relative right-51">ชื่อผู้ใช้</label>
             <input
@@ -237,7 +237,7 @@ const Register = () => {
               disabled={loading}
               className="bg-[#FFFEF2] border-2 border-[#256D45] text-[#256D45] text-xl md:text-2xl font-semibold px-8 h-12 rounded-[20px] shadow-[0px_4px_20px_rgba(0,0,0,0.25)] hover:bg-[#256D45] hover:text-[#FFFEF2] transition-colors duration-300 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? 'กำลังดำเนินการ...' : 'ยอมรับและสมัครสมาชิก'}
+              {loading ? 'กำลังดำเนินการ...' : 'สมัครสมาชิก'}
             </button>
           </div>
 
@@ -245,27 +245,27 @@ const Register = () => {
 
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowModal(false)}>
-            <div 
+            <div
               className="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <h2 className="text-2xl font-bold text-[#256D45] mb-4 border-b pb-2">นโยบายและเงื่อนไขการใช้งาน (PDPA)</h2>
               <div className="text-sm text-gray-700 space-y-4 leading-relaxed mb-6">
-                <p><strong>1. การเก็บรวบรวมข้อมูลส่วนบุคคล</strong><br/>เรามีความจำเป็นต้องเก็บข้อมูลส่วนบุคคลของคุณ เช่น ชื่อผู้ใช้ อีเมล เพื่อใช้ในการให้บริการและยืนยันตัวตน</p>
-                <p><strong>2. การใช้ข้อมูลส่วนบุคคล</strong><br/>ข้อมูลของคุณจะถูกใช้เพื่อวัตถุประสงค์ในการให้บริการของเว็บไซต์เท่านั้น จะไม่มีการเปิดเผยให้บุคคลที่สามโดยไม่ได้รับอนุญาต</p>
-                <p><strong>3. ความปลอดภัยของข้อมูล</strong><br/>เราใช้มาตรการทางเทคนิคที่เหมาะสมเพื่อรักษาความปลอดภัยข้อมูลของคุณ ป้องกันการเข้าถึง เปลี่ยนแปลง หรือทำลายโดยมิชอบ</p>
-                <p><strong>4. สิทธิของเจ้าของข้อมูล</strong><br/>คุณมีสิทธิในการขอเข้าถึง แก้ไข ปรับปรุง หรือลบข้อมูลส่วนบุคคลของคุณตามที่กฎหมายว่าด้วยการคุ้มครองข้อมูลส่วนบุคคล (PDPA) กำหนดไว้</p>
+                <p><strong>1. การเก็บรวบรวมข้อมูลส่วนบุคคล</strong><br />เรามีความจำเป็นต้องเก็บข้อมูลส่วนบุคคลของคุณ เช่น ชื่อผู้ใช้ อีเมล เพื่อใช้ในการให้บริการและยืนยันตัวตน</p>
+                <p><strong>2. การใช้ข้อมูลส่วนบุคคล</strong><br />ข้อมูลของคุณจะถูกใช้เพื่อวัตถุประสงค์ในการให้บริการของเว็บไซต์เท่านั้น จะไม่มีการเปิดเผยให้บุคคลที่สามโดยไม่ได้รับอนุญาต</p>
+                <p><strong>3. ความปลอดภัยของข้อมูล</strong><br />เราใช้มาตรการทางเทคนิคที่เหมาะสมเพื่อรักษาความปลอดภัยข้อมูลของคุณ ป้องกันการเข้าถึง เปลี่ยนแปลง หรือทำลายโดยมิชอบ</p>
+                <p><strong>4. สิทธิของเจ้าของข้อมูล</strong><br />คุณมีสิทธิในการขอเข้าถึง แก้ไข ปรับปรุง หรือลบข้อมูลส่วนบุคคลของคุณตามที่กฎหมายว่าด้วยการคุ้มครองข้อมูลส่วนบุคคล (PDPA) กำหนดไว้</p>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowModal(false)}
                   className="px-6 py-2 rounded-xl text-gray-500 font-medium hover:bg-gray-100 transition-colors"
                 >
                   ปิด
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => {
                     setAgreedToTerms(true);
                     setShowModal(false);
