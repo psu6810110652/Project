@@ -14,6 +14,10 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import nodemailer from 'nodemailer';
 
+// 👇 เพิ่ม 2 บรรทัดนี้เพื่อบังคับให้ระบบอ่านไฟล์ .env ทันที
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -160,7 +164,7 @@ export class UsersService {
     await this.usersRepository.save(user);
 
     // 4. สร้าง URL ของ React Frontend
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
     
     // 🟢 5. สร้างหน้าตาอีเมลแบบ HTML
     const htmlMessage = `
@@ -202,12 +206,7 @@ export class UsersService {
       return { message: 'ส่งอีเมลสำเร็จแล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ' };
     } catch (error) {
       console.error('Email error:', error);
-<<<<<<< resetpassword
       user.resetPasswordToken = null as any; 
-=======
-      // ถ้าส่งอีเมลไม่สำเร็จ ต้องเคลียร์ข้อมูล Token ทิ้ง
-      user.resetPasswordToken = null as any;
->>>>>>> main
       user.resetPasswordExpire = null as any;
       await this.usersRepository.save(user);
 
@@ -215,7 +214,7 @@ export class UsersService {
     }
   }
 
-  // 🟢 ฟังก์ชันรีเซ็ตรหัสผ่าน (เอากลับมาให้แล้วครับ ฟังก์ชันนี้แหละที่หายไป!)
+  // 🟢 ฟังก์ชันรีเซ็ตรหัสผ่าน
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -246,8 +245,8 @@ export class UsersService {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'lipapiruk107@gmail.com',
-        pass: 'tnmagcwbuasdpftm',
+        user: process.env.EMAIL_USER, // ดึงจาก .env
+        pass: process.env.EMAIL_PASS, // ดึงจาก .env
       },
     });
 
@@ -255,7 +254,7 @@ export class UsersService {
       from: '"ธีรยุทธการเกษตร" <noreply@yourdomain.com>',
       to: toEmail,
       subject: subject,
-      html: htmlContent, 
+      html: htmlContent, // ส่งเป็น HTML
     });
   }
-} 
+}
