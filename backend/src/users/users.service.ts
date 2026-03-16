@@ -9,10 +9,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, MoreThan, DeepPartial } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import * as nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +21,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto, ipAddress?: string): Promise<User> {
     const existingEmail = await this.usersRepository.findOne({
       where: { email: createUserDto.email }
     });
@@ -36,16 +36,36 @@ export class UsersService {
       throw new ConflictException('ชื่อผู้ใช้นี้ถูกใช้งานแล้ว');
     }
 
+    // ===== ตรวจสอบ Consent (ป้องกัน bypass จาก Postman) =====
+    if (!createUserDto.agreedToTerms) {
+      throw new BadRequestException('กรุณายอมรับเงื่อนไขการใช้งานและนโยบายความเป็นส่วนตัวก่อนดำเนินการต่อ');
+    }
+
     let hashedPassword: string | undefined = undefined;
     if (createUserDto.password) {
       const salt = await bcrypt.genSalt();
       hashedPassword = await bcrypt.hash(createUserDto.password, salt);
     }
 
-    const newUser = this.usersRepository.create({
-      ...createUserDto,
+    const now = new Date();
+
+    const { phoneNumber, ...rest } = createUserDto;
+
+    const newUser: User = this.usersRepository.create({
+      username: rest.username,
+      email: rest.email,
+      isGoogleLogin: rest.isGoogleLogin,
+      phone: phoneNumber,
       password: hashedPassword,
-    });
+
+      // ===== บันทึก Consent พร้อมหลักฐาน =====
+      agreedToTerms: true,
+      termsVersion: '1.0',              // ← อัปเดตเป็น '1.1', '2.0' เมื่อแก้ policy
+      termsAgreedAt: now,
+      marketingConsent: rest.marketingConsent ?? false,
+      marketingConsentAt: rest.marketingConsent ? now : null,
+      consentIpAddress: ipAddress ?? null,
+    } as DeepPartial<User>);
 
     try {
       const savedUser = await this.usersRepository.save(newUser);
@@ -121,17 +141,17 @@ export class UsersService {
 
   async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.usersRepository.findOne({ where: { email } });
-    
+
     if (!user) {
       throw new NotFoundException('ไม่พบผู้ใช้งานด้วยอีเมลนี้');
     }
 
     // 1. สร้าง Token แบบสุ่ม
     const resetToken = crypto.randomBytes(20).toString('hex');
-    
+
     // 2. เข้ารหัส Token ก่อนเก็บลงฐานข้อมูลเพื่อความปลอดภัย
     user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    
+
     // 3. ตั้งเวลาหมดอายุ (15 นาที)
     const expireDate = new Date();
     expireDate.setMinutes(expireDate.getMinutes() + 15);
@@ -182,10 +202,15 @@ export class UsersService {
       return { message: 'ส่งอีเมลสำเร็จแล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ' };
     } catch (error) {
       console.error('Email error:', error);
+<<<<<<< resetpassword
       user.resetPasswordToken = null as any; 
+=======
+      // ถ้าส่งอีเมลไม่สำเร็จ ต้องเคลียร์ข้อมูล Token ทิ้ง
+      user.resetPasswordToken = null as any;
+>>>>>>> main
       user.resetPasswordExpire = null as any;
       await this.usersRepository.save(user);
-      
+
       throw new InternalServerErrorException('ไม่สามารถส่งอีเมลได้ กรุณาลองใหม่อีกครั้ง');
     }
   }
@@ -197,7 +222,7 @@ export class UsersService {
     const user = await this.usersRepository.findOne({
       where: {
         resetPasswordToken: hashedToken,
-        resetPasswordExpire: MoreThan(new Date()), 
+        resetPasswordExpire: MoreThan(new Date()),
       },
     });
 

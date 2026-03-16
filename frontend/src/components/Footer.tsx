@@ -30,10 +30,10 @@ export default function Footer() {
             </h3>
             <nav className="flex flex-col gap-2 items-center pt-2">
               <Link to="/" className="text-[#256D45] text-lg md:text-xl">หน้าหลัก</Link>
-              <Link to="/fertilizers" className="text-[#256D45] text-lg md:text-xl">ปุ๋ย</Link>
-              <Link to="/tools" className="text-[#256D45] text-lg md:text-xl">อุปกรณ์</Link>
-              <Link to="/seeds" className="text-[#256D45] text-lg md:text-xl">เมล็ด</Link>
-              <Link to="/others" className="text-[#256D45] text-lg md:text-xl">อื่นๆ</Link>
+              <Link to="/ปุ๋ย" className="text-[#256D45] text-lg md:text-xl">ปุ๋ย</Link>
+              <Link to="/อุปกรณ์" className="text-[#256D45] text-lg md:text-xl">อุปกรณ์</Link>
+              <Link to="/เมล็ดพันธุ์" className="text-[#256D45] text-lg md:text-xl">เมล็ดพันธุ์</Link>
+              <Link to="/อื่นๆ" className="text-[#256D45] text-lg md:text-xl">อื่นๆ</Link>
             </nav>
           </div>
 

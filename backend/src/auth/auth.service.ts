@@ -85,6 +85,8 @@ export class AuthService {
           username: email,
           password: await bcrypt.hash(googleId, 10),
           isGoogleLogin: true,
+          agreedToTerms: true,
+          marketingConsent: false,
         });
       } else {
         console.log('DEBUG: Found existing user', user.id);

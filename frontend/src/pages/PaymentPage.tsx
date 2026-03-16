@@ -130,8 +130,8 @@ const PaymentPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       // 1. สร้าง URL ชั่วคราวไว้โชว์บนหน้าเว็บ (UI)
-      const imageUrl = URL.createObjectURL(file);
-      setSlipImage(imageUrl);
+      const imageUrls = URL.createObjectURL(file);
+      setSlipImage(imageUrls);
 
       // 2. แปลงไฟล์รูปภาพเป็น Base64 string เพื่อส่งไปเซฟใน Database
       const reader = new FileReader();
@@ -431,9 +431,17 @@ const PaymentPage: React.FC = () => {
                 <Upload size={32} className="text-[#256D45]" />
               )}
             </label>
-            {slipImage && (
-              <p className="text-sm text-[#256D45] mt-2 font-medium">อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)</p>
-            )}
+            {slipImage ? (
+              <p className="text-sm text-[#256D45] mt-2 font-medium text-center">
+                อัปโหลดรูปสำเร็จ (กดที่รูปเพื่อเปลี่ยน)
+              </p>
+            ) : null}
+
+            {/* PDPA Notice — แสดงเสมอ ไม่ว่าจะอัปโหลดแล้วหรือยัง */}
+            <p className="text-[10px] text-gray-400 mt-3 text-center max-w-xs leading-relaxed px-2">
+              🔒 ข้อมูลสลิปการโอนเงินจะถูกใช้เพื่อตรวจสอบยอดเงิน
+              และยืนยันการสั่งซื้อเท่านั้น ตามนโยบายความเป็นส่วนตัว (PDPA)
+            </p>
           </div>
         </div>
 

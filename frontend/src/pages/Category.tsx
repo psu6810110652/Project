@@ -80,27 +80,6 @@ const Category: React.FC = () => {
                     return Array.isArray(urls) ? urls[0] : urls;
                 };
 
-                // ฟังก์ชันดึงข้อมูลรีวิวเพื่อคำนวณคะแนน (เหมือนใน Home.tsx)
-                const fetchReviewsAndCalculateRating = async (productId: string) => {
-                    try {
-                        const reviewsResponse = await api.get(`/product/${productId}/reviews`);
-                        const reviewsData = reviewsResponse.data;
-                        
-                        if (reviewsData && reviewsData.length > 0) {
-                            const totalRating = reviewsData.reduce((sum: number, review: any) => sum + Number(review.rating || 0), 0);
-                            const avgRating = Math.round((totalRating / reviewsData.length) * 10) / 10;
-                            return {
-                                rating: avgRating,
-                                reviewCount: reviewsData.length
-                            };
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching reviews for ${productId}:`, error);
-                    }
-                    // Return 0 when no reviews exist or API fails - don't use potentially incorrect product data
-                    return { rating: 0, reviewCount: 0 };
-                };
-
                 const response = await api.get(`/category`);
                 const allCategories: CategoryType[] = response.data;
 
@@ -115,41 +94,34 @@ const Category: React.FC = () => {
                     return;
                 }
 
-                if (targetCategory) {
-                    setCategoryInfo(targetCategory);
+                setCategoryInfo(targetCategory);
 
-                    const detailResponse = await api.get(`/category/${targetCategory.id}`);
-                    const detailedData = detailResponse.data;
+                const detailResponse = await api.get(`/category/${targetCategory.id}`);
+                const detailedData = detailResponse.data;
 
-                    // ใช้ logic เหมือน Home.tsx เพื่อให้ข้อมูลตรงกัน
-                    const productsWithRating = await Promise.all(
-                        (detailedData.products || []).map(async (p: any) => {
-                            const ratingData = await fetchReviewsAndCalculateRating(p.id);
-                            return {
-                                ...p,
-                                image: getFirstImage(p),
-                                stock: p.stockQuantity ?? p.stock ?? 0,
-                                type: p.type,
-                                // ใช้เฉพาะข้อมูลจากรีวิวจริงเท่านั้น
-                                rating: ratingData.rating,
-                                favoriteCount: Number(p.favoriteCount) || 0,
-                                reviewCount: ratingData.reviewCount,
-                                soldCount: Number(p.soldCount) || 0
-                            };
-                        })
-                    );
-                    
-                    setProducts(productsWithRating);
+                // ใช้ข้อมูลจาก detailedData.products ที่ดึงมาครั้งเดียว
+                // ไม่ต้องดึงรีวิวแยกรายชิ้น (ช่วยประหยัด Egress)
+                const processedProducts = (detailedData.products || []).map((p: any) => ({
+                    ...p,
+                    image: getFirstImage(p),
+                    stock: p.stockQuantity ?? p.stock ?? 0,
+                    type: p.type,
+                    rating: Number(p.rating) || 0,
+                    favoriteCount: Number(p.favoriteCount) || 0,
+                    reviewCount: Number(p.reviewCount) || 0,
+                    soldCount: Number(p.soldCount) || 0
+                }));
+                
+                setProducts(processedProducts);
 
-                    // Find max price to set the limit
-                    if (productsWithRating.length > 0) {
-                        const max = Math.max(...productsWithRating.map((p: any) => p.price || 0));
-                        setMaxPriceLimit(max);
-                        setPriceRange([0, max]);
-                    } else {
-                        setMaxPriceLimit(0);
-                        setPriceRange([0, 0]);
-                    }
+                // Find max price to set the limit
+                if (processedProducts.length > 0) {
+                    const max = Math.max(...processedProducts.map((p: any) => p.price || 0));
+                    setMaxPriceLimit(max);
+                    setPriceRange([0, max]);
+                } else {
+                    setMaxPriceLimit(0);
+                    setPriceRange([0, 0]);
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -183,7 +155,7 @@ const Category: React.FC = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto px-6 md:px-10 lg:px-24 mt-6 md:mt-12 flex flex-col md:flex-row gap-8 w-full">
+            <div className="container mx-auto px-6 md:px-10 lg:px-24 mt-6 md:mt-12 flex flex-col md:flex-row gap-4 w-full">
 
                 <div className="md:hidden w-full px-4 mb-4 flex flex-col gap-4">
                     <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
@@ -203,7 +175,7 @@ const Category: React.FC = () => {
                     <RatingFilter selectedRating={selectedRating} onRatingChange={setSelectedRating} />
                 </div>
 
-                <aside className="hidden md:block w-72 shrink-0">
+                <aside className="hidden md:block w-80 shrink-0">
                     <div className="sticky top-24">
                         <div className="bg-(--color-bg-card) p-8 rounded-[20px] shadow-sm border border-gray-100 font-['Prompt']">
                             <div className="mb-8">
@@ -238,7 +210,7 @@ const Category: React.FC = () => {
                 </aside>
 
                 <div className="flex-1 pl-4 md:pl-0 pr-4">
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4 md:gap-6 w-full">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-1 md:gap-4 w-full">
                         {filteredProducts.length > 0 ? (
                             filteredProducts.map((product) => (
                                 <Products

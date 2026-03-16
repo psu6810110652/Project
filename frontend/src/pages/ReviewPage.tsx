@@ -12,9 +12,8 @@ const ReviewPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [existingReviews, setExistingReviews] = useState<ExistingReview[]>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
-
-  // No longer filtering currentUserId, but keeping auth for potential future use
-  // const currentUserId = auth?.user?.id || 'guest'; 
+  const [backendRating, setBackendRating] = useState(0);
+  const [backendReviewCount, setBackendReviewCount] = useState(0);
 
   useEffect(() => {
     const loadReviewData = async () => {
@@ -24,10 +23,12 @@ const ReviewPage: React.FC = () => {
       }
 
       try {
-        // Fetch product data
+        // Fetch product data - this includes the real-time average rating from backend
         const response = await api.get(`/product/${productId}`);
         const productData = response.data;
         setProductName(productData.name || 'ชื่อสินค้า');
+        setBackendRating(Number(productData.rating) || 0);
+        setBackendReviewCount(Number(productData.reviewCount) || 0);
       } catch (error) {
         console.error('Error loading product data:', error);
         setProductName('ชื่อสินค้า');
@@ -47,9 +48,9 @@ const ReviewPage: React.FC = () => {
     loadReviewData();
   }, [productId]);
 
-  const averageRating = existingReviews.length > 0
-    ? existingReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / existingReviews.length
-    : 0;
+  // Use backend rating as primary source of truth
+  const averageRating = backendRating;
+  const totalReviewsCount = backendReviewCount || existingReviews.length;
 
   // Show all reviews including our own on this page
   const allReviews = existingReviews;
@@ -59,13 +60,28 @@ const ReviewPage: React.FC = () => {
     : allReviews.filter(r => Math.floor(r.rating) === selectedRating);
 
   const renderStarsUI = (rating: number, size = 16) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        size={size}
-        className={i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
-      />
-    ));
+    return Array.from({ length: 5 }, (_, i) => {
+      const starValue = i + 1;
+      const isFull = starValue <= Math.floor(rating);
+      const isHalf = !isFull && starValue <= Math.ceil(rating) && (rating % 1 >= 0.5);
+      
+      return (
+        <div key={i} className="relative inline-block">
+          <Star
+            size={size}
+            className={isFull ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+          />
+          {isHalf && (
+            <div className="absolute top-0 left-0 overflow-hidden w-1/2">
+              <Star
+                size={size}
+                className="fill-yellow-400 text-yellow-400"
+              />
+            </div>
+          )}
+        </div>
+      );
+    });
   };
 
   if (isLoading) {
@@ -104,7 +120,7 @@ const ReviewPage: React.FC = () => {
                 <div className="flex justify-center my-1">
                   {renderStarsUI(averageRating, 24)}
                 </div>
-                <div className="text-gray-500 text-sm">{allReviews.length} รีวิว</div>
+                <div className="text-gray-500 text-sm">{totalReviewsCount} รีวิว</div>
               </div>
 
               <div className="h-16 w-px bg-gray-200 hidden md:block"></div>

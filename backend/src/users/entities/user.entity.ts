@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { Exclude } from 'class-transformer'; 
+import { Exclude } from 'class-transformer';
 import { Address } from '../../addresses/entities/address.entity';
+import { Favorite } from './favorite.entity';
 
 export enum UserRole {
   USER = 'User',
@@ -16,7 +17,7 @@ export class User {
   username: string;
 
   @Column({ nullable: true })
-  @Exclude() 
+  @Exclude()
   password?: string;
 
   @Column({ unique: true })
@@ -27,9 +28,9 @@ export class User {
 
   @Column({ default: false })
   isGoogleLogin: boolean;
-  
+
   @Column({ nullable: true })
-  phone?: string; 
+  phone?: string;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -49,9 +50,32 @@ export class User {
   @OneToMany(() => Address, (address) => address.user)
   addresses: Address[];
 
+  @OneToMany(() => Favorite, (favorite) => favorite.user)
+  favorites: Favorite[];
+
   @Column({ nullable: true })
   resetPasswordToken: string;
 
   @Column({ type: 'timestamp', nullable: true })
   resetPasswordExpire: Date;
+
+  // ===== PDPA Consent Fields =====
+
+  @Column({ name: 'agreed_to_terms', default: false })
+  agreedToTerms: boolean;               // บังคับ — ยอมรับ Terms & Privacy Policy
+
+  @Column({ name: 'terms_version', nullable: true })
+  termsVersion: string;                 // เวอร์ชันที่ยอมรับ เช่น "1.0"
+
+  @Column({ name: 'terms_agreed_at', type: 'timestamp', nullable: true })
+  termsAgreedAt: Date;                  // เวลาที่กด ยอมรับ
+
+  @Column({ name: 'marketing_consent', default: false })
+  marketingConsent: boolean;            // ไม่บังคับ — รับโปรโมชัน
+
+  @Column({ name: 'marketing_consent_at', type: 'timestamp', nullable: true })
+  marketingConsentAt: Date;             // เวลาที่ติ๊กรับข่าวสาร
+
+  @Column({ name: 'consent_ip_address', nullable: true })
+  consentIpAddress: string;             // IP ที่ใช้สมัคร (หลักฐานตาม PDPA)
 }
