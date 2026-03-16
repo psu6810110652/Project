@@ -56,8 +56,8 @@ export class UsersService {
       const buddhistYear = year + 543;       // พ.ศ. เช่น 2569
       const yy = buddhistYear % 100;         // 2 หลักท้าย เช่น 69
 
-      const rangeStart = `${yy}00000000`; // "6900000000"
-      const rangeEnd   = `${yy}99999999`; // "6999999999"
+      const rangeStart = `${yy}000000`; // "69000000"
+      const rangeEnd = `${yy}999999`; // "69999999"
 
       // หา max ID ใน range ของปีนี้
       const result = await this.usersRepository
@@ -66,7 +66,7 @@ export class UsersService {
         .where("user.id ~ '^[0-9]+$'") // เฉพาะที่เป็นตัวเลขล้วน
         .andWhere('user.id::BIGINT >= :start AND user.id::BIGINT <= :end', {
           start: parseInt(rangeStart),
-          end:   parseInt(rangeEnd),
+          end: parseInt(rangeEnd),
         })
         .getRawOne();
 
