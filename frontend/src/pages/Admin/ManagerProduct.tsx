@@ -26,7 +26,7 @@ const ManagerProduct: React.FC = () => {
     const { categoryId, code: productId } = useParams();
     const navigate = useNavigate();
     const auth = useContext(AuthContext);
-    
+
     const user = auth?.user;
     const isAdmin = user?.role === 'Admin';
     const isEditMode = !!productId && productId !== 'new';
@@ -51,10 +51,8 @@ const ManagerProduct: React.FC = () => {
     });
 
     const [existingTypes, setExistingTypes] = useState<{ value: string }[]>([]);
-    
-    // 🌟 State สำหรับเก็บข้อความ Error ใต้กล่องรหัสสินค้า
-    const [codeError, setCodeError] = useState<string>('');
 
+    // 🌟 เอา Error ของรหัสสินค้าออก เพราะไม่ได้กรอกเองแล้ว
     const inputStyleClasses = "w-full px-5 py-3 bg-[#F8F8F8] border-2 border-[#E8E8E8] rounded-[15px] text-[1.1rem] outline-none transition-all duration-300 focus:border-[#256D45] focus:bg-white focus:shadow-[0_0_10px_rgba(37,109,69,0.1)]";
 
     // ดึงข้อมูลเริ่มต้น
@@ -95,57 +93,48 @@ const ManagerProduct: React.FC = () => {
         }
     }, [productId, isEditMode, categoryId, isAdmin, navigate, messageApi]);
 
-    // 🌟 ฟังก์ชันตรวจสอบรหัสซ้ำแบบ Real-time (ทำงานทุกครั้งที่พิมพ์รหัสใหม่)
+    // 🌟 ดึงรหัสสินค้าใหม่ทุกครั้งที่มีการเปลี่ยนประเภทสินค้า (เฉพาะตอนเพิ่มใหม่)
     useEffect(() => {
-        // ถ้ารหัสว่าง หรือเป็นรหัสเดิมตอนโหมดแก้ไข ไม่ต้องเช็คซ้ำ
-        if (!formData.code.trim() || formData.code === productId) {
-            setCodeError('');
-            return;
-        }
-
-        const checkDuplicateCode = async () => {
-            try {
-                const res = await api.get(`/product/${formData.code}`);
-                // ถ้ามีข้อมูลตอบกลับมา แปลว่ามีรหัสนี้อยู่แล้ว
-                if (res.data) {
-                    setCodeError('รหัสสินค้านี้มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น');
-                }
-            } catch (error: any) {
-                // ถ้าเป็น 404 (Not Found) แปลว่ารหัสนี้ยังว่างอยู่ ใช้งานได้
-                if (axios.isAxiosError(error) && error.response?.status === 404) {
-                    setCodeError('');
-                }
+        if (!isEditMode && categoryId) {
+            if (!formData.type || formData.type.trim() === '') {
+                setFormData(prev => ({ ...prev, code: '' }));
+                return;
             }
-        };
 
-        // หน่วงเวลา 500ms ป้องกันการยิง API ถี่เกินไปขณะที่ผู้ใช้กำลังพิมพ์
-        const delayTimer = setTimeout(() => {
-            checkDuplicateCode();
-        }, 500);
+            const fetchGeneratedId = async () => {
+                try {
+                    const res = await api.get(`/product/generate-id?categoryId=${categoryId}&type=${encodeURIComponent(formData.type)}`);
+                    if (res.data?.id) {
+                        setFormData(prev => ({ ...prev, code: res.data.id }));
+                    }
+                } catch (error) {
+                    console.error("Error generating product ID:", error);
+                }
+            };
 
-        return () => clearTimeout(delayTimer);
-    }, [formData.code, productId]);
+            const delayTimer = setTimeout(() => {
+                fetchGeneratedId();
+            }, 500); // หน่วง 500ms ให้พิมพ์เสร็จก่อนยิง
+
+            return () => clearTimeout(delayTimer);
+        }
+    }, [formData.type, categoryId, isEditMode]);
 
     const handleSave = async () => {
         if (!formData.name.trim()) {
             messageApi.warning('กรุณาระบุชื่อสินค้า');
             return;
         }
-        if (!formData.code.trim()) {
-            messageApi.warning('กรุณาระบุรหัสสินค้า');
-            return;
-        }
-        
-        // 🌟 ดักการกดบันทึก ถ้ายังมี error เรื่องรหัสซ้ำอยู่
-        if (codeError) {
-            messageApi.error('กรุณาแก้ไขรหัสสินค้าที่ซ้ำกันก่อนบันทึก');
+
+        if (!formData.type.trim()) {
+            messageApi.warning('กรุณาระบุประเภทสินค้า');
             return;
         }
 
         setLoading(true);
         try {
             if (!isAdmin) throw new Error('Unauthorized');
-            
+
             const payload = {
                 name: formData.name,
                 id: formData.code,
@@ -170,13 +159,10 @@ const ManagerProduct: React.FC = () => {
                 await api.post(`/product`, payload);
                 messageApi.success("เพิ่มสินค้าใหม่เรียบร้อย");
             }
-            setTimeout(() => navigate(-1), 1000); 
+            setTimeout(() => navigate(-1), 1000);
         } catch (err: any) {
             if (axios.isAxiosError(err) && err.response?.status === 413) {
                 messageApi.error("ไฟล์ภาพมีขนาดใหญ่เกินไป กรุณาลดขนาดไฟล์");
-            } else if (axios.isAxiosError(err) && err.response?.status === 409) {
-                setCodeError("รหัสสินค้านี้มีอยู่ในระบบแล้ว"); // 🌟 อัปเดต Error ใต้ช่อง input
-                messageApi.error("รหัสสินค้านี้มีอยู่ในระบบแล้ว");
             } else if (err.message === 'Unauthorized' || (axios.isAxiosError(err) && [401, 403].includes(err.response?.status || 0))) {
                 messageApi.error('คุณไม่มีสิทธิ์ดำเนินการ โปรดเข้าสู่ระบบใหม่');
             } else {
@@ -309,25 +295,15 @@ const ManagerProduct: React.FC = () => {
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                             />
                         </InputBox>
-                        
-                        {/* 🌟 แสดง Error ใต้กล่องรหัสสินค้า */}
+
+                        {/* 🌟 แสดงรหัสสินค้าแต่ Lock ไว้ */}
                         <InputBox label="รหัสสินค้า" icon={<Hash size={20} />}>
-                            <div className="flex flex-col gap-1">
-                                <input
-                                    // เปลี่ยนสีขอบกรอบเป็นสีแดง ถ้ามี codeError
-                                    className={`${inputStyleClasses} ${codeError ? '!border-red-500 focus:!shadow-[0_0_10px_rgba(239,68,68,0.2)]' : ''}`}
-                                    value={formData.code}
-                                    onChange={e => {
-                                        setFormData({ ...formData, code: e.target.value });
-                                        if (codeError) setCodeError(''); // ซ่อน error ชั่วคราวตอนกำลังพิมพ์
-                                    }}
-                                />
-                                {codeError && (
-                                    <span className="text-red-500 text-sm font-semibold pl-2">
-                                        * {codeError}
-                                    </span>
-                                )}
-                            </div>
+                            <input
+                                className={`${inputStyleClasses} cursor-not-allowed bg-gray-200 text-gray-500`}
+                                value={formData.code ? formData.code : (formData.type ? 'กำลังคำนวณรหัส...' : 'ระบุประเภทสินค้าก่อน...')}
+                                disabled
+                                readOnly
+                            />
                         </InputBox>
 
                         <InputBox label="ประเภทสินค้า" icon={<FolderTree size={20} />}>
@@ -432,11 +408,11 @@ const ManagerProduct: React.FC = () => {
                                 <label className="flex items-center gap-2 text-[#256D45] font-bold text-lg">
                                     <Database size={20} /> คุณสมบัติสินค้า (Specifications)
                                 </label>
-                                
+
                                 <div className="flex flex-col gap-3">
                                     {Object.entries(formData.specifications).map(([key, value], idx) => (
                                         <div key={idx} className="flex gap-3">
-                                            <input 
+                                            <input
                                                 className={`${inputStyleClasses} !py-2 flex-1`}
                                                 placeholder="หัวข้อ (เช่น ขนาด, น้ำหนัก)"
                                                 value={key}
@@ -448,18 +424,18 @@ const ManagerProduct: React.FC = () => {
                                                     setFormData({ ...formData, specifications: newSpecs });
                                                 }}
                                             />
-                                            <input 
+                                            <input
                                                 className={`${inputStyleClasses} !py-2 flex-2`}
                                                 placeholder="รายละเอียด"
                                                 value={value}
                                                 onChange={(e) => {
-                                                    setFormData({ 
-                                                        ...formData, 
-                                                        specifications: { ...formData.specifications, [key]: e.target.value } 
+                                                    setFormData({
+                                                        ...formData,
+                                                        specifications: { ...formData.specifications, [key]: e.target.value }
                                                     });
                                                 }}
                                             />
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     const newSpecs = { ...formData.specifications };
                                                     delete newSpecs[key];
@@ -471,10 +447,10 @@ const ManagerProduct: React.FC = () => {
                                             </button>
                                         </div>
                                     ))}
-                                    <button 
-                                        onClick={() => setFormData({ 
-                                            ...formData, 
-                                            specifications: { ...formData.specifications, '': '' } 
+                                    <button
+                                        onClick={() => setFormData({
+                                            ...formData,
+                                            specifications: { ...formData.specifications, '': '' }
                                         })}
                                         className="mt-2 py-2 px-4 border-2 border-dashed border-[#256D45]/30 text-[#256D45] rounded-xl hover:bg-[#256D45]/5 transition-all font-semibold flex items-center justify-center gap-2"
                                     >
@@ -500,25 +476,24 @@ const ManagerProduct: React.FC = () => {
 
                     <div className="flex flex-wrap gap-6">
                         {formData.imageUrls.map((url, index) => (
-                            <div 
-                                key={index} 
+                            <div
+                                key={index}
                                 draggable
                                 onDragStart={() => handleDragStart(index)}
                                 onDragOver={handleDragOver}
                                 onDrop={() => handleDrop(index)}
                                 onDragEnd={() => setDraggedIndex(null)}
-                                className={`relative w-40 h-40 group cursor-move transition-all duration-300 ${
-                                    draggedIndex === index ? 'opacity-40 scale-95 border-dashed' : 'opacity-100'
-                                }`}
+                                className={`relative w-40 h-40 group cursor-move transition-all duration-300 ${draggedIndex === index ? 'opacity-40 scale-95 border-dashed' : 'opacity-100'
+                                    }`}
                             >
-                                <img 
-                                    src={url} 
-                                    className="w-full h-full object-cover rounded-2xl border-2 border-[#E8E8E8] shadow-md group-hover:brightness-90 pointer-events-none" 
-                                    alt={`product-${index}`} 
+                                <img
+                                    src={url}
+                                    className="w-full h-full object-cover rounded-2xl border-2 border-[#E8E8E8] shadow-md group-hover:brightness-90 pointer-events-none"
+                                    alt={`product-${index}`}
                                 />
                                 <button
                                     onClick={(e) => {
-                                        e.stopPropagation(); 
+                                        e.stopPropagation();
                                         handleRemoveImage(index);
                                     }}
                                     className="absolute -top-3 -right-3 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 hover:scale-110 transition-all z-10 cursor-pointer"

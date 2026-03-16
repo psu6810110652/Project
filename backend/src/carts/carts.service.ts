@@ -13,7 +13,7 @@ export class CartsService {
   ) { }
 
   // 1. เพิ่มสินค้าลงตะกร้า (Add to Cart)
-  async create(userId: number, createCartDto: CreateCartDto) {
+  async create(userId: string, createCartDto: CreateCartDto) {
     // เช็คก่อนว่าสินค้านี้ ลูกค้าคนนี้เคยหยิบใส่ตะกร้าหรือยัง?
     let cartItem = await this.cartRepo.findOne({
       where: {
@@ -38,7 +38,7 @@ export class CartsService {
   }
 
   // 2. ดูตะกร้าสินค้าของตัวเอง (Get My Cart)
-  async findAllByUserId(userId: number) {
+  async findAllByUserId(userId: string) {
     return await this.cartRepo.find({
       where: { user_id: userId },
       relations: ['product'],
@@ -47,7 +47,7 @@ export class CartsService {
   }
 
   // 3. ดึงดูรายการเดียว 
-  async findOne(id: number, userId: number) {
+  async findOne(id: number, userId: string) {
     const cartItem = await this.cartRepo.findOne({
       where: { id: id, user_id: userId },
       relations: ['product'],
@@ -60,7 +60,7 @@ export class CartsService {
   }
 
   // 4. อัปเดตจำนวนสินค้าในตะกร้า (เช่น ลูกค้ากดปุ่ม + / - ในหน้าเว็บ)
-  async update(id: number, userId: number, updateCartDto: UpdateCartDto) {
+  async update(id: number, userId: string, updateCartDto: UpdateCartDto) {
     const cartItem = await this.findOne(id, userId); // เช็คว่าเป็นของตัวเองไหม
 
     // อัปเดตจำนวนใหม่
@@ -71,13 +71,13 @@ export class CartsService {
   }
 
   // 5. ลบสินค้าออกจากตะกร้า (กดปุ่มถังขยะ)
-  async remove(id: number, userId: number) {
+  async remove(id: number, userId: string) {
     const cartItem = await this.findOne(id, userId); // เช็คว่าเป็นของตัวเองไหม
     return await this.cartRepo.remove(cartItem);
   }
 
   //ล้างตะกร้า (ใช้ตอนที่ลูกค้ากด ยืนยันการสั่งซื้อ สำเร็จแล้ว)
-  async clearCart(userId: number) {
+  async clearCart(userId: string) {
     const myCartItems = await this.cartRepo.find({ where: { user_id: userId } });
     if (myCartItems.length > 0) {
       return await this.cartRepo.remove(myCartItems);

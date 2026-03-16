@@ -45,5 +45,5 @@ export class Review {
     user: User;
 
     @RelationId((review: Review) => review.user)
-    userId: number;
+    userId: string;
 }

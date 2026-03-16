@@ -17,7 +17,7 @@ export class FavoritesService {
     ) {}
 
     // เพิ่มสินค้าในรายการโปรด
-    async addToFavorites(userId: number, productId: string): Promise<Favorite> {
+    async addToFavorites(userId: string, productId: string): Promise<Favorite> {
         // ตรวจสอบว่ามีผู้ใช้และสินค้านี้อยู่จริงหรือไม่
         const user = await this.usersRepository.findOne({ where: { id: userId } });
         if (!user) {
@@ -48,7 +48,7 @@ export class FavoritesService {
     }
 
     // ลบสินค้าจากรายการโปรด
-    async removeFromFavorites(userId: number, productId: string): Promise<void> {
+    async removeFromFavorites(userId: string, productId: string): Promise<void> {
         const favorite = await this.favoritesRepository.findOne({
             where: { userId, productId }
         });
@@ -61,7 +61,7 @@ export class FavoritesService {
     }
 
     // ดึงรายการโปรดทั้งหมดของผู้ใช้
-    async getUserFavorites(userId: number): Promise<Favorite[]> {
+    async getUserFavorites(userId: string): Promise<Favorite[]> {
         return await this.favoritesRepository.find({
             where: { userId },
             relations: ['product'],
@@ -70,7 +70,7 @@ export class FavoritesService {
     }
 
     // ตรวจสอบว่าสินค้าอยู่ในรายการโปรดของผู้ใช้หรือไม่
-    async isFavorite(userId: number, productId: string): Promise<boolean> {
+    async isFavorite(userId: string, productId: string): Promise<boolean> {
         const favorite = await this.favoritesRepository.findOne({
             where: { userId, productId }
         });
@@ -105,7 +105,7 @@ export class FavoritesService {
     }
 
     // สำหรับ frontend - ดึงข้อมูลสินค้าในรายการโปรดพร้อมข้อมูลเต็ม
-    async getFavoriteProducts(userId: number): Promise<any[]> {
+    async getFavoriteProducts(userId: string): Promise<any[]> {
         const favorites = await this.favoritesRepository.find({
             where: { userId },
             relations: ['product', 'product.category', 'product.detail']
