@@ -47,8 +47,7 @@ const ResetPassword = () => {
 
     try {
       // เรียก API เปลี่ยนรหัสผ่าน โดยส่ง token และ รหัสผ่านใหม่ไป
-      await api.post('/users/reset-password', { token, newPassword: passwords.newPassword });
-
+      await api.post('/users/reset-password', { token: token, newPassword: passwords.newPassword });
       Swal.fire({
         title: 'เปลี่ยนรหัสผ่านสำเร็จ!',
         text: 'คุณสามารถใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบได้ทันที',

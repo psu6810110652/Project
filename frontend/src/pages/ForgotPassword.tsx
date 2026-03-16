@@ -70,6 +70,8 @@ const ForgotPassword = () => {
               placeholder="กรอกอีเมลของคุณ"
               value={email}
               required
+              name="email" /* 🟢 เพิ่ม name="email" ด้วยเพื่อให้เบราว์เซอร์จำง่ายขึ้น */
+              autoComplete="email" /* 🟢 หัวใจสำคัญอยู่ที่ตรงนี้ครับ! */
               className="bg-[#EDEDED] w-full h-15 rounded-2xl px-6 text-[#256D45] text-xl placeholder:text-[#BFBFBF] outline-none border-2 border-transparent focus:border-[#256D45] transition-all"
               onChange={(e) => setEmail(e.target.value)}
             />

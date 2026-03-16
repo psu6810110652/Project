@@ -187,7 +187,10 @@ const Login = () => {
               <input type="checkbox" className="w-5 h-5 md:w-5.5 md:h-5.5 accent-[#256D45]" />
               <span className="text-[#256D45] text-lg md:text-xl font-medium">จดจำฉัน</span>
             </label>
-            <Link to="/forgot-password" className="text-[#BFBFBF] text-lg md:text-xl font-medium underline">
+            <Link 
+              to="/forgot-password" 
+              className="text-[#BFBFBF] hover:text-[#256D45] text-lg md:text-xl font-medium underline relative z-10 transition-colors"
+            >
               ลืมรหัสผ่าน?
             </Link>
           </div>

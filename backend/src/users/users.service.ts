@@ -136,7 +136,7 @@ export class UsersService {
   }
 
   // ====================================================================
-  // 🟢 ระบบลืมรหัสผ่าน (Forgot Password) - ส่งอีเมลจริง
+  // 🟢 ระบบลืมรหัสผ่าน (Forgot Password) - ส่งอีเมลแบบมีปุ่ม HTML
   // ====================================================================
 
   async forgotPassword(email: string): Promise<{ message: string }> {
@@ -159,18 +159,55 @@ export class UsersService {
 
     await this.usersRepository.save(user);
 
-    // 4. สร้าง URL ของ React Frontend (เช็คพอร์ตหน้าบ้านให้ตรงด้วยนะครับ)
+    // 4. สร้าง URL ของ React Frontend
     const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
-    const message = `คุณได้รับอีเมลนี้เนื่องจากมีการร้องขอเปลี่ยนรหัสผ่านสำหรับบัญชีของคุณ \n\n กรุณาคลิกที่ลิงก์ด้านล่างเพื่อตั้งรหัสผ่านใหม่: \n\n ${resetUrl} \n\n (ลิงก์นี้จะหมดอายุใน 15 นาที หากคุณไม่ได้เป็นผู้ร้องขอ กรุณาเพิกเฉยต่ออีเมลฉบับนี้)`;
+    
+    // 🟢 5. สร้างหน้าตาอีเมลแบบ HTML
+    const htmlMessage = `
+      <div style="font-family: 'Prompt', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #DCEDC1; border-radius: 16px; background-color: #FFFEF2;">
+        <h2 style="color: #256D45; text-align: center; font-size: 24px; margin-bottom: 20px;">
+          คำขอตั้งรหัสผ่านใหม่
+        </h2>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">สวัสดีครับ,</p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          เราได้รับคำขอให้รีเซ็ตรหัสผ่านสำหรับบัญชีที่เชื่อมโยงกับอีเมล <strong>${email}</strong> บนระบบของ <strong>ธีรยุทธการเกษตร</strong>
+        </p>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          หากคุณเป็นผู้ร้องขอ กรุณาคลิกที่ปุ่มด้านล่างเพื่อดำเนินการตั้งรหัสผ่านใหม่:
+        </p>
+        
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${resetUrl}" 
+             style="background-color: #256D45; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 10px rgba(37, 109, 69, 0.2);">
+            คลิกเพื่อตั้งรหัสผ่านใหม่
+          </a>
+        </div>
+
+        <p style="color: #666; font-size: 14px; text-align: center;">
+          <em>หมายเหตุ: ลิงก์นี้จะมีอายุการใช้งาน 15 นาที เพื่อความปลอดภัยของคุณ</em>
+        </p>
+        <hr style="border: 0; border-top: 2px dashed #DCEDC1; margin: 30px 0;">
+        <p style="color: #999; font-size: 13px; text-align: center; line-height: 1.5;">
+          หากปุ่มด้านบนไม่ทำงาน คุณสามารถคัดลอกลิงก์ด้านล่างไปวางในเบราว์เซอร์ของคุณได้:<br>
+          <a href="${resetUrl}" style="color: #256D45; word-break: break-all;">${resetUrl}</a>
+        </p>
+        <p style="color: #999; font-size: 13px; text-align: center; margin-top: 20px;">
+          หากคุณไม่ได้ร้องขอการเปลี่ยนรหัสผ่านนี้ กรุณาเพิกเฉยต่ออีเมลฉบับนี้
+        </p>
+      </div>
+    `;
 
     try {
-      // 🟢 เรียกใช้ฟังก์ชันส่งอีเมล
-      await this.sendEmail(user.email, 'รีเซ็ตรหัสผ่าน - ธีรยุทธการเกษตร', message);
+      await this.sendEmail(user.email, 'รีเซ็ตรหัสผ่าน - ธีรยุทธการเกษตร', htmlMessage);
       return { message: 'ส่งอีเมลสำเร็จแล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ' };
     } catch (error) {
       console.error('Email error:', error);
+<<<<<<< resetpassword
+      user.resetPasswordToken = null as any; 
+=======
       // ถ้าส่งอีเมลไม่สำเร็จ ต้องเคลียร์ข้อมูล Token ทิ้ง
       user.resetPasswordToken = null as any;
+>>>>>>> main
       user.resetPasswordExpire = null as any;
       await this.usersRepository.save(user);
 
@@ -178,6 +215,7 @@ export class UsersService {
     }
   }
 
+  // 🟢 ฟังก์ชันรีเซ็ตรหัสผ่าน (เอากลับมาให้แล้วครับ ฟังก์ชันนี้แหละที่หายไป!)
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -204,12 +242,12 @@ export class UsersService {
   }
 
   // 🟢 ฟังก์ชันส่งอีเมลจริงผ่าน Gmail
-  private async sendEmail(toEmail: string, subject: string, message: string) {
+  private async sendEmail(toEmail: string, subject: string, htmlContent: string) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'lipapiruk107@gmail.com', // 📌 1. ใส่อีเมล Gmail ของคุณตรงนี้
-        pass: 'tnmagcwbuasdpftm',    // 📌 2. ใส่ "รหัสผ่านสำหรับแอป" (App Password) ตรงนี้
+        user: 'lipapiruk107@gmail.com',
+        pass: 'tnmagcwbuasdpftm',
       },
     });
 
@@ -217,7 +255,7 @@ export class UsersService {
       from: '"ธีรยุทธการเกษตร" <noreply@yourdomain.com>',
       to: toEmail,
       subject: subject,
-      text: message,
+      html: htmlContent, 
     });
   }
-}
+} 
