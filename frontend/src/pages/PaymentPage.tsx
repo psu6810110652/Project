@@ -293,9 +293,9 @@ const PaymentPage: React.FC = () => {
         {/* === การ์ดที่ 1: สรุปคำสั่งซื้อ === */}
         <div className="bg-white rounded-3xl p-6 md:p-8 shadow-md flex flex-col md:flex-row gap-8">
 
-          <div className="flex-1 flex flex-col gap-6">
-            <div className="flex flex-col gap-4 max-h-75 overflow-y-auto pr-2 no-scrollbar">
-              <h3 className="text-xl font-bold text-[#256D45] border-b pb-2">รายการสินค้า ({cartItems.length} รายการ)</h3>
+          <div className="flex-1 flex flex-col">
+            <div className="flex flex-col gap-4 pr-2">
+              <h3 className="text-xl font-bold text-[#256D45] border-b pb-2 mb-6">รายการสินค้า ({cartItems.length} รายการ)</h3>
 
               {cartItems.length === 0 ? (
                 <p className="text-red-500">ไม่พบข้อมูลสินค้า กรุณากลับไปที่ตะกร้า</p>
@@ -309,11 +309,11 @@ const PaymentPage: React.FC = () => {
                         <span className="text-2xl text-gray-400">📦</span>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <h2 className="text-lg font-bold text-[#256D45]">{item.name}</h2>
-                      <div className="flex justify-between mt-1">
-                        <p className="text-[#256D45] font-medium">จำนวน: {item.quantity} ชิ้น</p>
-                        <p className="text-[#256D45] font-bold">
+                    <div className="flex-1 text-left">
+                      <h2 className="text-lg font-bold text-[#256D45] text-left">{item.name}</h2>
+                      <div className="flex justify-between mt-1 items-end">
+                        <p className="text-[#256D45] font-medium text-left">จำนวน: {item.quantity} ชิ้น</p>
+                        <p className="text-[#256D45] font-bold text-right">
                           {(item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price) * item.quantity} ฿
                         </p>
                       </div>
@@ -375,10 +375,10 @@ const PaymentPage: React.FC = () => {
           <div className="hidden md:block w-0.5 bg-[#256D45]"></div>
           <div className="md:hidden h-0.5 w-full bg-[#256D45]"></div>
 
-          <div className="flex-1 flex flex-col justify-between py-2">
-            <h3 className="text-xl font-bold text-[#256D45] border-b pb-2 mb-4">สรุปยอด</h3>
+          <div className="flex-1 flex flex-col">
+            <h3 className="text-xl font-bold text-[#256D45] border-b pb-2 mb-6">สรุปยอด</h3>
 
-            <div className="space-y-4 text-lg font-bold text-[#256D45]">
+            <div className="space-y-4 text-lg font-bold text-[#256D45] flex-1">
               <div className="flex justify-between">
                 <span>ราคาสินค้ารวม</span>
                 <span>{totalPrice} ฿</span>
@@ -395,7 +395,7 @@ const PaymentPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex justify-between mt-8 text-xl md:text-2xl font-black text-[#256D45] pt-4 border-t-2 border-[#256D45]">
+            <div className="flex justify-between mt-8 text-xl md:text-2xl font-black text-[#256D45] pt-4 border-t-2 border-[#256D45] mt-auto">
               <span>ยอดชำระสุทธิ</span>
               <span className="text-2xl">฿ {finalTotal}</span>
             </div>
