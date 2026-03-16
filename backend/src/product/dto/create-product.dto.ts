@@ -8,8 +8,9 @@ class CategoryDto {
 }
 
 export class CreateProductDto {
+  @IsOptional()
   @IsString()
-  id: string; // Product Code
+  id?: string; // Product Code (ระบบจะสร้างให้อัตโนมัติ)
 
   @IsString()
   name: string;

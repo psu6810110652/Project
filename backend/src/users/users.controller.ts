@@ -1,4 +1,16 @@
-import {Controller,Get,Post,Body,Patch,Param,Delete,UseGuards,ParseIntPipe,Request,Req,ForbiddenException,InternalServerErrorException,
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  Req,
+  ForbiddenException,
+  InternalServerErrorException,
   HttpException
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -54,20 +66,19 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  // Protected: Find a user by their username (Admin or self)
+  // Protected: Find a user by their ID (Admin or self)
+  // ID อาจเป็น "6900000001" หรือ "A001" — ไม่ใช้ ParseIntPipe แล้ว
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
+  async findOne(@Param('id') id: string, @Request() req) {
     try {
       // IDOR Protection: allow access only for the same user or an Admin
-      // Note: req.user.sub comes from JWT as a number; id is parsed by ParseIntPipe
-      if (Number(req.user.sub) !== id && req.user.role !== UserRole.ADMIN) {
+      if (String(req.user.sub) !== id && req.user.role !== UserRole.ADMIN) {
         throw new ForbiddenException('You can only access your own profile');
       }
       const user = await this.usersService.findOneById(id);
       return user;
     } catch (error) {
-      // Re-throw known HTTP exceptions (403, 404, etc.) without wrapping them as 500
       if (error instanceof HttpException) {
         throw error;
       }
@@ -80,13 +91,11 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
     @Request() req
   ) {
-    // Explicit IDOR protection check: ensure req.user.sub === id
-    // If the IDs do not match, throw a ForbiddenException, unless the user has the 'Admin' role.
-    if (Number(req.user.sub) !== id && req.user.role !== UserRole.ADMIN) {
+    if (String(req.user.sub) !== id && req.user.role !== UserRole.ADMIN) {
       throw new ForbiddenException('You are not allowed to update this profile');
     }
     return this.usersService.update(id, updateUserDto);
@@ -96,7 +105,7 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 }

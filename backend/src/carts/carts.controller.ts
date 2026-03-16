@@ -19,6 +19,6 @@ export class CartsController {
 
   @Delete(':cartItemId')
   removeItem(@Request() req, @Param('cartItemId') cartItemId: string) {
-    return this.cartsService.remove(req.user.sub, +cartItemId);
+    return this.cartsService.remove(+cartItemId, req.user.sub);
   }
 }

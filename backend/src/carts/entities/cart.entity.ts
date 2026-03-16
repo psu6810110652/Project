@@ -6,8 +6,8 @@ export class Cart {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
-    user_id: number; // เก็บว่าใครเป็นคนหยิบใส่ตะกร้า
+    @Column({ type: 'varchar', length: 20 })
+    user_id: string; // เก็บว่าใครเป็นคนหยิบใส่ตะกร้า
 
     @Column()
     product_id: number; // เก็บว่าหยิบสินค้าชิ้นไหน

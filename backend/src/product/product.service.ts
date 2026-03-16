@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
@@ -71,6 +71,7 @@ export class ProductService {
   async findAllByCategory(categoryId: number, limit: number = 20) {
     const query = this.productRepository.createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.detail', 'detail')
       .where('category.id = :categoryId', { categoryId });
 
     const products = await this.addStatsToQuery(query)
@@ -78,7 +79,11 @@ export class ProductService {
       .take(limit)
       .getRawAndEntities();
 
-    return this.mapRawToProduct(products.entities, products.raw);
+    const entities = this.mapRawToProduct(products.entities, products.raw);
+    return entities.map(p => ({
+      ...p,
+      type: (p as any).detail?.type // Flatten type for frontend suggestions
+    }));
   }
 
   async findPromotions(limit: number = 10) {
@@ -200,16 +205,76 @@ export class ProductService {
     return await this.productRepository.remove(product);
   }
 
+  // ====================================================================
+  // 🔢  ระบบ Generate Product ID อัตโนมัติ (เช่น 1010000)
+  //     Format: [Category ID] + [Type 2 หลัก] + [Sequence 4 หลัก]
+  // ====================================================================
+  public async generateProductId(categoryId: number, productType?: string): Promise<string> {
+    const typeStr = productType || 'ทั่วไป';
+    const catPrefix = String(categoryId);
+    const minLen = catPrefix.length + 6; // เช่น categoryId = 1 ความยาวจะเป็น 1 + 2 (type) + 4 (seq) = 7
+
+    // 1. หาว่า "ประเภทย่อย" นี้เคยถูกสร้างใน "หมวดหมู่" นี้หรือยัง เพื่อหา Sequence ล่าสุด
+    const latestSameType = await this.productRepository
+      .createQueryBuilder('p')
+      .leftJoin('p.detail', 'pd')
+      .where('p.category_id = :categoryId', { categoryId })
+      .andWhere("COALESCE(pd.type, 'ทั่วไป') = :type", { type: typeStr })
+      .andWhere('LENGTH(p.id) = :len', { len: minLen })
+      .andWhere('p.id LIKE :pattern', { pattern: `${catPrefix}%` })
+      .orderBy('p.id', 'DESC')
+      .getOne();
+
+    if (latestSameType) {
+      // มีประเภทนี้อยู่แล้ว เช่น 1010000 -> ถัดไปจะเป็น 1010001
+      const currentIdNum = parseInt(latestSameType.id, 10);
+      const nextIdNum = currentIdNum + 1;
+      return String(nextIdNum);
+    }
+
+    // 2. ถ้ายังไม่เคยมี "ประเภทย่อย" (Type) นี้ใน "หมวดหมู่" ให้หา Type Code ล่าสุดที่เพิ่งรันไป
+    const latestCategoryProduct = await this.productRepository
+      .createQueryBuilder('p')
+      .where('p.category_id = :categoryId', { categoryId })
+      .andWhere('LENGTH(p.id) = :len', { len: minLen })
+      .andWhere('p.id LIKE :pattern', { pattern: `${catPrefix}%` })
+      .orderBy('p.id', 'DESC')
+      .getOne();
+
+    if (latestCategoryProduct) {
+      // สมมติได้ 1020005 -> ตัด catPrefix (1) ออกเหลือ '020005' -> ดึง 2 ตัวแรกคือ '02' (Type Code)
+      const remainingStr = latestCategoryProduct.id.substring(catPrefix.length); 
+      const lastTypeCodeStr = remainingStr.substring(0, 2); 
+      
+      let nextTypeCodeNum = parseInt(lastTypeCodeStr, 10) + 1;
+      if (nextTypeCodeNum > 99) {
+         throw new InternalServerErrorException('รองรับประเภทย่อยได้สูงสุด 99 ประเภทต่อหมวดหมู่');
+      }
+      const nextTypeCodeFormatted = String(nextTypeCodeNum).padStart(2, '0');
+      
+      // Sequence เริ่มใหม่ที่ 0000
+      return `${catPrefix}${nextTypeCodeFormatted}0000`; 
+    }
+
+    // 3. ถ้าไม่มีสินค้าใดๆ เลยในหมวดหมู่นี้ที่เข้าเงื่อนไข (เริ่ม Type แรกสุด '01')
+    return `${catPrefix}010000`;
+  }
+
   async create(createProductDto: CreateProductDto) {
-    const { description, imageUrls, type, specifications, howToUse, ...productData } = createProductDto as any;
+    const { id: incomingId, description, imageUrls, type, specifications, howToUse, category, ...productData } = createProductDto as any;
+
+    // รัน ID สินค้าอัตโนมัติตาม Category และ Type (ไม่สนใจ ID ที่ส่งมาจาก Frontend)
+    const newId = await this.generateProductId(category.id, type);
 
     const newProduct = this.productRepository.create({
       ...productData,
+      id: newId,
+      category: { id: category.id },
       promotionPrice: productData.promotionPrice ?? undefined,
       detail: {
         description,
         imageUrls,
-        type,
+        type: type || 'ทั่วไป',
         specifications,
         howToUse
       }

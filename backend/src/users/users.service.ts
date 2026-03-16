@@ -8,15 +8,11 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { Repository, MoreThan, DeepPartial } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import nodemailer from 'nodemailer';
-
-// 👇 เพิ่ม 2 บรรทัดนี้เพื่อบังคับให้ระบบอ่านไฟล์ .env ทันที
-import * as dotenv from 'dotenv';
-dotenv.config();
 
 @Injectable()
 export class UsersService {
@@ -24,6 +20,65 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) { }
+
+  // ====================================================================
+  // 🔢 สร้าง User ID แบบกำหนดเอง
+  //    Admin  → A001, A002, A003, ...
+  //    User   → 6900000000, 6900000001, ... (YY + 8 หลัก ตามปี พ.ศ.)
+  // ====================================================================
+  private async generateUserId(role: UserRole): Promise<string> {
+    if (role === UserRole.ADMIN) {
+      // Admin: A001, A002, A003, ...
+      // หา admin ID ล่าสุดที่มี pattern Axxx
+      const result = await this.usersRepository
+        .createQueryBuilder('user')
+        .select('user.id', 'id')
+        .where("user.id LIKE 'A%'")
+        .orderBy('user.id', 'DESC')
+        .limit(1)
+        .getRawOne();
+
+      if (!result?.id) {
+        return 'A001'; // ยังไม่มี Admin เลย เริ่มที่ A001
+      }
+
+      // แปลงเบอร์ล่าสุด เช่น A007 → 7 → +1 → A008
+      const lastNum = parseInt(result.id.replace('A', ''), 10);
+      const nextNum = lastNum + 1;
+      if (nextNum > 999) {
+        throw new InternalServerErrorException('Admin ID เต็มแล้ว (A999)');
+      }
+      return `A${String(nextNum).padStart(3, '0')}`; // A001 ~ A999
+
+    } else {
+      // User ทั่วไป: YY + 8 หลัก ตามปี พ.ศ.
+      const year = new Date().getFullYear(); // ค.ศ. เช่น 2026
+      const buddhistYear = year + 543;       // พ.ศ. เช่น 2569
+      const yy = buddhistYear % 100;         // 2 หลักท้าย เช่น 69
+
+      const rangeStart = `${yy}00000000`; // "6900000000"
+      const rangeEnd   = `${yy}99999999`; // "6999999999"
+
+      // หา max ID ใน range ของปีนี้
+      const result = await this.usersRepository
+        .createQueryBuilder('user')
+        .select('MAX(user.id::BIGINT)', 'maxId')
+        .where("user.id ~ '^[0-9]+$'") // เฉพาะที่เป็นตัวเลขล้วน
+        .andWhere('user.id::BIGINT >= :start AND user.id::BIGINT <= :end', {
+          start: parseInt(rangeStart),
+          end:   parseInt(rangeEnd),
+        })
+        .getRawOne();
+
+      const maxId = result?.maxId ? parseInt(result.maxId) : parseInt(rangeStart) - 1;
+      const nextId = maxId + 1;
+
+      if (nextId > parseInt(rangeEnd)) {
+        throw new InternalServerErrorException('ID ในปีนี้เต็มแล้ว ไม่สามารถสร้างผู้ใช้ใหม่ได้');
+      }
+      return String(nextId); // เก็บเป็น string เช่น "6900000000"
+    }
+  }
 
   async create(createUserDto: CreateUserDto, ipAddress?: string): Promise<User> {
     const existingEmail = await this.usersRepository.findOne({
@@ -55,16 +110,22 @@ export class UsersService {
 
     const { phoneNumber, ...rest } = createUserDto;
 
+    // ===== กำหนด Role และ Generate ID =====
+    const role: UserRole = (rest as any).role ?? UserRole.USER;
+    const newId = await this.generateUserId(role);
+
     const newUser: User = this.usersRepository.create({
+      id: newId,
       username: rest.username,
       email: rest.email,
       isGoogleLogin: rest.isGoogleLogin,
       phone: phoneNumber,
       password: hashedPassword,
+      role: role,
 
       // ===== บันทึก Consent พร้อมหลักฐาน =====
       agreedToTerms: true,
-      termsVersion: '1.0',              // ← อัปเดตเป็น '1.1', '2.0' เมื่อแก้ policy
+      termsVersion: '1.0',
       termsAgreedAt: now,
       marketingConsent: rest.marketingConsent ?? false,
       marketingConsentAt: rest.marketingConsent ? now : null,
@@ -90,7 +151,7 @@ export class UsersService {
     });
   }
 
-  async findOneById(id: number): Promise<User | null> {
+  async findOneById(id: string): Promise<User | null> {
     const user = await this.usersRepository.findOne({
       where: { id: id },
       relations: ['addresses'],
@@ -111,7 +172,7 @@ export class UsersService {
     return this.usersRepository.find({ relations: ['addresses'] });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     if (updateUserDto.password) {
       const salt = await bcrypt.genSalt();
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, salt);
@@ -131,7 +192,7 @@ export class UsersService {
     return result as User;
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const user = await this.findOneById(id);
     if (!user) {
       throw new NotFoundException('หาผู้ใช้ไม่เจอครับ');
@@ -140,7 +201,7 @@ export class UsersService {
   }
 
   // ====================================================================
-  // 🟢 ระบบลืมรหัสผ่าน (Forgot Password) - ส่งอีเมลแบบมีปุ่ม HTML
+  // 🟢 ระบบลืมรหัสผ่าน (Forgot Password) - ส่งอีเมลจริง
   // ====================================================================
 
   async forgotPassword(email: string): Promise<{ message: string }> {
@@ -164,49 +225,15 @@ export class UsersService {
     await this.usersRepository.save(user);
 
     // 4. สร้าง URL ของ React Frontend
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
-    
-    // 🟢 5. สร้างหน้าตาอีเมลแบบ HTML
-    const htmlMessage = `
-      <div style="font-family: 'Prompt', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #DCEDC1; border-radius: 16px; background-color: #FFFEF2;">
-        <h2 style="color: #256D45; text-align: center; font-size: 24px; margin-bottom: 20px;">
-          คำขอตั้งรหัสผ่านใหม่
-        </h2>
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">สวัสดีครับ,</p>
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          เราได้รับคำขอให้รีเซ็ตรหัสผ่านสำหรับบัญชีที่เชื่อมโยงกับอีเมล <strong>${email}</strong> บนระบบของ <strong>ธีรยุทธการเกษตร</strong>
-        </p>
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          หากคุณเป็นผู้ร้องขอ กรุณาคลิกที่ปุ่มด้านล่างเพื่อดำเนินการตั้งรหัสผ่านใหม่:
-        </p>
-        
-        <div style="text-align: center; margin: 40px 0;">
-          <a href="${resetUrl}" 
-             style="background-color: #256D45; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 10px rgba(37, 109, 69, 0.2);">
-            คลิกเพื่อตั้งรหัสผ่านใหม่
-          </a>
-        </div>
-
-        <p style="color: #666; font-size: 14px; text-align: center;">
-          <em>หมายเหตุ: ลิงก์นี้จะมีอายุการใช้งาน 15 นาที เพื่อความปลอดภัยของคุณ</em>
-        </p>
-        <hr style="border: 0; border-top: 2px dashed #DCEDC1; margin: 30px 0;">
-        <p style="color: #999; font-size: 13px; text-align: center; line-height: 1.5;">
-          หากปุ่มด้านบนไม่ทำงาน คุณสามารถคัดลอกลิงก์ด้านล่างไปวางในเบราว์เซอร์ของคุณได้:<br>
-          <a href="${resetUrl}" style="color: #256D45; word-break: break-all;">${resetUrl}</a>
-        </p>
-        <p style="color: #999; font-size: 13px; text-align: center; margin-top: 20px;">
-          หากคุณไม่ได้ร้องขอการเปลี่ยนรหัสผ่านนี้ กรุณาเพิกเฉยต่ออีเมลฉบับนี้
-        </p>
-      </div>
-    `;
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const message = `คุณได้รับอีเมลนี้เนื่องจากมีการร้องขอเปลี่ยนรหัสผ่านสำหรับบัญชีของคุณ \n\n กรุณาคลิกที่ลิงก์ด้านล่างเพื่อตั้งรหัสผ่านใหม่: \n\n ${resetUrl} \n\n (ลิงก์นี้จะหมดอายุใน 15 นาที หากคุณไม่ได้เป็นผู้ร้องขอ กรุณาเพิกเฉยต่ออีเมลฉบับนี้)`;
 
     try {
-      await this.sendEmail(user.email, 'รีเซ็ตรหัสผ่าน - ธีรยุทธการเกษตร', htmlMessage);
+      await this.sendEmail(user.email, 'รีเซ็ตรหัสผ่าน - ธีรยุทธการเกษตร', message);
       return { message: 'ส่งอีเมลสำเร็จแล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ' };
     } catch (error) {
       console.error('Email error:', error);
-      user.resetPasswordToken = null as any; 
+      user.resetPasswordToken = null as any;
       user.resetPasswordExpire = null as any;
       await this.usersRepository.save(user);
 
@@ -214,7 +241,6 @@ export class UsersService {
     }
   }
 
-  // 🟢 ฟังก์ชันรีเซ็ตรหัสผ่าน
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
@@ -241,12 +267,12 @@ export class UsersService {
   }
 
   // 🟢 ฟังก์ชันส่งอีเมลจริงผ่าน Gmail
-  private async sendEmail(toEmail: string, subject: string, htmlContent: string) {
+  private async sendEmail(toEmail: string, subject: string, message: string) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER, // ดึงจาก .env
-        pass: process.env.EMAIL_PASS, // ดึงจาก .env
+        user: 'lipapiruk107@gmail.com',
+        pass: 'tnmagcwbuasdpftm',
       },
     });
 
@@ -254,7 +280,7 @@ export class UsersService {
       from: '"ธีรยุทธการเกษตร" <noreply@yourdomain.com>',
       to: toEmail,
       subject: subject,
-      html: htmlContent, // ส่งเป็น HTML
+      text: message,
     });
   }
 }

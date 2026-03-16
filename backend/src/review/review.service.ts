@@ -29,7 +29,7 @@ export class ReviewService {
         rating: finalRating,
         reviewContent: String(reviewContent || ''),
         product: productId ? { id: String(productId) } : undefined,
-        user: !isNaN(parsedUserId) ? { id: parsedUserId } : undefined
+        user: userId ? { id: String(userId) } : undefined
       };
 
       // Handle optional orderID
@@ -74,7 +74,7 @@ export class ReviewService {
       
       // Update relations if provided
       if (productId) review.product = { id: productId } as any;
-      if (userId) review.user = { id: Number(userId) } as any;
+      if (userId) review.user = { id: String(userId) } as any;
       if (orderID) review.order = { id: orderID } as any;
       if (data.orderDate) review.orderDate = new Date(data.orderDate);
 
@@ -105,7 +105,7 @@ export class ReviewService {
     }));
   }
 
-  async findByOrder(orderId: string, userId: number) {
+  async findByOrder(orderId: string, userId: string) {
     return await this.reviewRepository.find({
       where: {
         order: { id: orderId },

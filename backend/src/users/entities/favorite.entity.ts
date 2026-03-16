@@ -9,7 +9,7 @@ export class Favorite {
     id: string;
 
     @Column({ name: 'user_id' })
-    userId: number;
+    userId: string;
 
     @Column({ name: 'product_id' })
     productId: string;

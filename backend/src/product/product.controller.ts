@@ -45,6 +45,13 @@ export class ProductController {
   }
 
 
+  @Get('generate-id')
+  async previewGeneratedId(@Query('categoryId') categoryId: string, @Query('type') type: string) {
+    if (!categoryId) return { id: '' };
+    const id = await this.productService.generateProductId(+categoryId, type);
+    return { id };
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productService.findOne(id);
