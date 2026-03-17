@@ -1,0 +1,37 @@
+services:
+  # 🚀 Backend Service (Live Reload)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: teerayut_backend
+    restart: always
+    ports:
+      - '3000:3000'
+    env_file: .env
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  # 🌐 Frontend Service (Live Update / HMR)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile   # ใช้ Dockerfile ใน frontend เป็นตัวรัน development
+    container_name: teerayut_frontend
+    restart: always
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./frontend:/usr/src/app   # เชื่อมต่อโค้ดจริงเข้ากับ container
+      - /usr/src/app/node_modules # ป้องกัน node_modules ใน container โดนทับ
+    depends_on:
+      - backend
+
+  # 💾 Redis Service
+  redis:
+    image: redis:alpine
+    container_name: teerayut_redis
+    restart: always
+    ports:
+      - '6379:6379'

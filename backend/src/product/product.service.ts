@@ -100,19 +100,20 @@ export class ProductService {
   async findAll(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
-    const query = this.productRepository.createQueryBuilder('product')
+    // 1. หาจำนวนทั้งหมด (ใช้ Query แยกเพื่อความชัวร์และไม่รบกวน Query หลัก)
+    const totalCountQuery = this.productRepository.createQueryBuilder('product');
+    const total = await totalCountQuery.getCount();
+
+    // 2. ดึงข้อมูลสินค้าพร้อม Pagination และ Subqueries (Stats)
+    const dataQuery = this.productRepository.createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category');
 
-    // Get count BEFORE adding stats subqueries for performance
-    const total = await query.getCount();
-
-    this.addStatsToQuery(query)
+    this.addStatsToQuery(dataQuery)
       .orderBy('product.createdAt', 'DESC')
       .skip(skip)
       .take(limit);
 
-    const products = await query.getRawAndEntities();
-
+    const products = await dataQuery.getRawAndEntities();
     const items = this.mapRawToProduct(products.entities, products.raw);
 
     return {

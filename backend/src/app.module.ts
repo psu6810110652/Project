@@ -25,14 +25,15 @@ import { ReviewModule } from './review/review.module';
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       autoLoadEntities: true,
-      synchronize: true,
-      logging: true,
+      synchronize: false,
+      logging: false,
       ssl: {
         rejectUnauthorized: false,
-        require: true
       },
       extra: {
-        sslmode: 'require'
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
       }
     }),
   }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule, AddressesModule, CartsModule, ReviewModule],

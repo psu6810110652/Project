@@ -15,16 +15,11 @@ export class ReviewService {
 
   async create(data: any) {
     try {
-      console.log('[ReviewService] Incoming Data:', JSON.stringify(data, null, 2));
-
       const { productId, userId, orderID, rating, reviewContent, orderDate } = data;
 
-      // Extract numeric ratings and IDs safely
       const parsedRating = parseFloat(String(rating));
       const finalRating = isNaN(parsedRating) ? 5 : parsedRating;
-      const parsedUserId = parseInt(String(userId));
 
-      // Build a pure object for TypeORM create()
       const reviewPayload: any = {
         rating: finalRating,
         reviewContent: String(reviewContent || ''),
@@ -32,12 +27,10 @@ export class ReviewService {
         user: userId ? { id: String(userId) } : undefined
       };
 
-      // Handle optional orderID
       if (orderID && orderID !== 'null' && orderID !== 'undefined') {
         reviewPayload.order = { id: String(orderID) };
       }
 
-      // Handle optional orderDate
       if (orderDate) {
         const d = new Date(orderDate);
         if (!isNaN(d.getTime())) {
@@ -45,16 +38,10 @@ export class ReviewService {
         }
       }
 
-      console.log('[ReviewService] Creating review with payload:', JSON.stringify(reviewPayload));
       const review = this.reviewRepository.create(reviewPayload);
-      
-      console.log('[ReviewService] Saving review entity...');
-      const result: any = await this.reviewRepository.save(review);
-      console.log('[ReviewService] Review saved successfully:', result.id);
-      return result;
+      return await this.reviewRepository.save(review);
     } catch (error) {
       console.error('[ReviewService] Error creating review:', error);
-      
       if (error.code === '22P02') {
         throw new BadRequestException(`Invalid ID format: ${error.message}`);
       }
