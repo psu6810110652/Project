@@ -127,7 +127,7 @@ export const Box = ({ allProducts, type }: BoxProps): JSX.Element | null => {
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // ซ่อน Scrollbar เผื่อคลาส no-scrollbar ไม่ทำงาน
             >
               {products.map((product) => (
-                <div key={product.id} className="shrink-0 transition-transform hover:scale-105 duration-300">
+                <div key={product.id} className="w-[220px] md:w-[280px] shrink-0 transition-transform hover:scale-105 duration-300">
                   <Products
                     id={product.id}
                     name={product.name}
