@@ -64,6 +64,7 @@ export class FavoritesService {
 
         return savedFavorite;
     }
+    
 
     // ลบสินค้าจากรายการโปรด
     async removeFromFavorites(userId: string, productId: string): Promise<void> {
@@ -85,7 +86,14 @@ export class FavoritesService {
         }
 
         // อัปเดตจำนวนการถูกใจที่ตัวสินค้า (Decrement)
-        await this.productsRepository.decrement({ id: productId }, 'favoriteCount', 1);
+        // อัปเดตจำนวนการถูกใจที่ตัวสินค้า (ลดลง 1 แต่ห้ามต่ำกว่า 0)
+        await this.productsRepository.createQueryBuilder()
+        .update(Product)
+        .set({ 
+            favoriteCount: () => 'GREATEST(favoriteCount - 1, 0)' 
+        })
+        .where('id = :id', { id: productId })
+        .execute();
     }
 
     // ดึงรายการโปรดทั้งหมดของผู้ใช้
