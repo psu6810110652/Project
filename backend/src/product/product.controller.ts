@@ -19,7 +19,6 @@ export class ProductController {
     private readonly favoritesService: FavoritesService
   ) { }
 
-
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -44,23 +43,14 @@ export class ProductController {
     return this.productService.findAll(+page || 1, +limit || 20);
   }
 
-
-  @Get('generate-id')
-  async previewGeneratedId(@Query('categoryId') categoryId: string, @Query('type') type: string) {
-    if (!categoryId) return { id: '' };
-    const id = await this.productService.generateProductId(+categoryId, type);
-    return { id };
+  @Get('category/:categoryId')
+  async findByCategory(@Param('categoryId') categoryId: string, @Query('limit') limit: string) {
+    return this.productService.findAllByCategory(+categoryId, +limit || 10);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productService.findOne(id);
-  }
-
-
-  @Get('category/:categoryId')
-  async findByCategory(@Param('categoryId') categoryId: string, @Query('limit') limit: string) {
-    return this.productService.findAllByCategory(+categoryId, +limit || 10);
   }
 
 

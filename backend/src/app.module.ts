@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CategoryModule } from './category/category.module';
@@ -12,7 +13,9 @@ import { CartsModule } from './carts/carts.module';
 import { ReviewModule } from './review/review.module';
 
 @Module({
-  imports: [TypeOrmModule.forRootAsync({
+  imports: [ConfigModule.forRoot({
+    isGlobal: true,
+  }), TypeOrmModule.forRootAsync({
     useFactory: () => ({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -23,9 +26,13 @@ import { ReviewModule } from './review/review.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       autoLoadEntities: true,
       synchronize: true,
-      logging: false,
+      logging: true,
       ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        require: true
+      },
+      extra: {
+        sslmode: 'require'
       }
     }),
   }), CategoryModule, ProductModule, UsersModule, AuthModule, OrdersModule, AddressesModule, CartsModule, ReviewModule],
