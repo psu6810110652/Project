@@ -64,8 +64,12 @@ export class OrdersController {
     @UseGuards(AuthGuard('jwt'))
     async getMyOrders(@Request() req) {
         try {
+            console.log('DEBUG: getMyOrders for user:', req.user);
             const userId = String(req.user.sub || req.user.userId);
-            return await this.ordersService.findByCustomerId(userId);
+            console.log('DEBUG: Fetching orders for userId:', userId);
+            const orders = await this.ordersService.findByCustomerId(userId);
+            console.log(`DEBUG: Found ${orders.length} orders`);
+            return orders;
         } catch (error) {
             console.error('Error in OrdersController.getMyOrders:', error);
             throw error; // let the global handler convert to 500

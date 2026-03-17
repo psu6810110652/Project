@@ -49,7 +49,7 @@ export default function ManagerOrder() {
                 cancelReason: newStatus === 'cancelled' ? 'สลิปไม่ถูกต้อง' : undefined
             });
             message.success("อัปเดตสถานะสำเร็จ");
-            fetchOrder();
+            navigate('/admin/orders');
         } catch (err) {
             console.error(err);
             message.error("เกิดข้อผิดพลาดในการอัปเดตสถานะ");
@@ -63,7 +63,7 @@ export default function ManagerOrder() {
         switch (status) {
             case 'pending_confirm': return 'รอยืนยัน';
             case 'pending_delivery': return 'รอจัดส่ง';
-            case 'pending_received': return 'กำลังจัดส่ง';
+            case 'pending_received': return 'รอได้รับสินค้า';
             case 'completed': return 'สำเร็จ';
             case 'cancelled': return 'ยกเลิก';
             default: return 'รอยืนยัน';
@@ -103,7 +103,7 @@ export default function ManagerOrder() {
                 {/* Header Title */}
                 <div className="flex justify-between items-end border-b-[3px] border-[#256D45] pb-3 md:pb-4 mt-2">
                     <h1 className="text-3xl md:text-5xl font-black shrink-0 tracking-tight drop-shadow-sm">
-                        รหัสคำสั่งซื้อ #{order.orderNumber || 'ไม่มีรหัส'}
+                        #{order.orderNumber || 'ไม่มีรหัส'}
                     </h1>
                     <div className="text-xl md:text-2xl font-bold bg-transparent text-[#256D45] drop-shadow-sm">
                         {getStatusLabel(order.status)}
@@ -229,24 +229,28 @@ export default function ManagerOrder() {
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="flex justify-between mt-6 px-2 md:px-0">
-                    <button
-                        onClick={() => handleUpdateStatus('cancelled')}
-                        className="border-[2.5px] border-red-500 text-red-500 bg-[#FFFEF2] hover:bg-red-50 font-bold !px-8 md:px-12 !py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-transform hover:scale-105 active:scale-95"
-                    >
-                        ยกเลิก
-                    </button>
+                <div className={`flex ${order.status === 'pending_confirm' ? 'justify-between' : 'justify-end'} mt-6 px-2 md:px-0`}>
+                    {order.status === 'pending_confirm' && (
+                        <button
+                            onClick={() => handleUpdateStatus('cancelled')}
+                            className="border-[2.5px] border-red-500 text-red-500 bg-[#FFFEF2] hover:bg-red-50 font-bold !px-8 md:px-12 !py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-transform hover:scale-105 active:scale-95"
+                        >
+                            ยกเลิก
+                        </button>
+                    )}
 
-                    <button
-                        onClick={() => {
-                            if (order.status === 'pending_confirm') handleUpdateStatus('pending_delivery');
-                            else if (order.status === 'pending_delivery') handleUpdateStatus('pending_received');
-                            else handleUpdateStatus('completed');
-                        }}
-                        className="bg-[#FFFEF2] border-[2.5px] border-[#256D45] hover:bg-[#256D45] hover:text-[#FFFEF2] text-[#256D45] font-bold !px-8 md:px-12 !py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-all hover:scale-105 active:scale-95"
-                    >
-                        {order.status === 'pending_confirm' ? 'ยืนยันออเดอร์' : order.status === 'pending_delivery' ? 'ยืนยันการจัดส่ง' : 'อัปเดตสถานะ'}
-                    </button>
+                    {order.status !== 'completed' && order.status !== 'cancelled' && order.status !== 'pending_received' && (
+                        <button
+                            onClick={() => {
+                                if (order.status === 'pending_confirm') handleUpdateStatus('pending_delivery');
+                                else if (order.status === 'pending_delivery') handleUpdateStatus('pending_received');
+                                else handleUpdateStatus('completed');
+                            }}
+                            className="bg-[#FFFEF2] border-[2.5px] border-[#256D45] hover:bg-[#256D45] hover:text-[#FFFEF2] text-[#256D45] font-bold !px-8 md:px-12 !py-3 rounded-[20px] shadow-lg text-lg md:text-xl transition-all hover:scale-105 active:scale-95"
+                        >
+                            {order.status === 'pending_confirm' ? 'ยืนยันออเดอร์' : order.status === 'pending_delivery' ? 'ยืนยันการจัดส่ง' : 'อัปเดตสถานะ'}
+                        </button>
+                    )}
                 </div>
 
             </div>

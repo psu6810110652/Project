@@ -126,6 +126,7 @@ export default function Order() {
       filters: [
         { text: 'รอยืนยัน', value: 'pending_confirm' },
         { text: 'รอจัดส่ง', value: 'pending_delivery' },
+        { text: 'รอได้รับสินค้า', value: 'pending_received' },
         { text: 'สำเร็จ', value: 'completed' },
         { text: 'ยกเลิก', value: 'cancelled' },
       ],
@@ -143,6 +144,8 @@ export default function Order() {
           dotClass += "bg-orange-500";
         } else if (status === 'pending_delivery') {
           dotClass += "bg-yellow-500";
+        } else if (status === 'pending_received') {
+          dotClass += "bg-blue-500";
         } else if (status === 'completed') {
           dotClass += "bg-green-500";
         } else if (status === 'cancelled') {
@@ -220,6 +223,9 @@ export default function Order() {
                   </div>
                   <div className="flex items-center gap-2 text-sm md:text-base font-bold text-[#256D45]">
                     <span className="w-3.5 h-3.5 rounded-full bg-yellow-500 shadow-sm"></span> รอจัดส่ง
+                  </div>
+                  <div className="flex items-center gap-2 text-sm md:text-base font-bold text-[#256D45]">
+                    <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-sm"></span> รอได้รับสินค้า
                   </div>
                   <div className="flex items-center gap-2 text-sm md:text-base font-bold text-[#256D45]">
                     <span className="w-3.5 h-3.5 rounded-full bg-green-500 shadow-sm"></span> สำเร็จ
