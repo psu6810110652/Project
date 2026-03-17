@@ -53,6 +53,9 @@ export class User {
   @OneToMany(() => Favorite, (favorite) => favorite.user)
   favorites: Favorite[];
 
+  @Column({ name: 'favorites_data', type: 'jsonb', default: [] })
+  favoritesData: any[];
+
   @Column({ nullable: true })
   resetPasswordToken: string;
 

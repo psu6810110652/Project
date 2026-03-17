@@ -24,16 +24,14 @@ export class ProductService {
     'stockQuantity',
     'isPromotion',
     'isFeatured',
+    'favoriteCount',
     'createdAt'
   ];
 
-  /**
-   * Helper method to add calculated statistics to a QueryBuilder
-   */
   private addStatsToQuery(query: any) {
     return query
+      .select(this.PRODUCT_SUMMARY_SELECT.map(f => `product.${String(f)}`))
       .addSelect('(SELECT COUNT(*) FROM reviews r WHERE r."productId" = product.id)', 'reviewCount')
-      .addSelect('(SELECT COUNT(*) FROM user_favorites f WHERE f.product_id = product.id)', 'favoriteCount')
       .addSelect('(SELECT ROUND(AVG(r2.rating)::numeric, 1) FROM reviews r2 WHERE r2."productId" = product.id)', 'avgRating')
       .addSelect(`(
         SELECT COALESCE(SUM((item->>'quantity')::int), 0)
@@ -50,16 +48,15 @@ export class ProductService {
   /**
    * Helper method to map raw results to entities with parsed stats
    */
-  private mapRawToProduct(entities: Product[], raw: any[]) {
+  private mapRawToProduct(entities: Product[], raw: any[] = []) {
     return entities.map((p, i) => {
       const r = raw[i];
-      // Helper to find key in any casing (sqlite/postgres/etc might vary)
-      const getValue = (key: string) => r[key] ?? r[key.toLowerCase()] ?? 0;
+      // Helper to find key in any casing
+      const getValue = (key: string) => r ? (r[key] ?? r[key.toLowerCase()] ?? 0) : 0;
 
       return {
         ...p,
         reviewCount: parseInt(String(getValue('reviewCount'))),
-        favoriteCount: parseInt(String(getValue('favoriteCount'))),
         rating: parseFloat(String(getValue('avgRating'))),
         soldCount: parseInt(String(getValue('soldCount'))),
         thumbnailUrl: (p.thumbnailUrls && p.thumbnailUrls.length > 0) ? p.thumbnailUrls[0] : null,

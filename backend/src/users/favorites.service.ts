@@ -44,7 +44,25 @@ export class FavoritesService {
             productId,
         });
 
-        return await this.favoritesRepository.save(favorite);
+        const savedFavorite = await this.favoritesRepository.save(favorite);
+
+        // อัปเดตข้อมูล Favorites ในตาราง User (Snapshot เหมือน Order)
+        const favoriteSnapshot = {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.thumbnailUrls && product.thumbnailUrls.length > 0 ? product.thumbnailUrls[0] : null,
+            addedAt: new Date()
+        };
+
+        const userFavorites = user.favoritesData || [];
+        user.favoritesData = [...userFavorites, favoriteSnapshot];
+        await this.usersRepository.save(user);
+
+        // อัปเดตจำนวนการถูกใจที่ตัวสินค้า (Increment)
+        await this.productsRepository.increment({ id: productId }, 'favoriteCount', 1);
+
+        return savedFavorite;
     }
 
     // ลบสินค้าจากรายการโปรด
@@ -58,6 +76,16 @@ export class FavoritesService {
         }
 
         await this.favoritesRepository.remove(favorite);
+
+        // อัปเดตข้อมูล Favorites ในตาราง User (ลบออกจาก Snapshot)
+        const user = await this.usersRepository.findOne({ where: { id: userId } });
+        if (user && user.favoritesData) {
+            user.favoritesData = user.favoritesData.filter((item: any) => item.id !== productId);
+            await this.usersRepository.save(user);
+        }
+
+        // อัปเดตจำนวนการถูกใจที่ตัวสินค้า (Decrement)
+        await this.productsRepository.decrement({ id: productId }, 'favoriteCount', 1);
     }
 
     // ดึงรายการโปรดทั้งหมดของผู้ใช้
@@ -84,24 +112,13 @@ export class FavoritesService {
         });
     }
 
-    // ดึงสินค้าที่มีคนชื่นชอบมากที่สุด
-    async getMostFavoritedProducts(limit: number = 10): Promise<any[]> {
-        const result = await this.favoritesRepository
-            .createQueryBuilder('f')
-            .select([
-                'f.productId as productId',
-                'p.name as productName',
-                'p.thumbnailUrls as productImages',
-                'p.price as price',
-                'COUNT(f.id) as favoriteCount'
-            ])
-            .leftJoin('product', 'p', 'p.id = f.productId')
-            .groupBy('f.productId, p.name, p.thumbnailUrls, p.price')
-            .orderBy('favoriteCount', 'DESC')
-            .limit(limit)
-            .getRawMany();
-
-        return result;
+    // ดึงสินค้าที่มีคนชื่นชอบมากที่สุด (ใช้วิธีดึงจากคอลัมน์ใหม่ที่เร็วกว่า)
+    async getMostFavoritedProducts(limit: number = 10): Promise<Product[]> {
+        return await this.productsRepository.find({
+            order: { favoriteCount: 'DESC' },
+            take: limit,
+            relations: ['category']
+        });
     }
 
     // สำหรับ frontend - ดึงข้อมูลสินค้าในรายการโปรดพร้อมข้อมูลเต็ม
@@ -111,16 +128,24 @@ export class FavoritesService {
             relations: ['product', 'product.category', 'product.detail']
         });
 
-        return favorites.map(fav => ({
-            id: fav.id,
-            productId: fav.productId,
-            productName: fav.product.name,
-            price: fav.product.price,
-            imageUrls: fav.product.detail?.imageUrls || [],
-            thumbnailUrls: fav.product.thumbnailUrls,
-            category: fav.product.category,
-            addedAt: fav.createdAt,
-            isFavorite: true
-        }));
+        // กรองเอาเฉพาะรายการที่สินค้ายังคงมีอยู่จริงในระบบ
+        return favorites
+            .filter(fav => fav.product)
+            .map(fav => ({
+                id: fav.product.id, // ใช้ ID สินค้าเป็น ID หลัก
+                name: fav.product.name,
+                price: fav.product.price,
+                stockQuantity: fav.product.stockQuantity,
+                imageUrls: fav.product.detail?.imageUrls || [],
+                thumbnailUrls: fav.product.thumbnailUrls,
+                favoriteCount: fav.product.favoriteCount,
+                rating: 0,
+                reviewCount: 0,
+                soldCount: 0,
+                category: fav.product.category?.name,
+                type: fav.product.detail?.type,
+                addedAt: fav.createdAt,
+                isFavorite: true
+            }));
     }
 }

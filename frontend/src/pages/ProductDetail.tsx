@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Star, Share2, ChevronLeft, ChevronRight, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../services/api';
+import { FavoritesService } from '../services/favoritesService';
 
 // 🌟 1. นำเอา Comment ออก เพื่อเรียกใช้งานระบบตะกร้า
 import { useCart } from '../context/CartContext';
@@ -67,8 +68,8 @@ export const ProductDetail: React.FC = () => {
                 const data = response.data;
                 setProduct(data);
 
-                const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-                setIsFavorite(favorites.includes(id));
+                // Use FavoritesService
+                setIsFavorite(FavoritesService.isFavorite(id));
 
                 setAverageRating(Number(data.rating) || 0);
                 setTotalReviews(Number(data.reviewCount) || 0);
@@ -181,20 +182,35 @@ export const ProductDetail: React.FC = () => {
         }
     };
 
-    const toggleFavorite = () => {
-        if (!id) return;
-        const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-        if (isFavorite) {
-            const newFavorites = favorites.filter((favId: string) => favId !== id);
-            localStorage.setItem('favorites', JSON.stringify(newFavorites));
-            setIsFavorite(false);
-            setMessage('ลบออกจากรายการโปรดแล้ว');
-        } else {
-            favorites.push(id);
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-            setIsFavorite(true);
-            setMessage('เพิ่มไปยังรายการโปรดแล้ว');
+    const toggleFavorite = async () => {
+        if (!id || !product) return;
+        
+        const previousStatus = isFavorite;
+        const newStatus = !previousStatus;
+        
+        // Optimistic update status
+        setIsFavorite(newStatus);
+        
+        // Update product count locally for immediate feedback
+        setProduct((prev: any) => ({
+            ...prev,
+            favoriteCount: newStatus ? (Number(prev?.favoriteCount || 0) + 1) : Math.max(0, Number(prev?.favoriteCount || 0) - 1)
+        }));
+
+        try {
+            await FavoritesService.toggleFavorite(id);
+            setMessage(newStatus ? 'เพิ่มไปยังรายการโปรดแล้ว' : 'ลบออกจากรายการโปรดแล้ว');
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            // Revert on error
+            setIsFavorite(previousStatus);
+            setProduct((prev: any) => ({
+                ...prev,
+                favoriteCount: Number(product.favoriteCount) || 0
+            }));
+            setMessage('เกิดข้อผิดพลาดในการเปลี่ยนสถานะรายการโปรด');
         }
+        
         setTimeout(() => setMessage(''), 2000);
     };
 
@@ -305,10 +321,13 @@ export const ProductDetail: React.FC = () => {
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-2">
                                         <h1 className="text-3xl font-bold text-[#1f502c]">{product.name}</h1>
-                                        <div className="flex gap-2">
-                                            <button onClick={toggleFavorite} className="p-3 rounded-full hover:bg-gray-100 transition-colors">
-                                                <Heart size={32} className={`transition-colors duration-300 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-[#2a6b3b]'}`} />
-                                            </button>
+                                        <div className="flex gap-2 items-center">
+                                            <div className="flex flex-col items-center">
+                                                <button onClick={toggleFavorite} className="p-3 rounded-full hover:bg-gray-100 transition-colors">
+                                                    <Heart size={32} className={`transition-colors duration-300 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-[#2a6b3b]'}`} />
+                                                </button>
+                                                <span className="text-xs text-gray-500 mt-[-8px]">{product.favoriteCount || 0}</span>
+                                            </div>
                                             <button onClick={handleShare} className="p-3 rounded-full hover:bg-gray-100 text-[#2a6b3b]">
                                                 <Share2 size={28} />
                                             </button>

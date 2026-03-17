@@ -2,7 +2,6 @@ import { type ProductCard } from "../types";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FavoritesService } from '../services/favoritesService';
-import api from '../services/api';
 import { optimizeImage } from '../utils/imageUtils';
 
 type ExtendedProductCard = ProductCard & {
@@ -47,38 +46,29 @@ export const Products = (props: ExtendedProductCard) => {
         e.stopPropagation();
         if (!props.id) return;
 
-        const newFavoriteStatus = FavoritesService.toggleFavorite(props.id);
+        // Optimistic update
+        const previousStatus = isFavorite;
+        const newFavoriteStatus = !previousStatus;
         setIsFavorite(newFavoriteStatus);
+        
+        // Update local favorite count for immediate feedback
+        setProductData(prev => ({
+            ...prev,
+            favoriteCount: newFavoriteStatus ? (prev.favoriteCount + 1) : Math.max(0, prev.favoriteCount - 1)
+        }));
 
-        // Update favorite count on backend with proper synchronization
         try {
-            // Fetch current product data to get accurate favorite count
-            const productResponse = await api.get(`/product/${props.id}`);
-            const currentProduct = productResponse.data;
-            const currentFavoriteCount = Number(currentProduct.favoriteCount) || 0;
-
-            const newFavoriteCount = newFavoriteStatus ? currentFavoriteCount + 1 : Math.max(0, currentFavoriteCount - 1);
-
-            // Update local state immediately for better UX
-            setProductData(prev => ({
-                ...prev,
-                favoriteCount: newFavoriteCount
-            }));
-
-            // Update backend
-            await api.patch(`/product/${props.id}/stats`, {
-                favoriteCount: newFavoriteCount
-            });
+            // Call the async service (handles backend add/remove + increment/decrement)
+            await FavoritesService.toggleFavorite(props.id);
+            console.log(`Toggled favorite for product ${props.id} successfully`);
         } catch (error) {
-            console.error('Error updating favorite count:', error);
-            // Revert local state if backend update fails
+            console.error('Error toggling favorite:', error);
+            // Revert state on error
+            setIsFavorite(previousStatus);
             setProductData(prev => ({
                 ...prev,
                 favoriteCount: Number(props.favoriteCount) || 0
             }));
-            // Also revert favorite status
-            FavoritesService.toggleFavorite(props.id); // Toggle back
-            setIsFavorite(!newFavoriteStatus);
         }
     };
 

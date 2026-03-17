@@ -51,6 +51,9 @@ export class Product {
     @Column({ name: 'is_featured', default: false, nullable: true })
     isFeatured: boolean;
 
+    @Column({ name: 'favorite_count', default: 0 })
+    favoriteCount: number;
+
     @CreateDateColumn({ name: 'created_at', nullable: true })
     createdAt: Date;
 
