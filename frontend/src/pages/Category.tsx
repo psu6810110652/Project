@@ -12,7 +12,7 @@ import Seeds from '../assets/images/seed.png';
 import Tools from '../assets/images/tool.png';
 import Chemicals from '../assets/images/Chemical.png';
 import Fertilizers from '../assets/images/Fertilizer.png';
-import Other from '../assets/images/Other.png';
+import Other from '../assets/images/other.png';
 import DefaultBanner from '../assets/images/Home.png';
 
 const Category: React.FC = () => {
