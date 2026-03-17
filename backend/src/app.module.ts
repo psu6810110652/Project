@@ -25,7 +25,7 @@ import { ReviewModule } from './review/review.module';
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: false,
       logging: true,
       ssl: {
         rejectUnauthorized: false,

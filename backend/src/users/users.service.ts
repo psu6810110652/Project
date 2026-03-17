@@ -62,9 +62,9 @@ export class UsersService {
       // หา max ID ใน range ของปีนี้
       const result = await this.usersRepository
         .createQueryBuilder('user')
-        .select('MAX(user.id::BIGINT)', 'maxId')
+        .select('MAX(CAST(user.id AS BIGINT))', 'maxId')
         .where("user.id ~ '^[0-9]+$'") // เฉพาะที่เป็นตัวเลขล้วน
-        .andWhere('user.id::BIGINT >= :start AND user.id::BIGINT <= :end', {
+        .andWhere('CAST(user.id AS BIGINT) >= :start AND CAST(user.id AS BIGINT) <= :end', {
           start: parseInt(rangeStart),
           end: parseInt(rangeEnd),
         })
