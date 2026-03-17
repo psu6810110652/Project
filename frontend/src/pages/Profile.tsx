@@ -596,7 +596,7 @@ const Profile = () => {
                   <span className={`text-4xl font-bold mb-2 ${activeTab === 'pending_received' ? 'text-white' : 'text-[#256D45]'}`}>
                     {counts.pendingReceived}
                   </span>
-                  <span className={`text-sm font-medium ${activeTab === 'pending_received' ? 'text-white' : 'text-gray-600'}`}>รอได้รับ</span>
+                  <span className={`text-sm font-medium ${activeTab === 'pending_received' ? 'text-white' : 'text-gray-600'}`}>รอได้รับสินค้า</span>
                 </div>
 
                 {/* 4. สำเร็จ */}
