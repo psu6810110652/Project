@@ -52,10 +52,8 @@ const ManagerProduct: React.FC = () => {
 
     const [existingTypes, setExistingTypes] = useState<{ value: string }[]>([]);
 
-    // 🌟 เอา Error ของรหัสสินค้าออก เพราะไม่ได้กรอกเองแล้ว
     const inputStyleClasses = "w-full px-5 py-3 bg-[#F8F8F8] border-2 border-[#E8E8E8] rounded-[15px] text-[1.1rem] outline-none transition-all duration-300 focus:border-[#256D45] focus:bg-white focus:shadow-[0_0_10px_rgba(37,109,69,0.1)]";
 
-    // ดึงข้อมูลเริ่มต้น
     useEffect(() => {
         if (!isAdmin) {
             messageApi.error('คุณไม่มีสิทธิ์แก้ไขข้อมูลสินค้า');
@@ -93,7 +91,6 @@ const ManagerProduct: React.FC = () => {
         }
     }, [productId, isEditMode, categoryId, isAdmin, navigate, messageApi]);
 
-    // 🌟 ดึงรหัสสินค้าใหม่ทุกครั้งที่มีการเปลี่ยนประเภทสินค้า (เฉพาะตอนเพิ่มใหม่)
     useEffect(() => {
         if (!isEditMode && categoryId) {
             if (!formData.type || formData.type.trim() === '') {
@@ -114,7 +111,7 @@ const ManagerProduct: React.FC = () => {
 
             const delayTimer = setTimeout(() => {
                 fetchGeneratedId();
-            }, 500); // หน่วง 500ms ให้พิมพ์เสร็จก่อนยิง
+            }, 500);
 
             return () => clearTimeout(delayTimer);
         }
@@ -128,6 +125,24 @@ const ManagerProduct: React.FC = () => {
 
         if (!formData.type.trim()) {
             messageApi.warning('กรุณาระบุประเภทสินค้า');
+            return;
+        }
+
+        // 🌟 ดักจับราคาสินค้า ต้องมากกว่า 0 เสมอ
+        if (formData.price <= 0) {
+            messageApi.warning('ราคาสินค้าต้องมากกว่า 0 บาท');
+            return;
+        }
+
+        // 🌟 ดักจับราคาโปรโมชั่น (ถ้ามี)
+        if (formData.isPromotion && formData.promotionPrice <= 0) {
+            messageApi.warning('ราคาโปรโมชั่นต้องมากกว่า 0 บาท');
+            return;
+        }
+
+        // 🌟 ดักจับจำนวนสินค้า ห้ามติดลบ (เป็น 0 ได้)
+        if (formData.stock < 0) {
+            messageApi.warning('จำนวนสินค้าในคลังห้ามติดลบ');
             return;
         }
 
@@ -296,7 +311,6 @@ const ManagerProduct: React.FC = () => {
                             />
                         </InputBox>
 
-                        {/* 🌟 แสดงรหัสสินค้าแต่ Lock ไว้ */}
                         <InputBox label="รหัสสินค้า" icon={<Hash size={20} />}>
                             <input
                                 className={`${inputStyleClasses} cursor-not-allowed bg-gray-200 text-gray-500`}
@@ -324,6 +338,7 @@ const ManagerProduct: React.FC = () => {
                         <InputBox label="ราคาสินค้าปกติ (บาท)" icon={<Coins size={20} />}>
                             <input
                                 type="number"
+                                min="1" // 🌟 เพิ่ม min=1 เพื่อไม่ให้กดลูกศรลงไปถึง 0 หรือติดลบได้
                                 className={inputStyleClasses}
                                 value={formData.price}
                                 onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
@@ -333,6 +348,7 @@ const ManagerProduct: React.FC = () => {
                         <InputBox label="จำนวนสินค้าในคลัง" icon={<Database size={20} />}>
                             <input
                                 type="number"
+                                min="0" // 🌟 เพิ่ม min=0 เพื่อให้ต่ำสุดได้แค่ 0 ห้ามติดลบ
                                 className={inputStyleClasses}
                                 value={formData.stock}
                                 onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
@@ -357,6 +373,7 @@ const ManagerProduct: React.FC = () => {
                                     <InputBox label="ราคาโปรโมชั่น (บาท)" icon={<Tag size={20} className="text-red-500" />}>
                                         <input
                                             type="number"
+                                            min="1" // 🌟 เพิ่ม min=1 ด้วย
                                             className={`${inputStyleClasses} !border-red-200 focus:!border-red-500 bg-white`}
                                             placeholder="ใส่ราคาที่ลดแล้ว"
                                             value={formData.promotionPrice}
