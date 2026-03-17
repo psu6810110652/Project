@@ -18,7 +18,7 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
   const isRecommend = type === 'recommend';
   const isRelated = type === 'related';
   const isPromotion = type === 'promotion';
-  
+
   const title = customTitle || (isRecommend ? "สินค้าแนะนำ" : isPromotion ? "สินค้าโปรโมชั่น" : "สินค้าทั้งหมด");
 
   // 1. กรองข้อมูล
@@ -41,10 +41,10 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       const totalScroll = scrollWidth - clientWidth;
-      
+
       // อัปเดตสถานะว่าเลื่อนได้หรือไม่
       setIsScrollable(totalScroll > 10);
-      
+
       if (totalScroll > 0) {
         setScrollProgress((scrollLeft / totalScroll) * 100);
       }
@@ -60,16 +60,14 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
       if (container) {
         const { scrollLeft, scrollWidth, clientWidth } = container;
 
-        // Infinite Loop snapping logic
+        const firstItem = container.firstElementChild as HTMLElement;
+        const gap = window.innerWidth >= 768 ? 24 : 16; // md:gap-6 คือ 24px, gap-4 คือ 16px
+        const scrollAmount = firstItem.offsetWidth + gap;
+
         if (scrollLeft >= (scrollWidth * 2 / 3) - clientWidth) {
           container.scrollTo({ left: 0, behavior: 'auto' });
-          setTimeout(() => {
-            // เลื่อนไป 304px (Card 280 + Gap 24) เพื่อให้ตัวถัดไปอยู่กลางเป๊ะ
-            container.scrollBy({ left: 304, behavior: 'smooth' });
-          }, 30);
         } else {
-          // เลื่อนไปทางขวาตามปกติ
-          container.scrollBy({ left: 304, behavior: 'smooth' });
+          container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
         }
       }
     }, 3000);
@@ -82,7 +80,7 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
     const scrollContainer = scrollRef.current;
     if (scrollContainer) {
       handleScroll();
-      
+
       // ถ้าเป็นสินค้าแนะนำ (Infinite Loop) ให้เริ่มที่เซตตรงกลางเพื่อให้ตัวแรกอยู่กลางจอพอดี
       if (isRecommend) {
         const scrollToMiddle = () => {
@@ -112,7 +110,7 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
     : "w-full max-w-7xl mx-auto px-4 md:px-10";
 
   return (
-    <section className={`w-full py-10 bg-[#fffef2] ${isRecommend ? 'mb-4' : 'mb-12'} overflow-hidden`}>
+    <section className={`w-full py-10 bg-[#fffef2] ${isRecommend ? 'mb-4' : 'mb-12'}`}>
       <div className={containerClass}>
 
         {/* Header */}
@@ -151,41 +149,50 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
           >
             <div
               ref={scrollRef}
-              className={`flex gap-4 md:gap-6 no-scrollbar scroll-smooth py-10 w-full 
-                ${!isRecommend ? 'px-6 md:px-10 lg:px-20' : ''}
-                ${(isRecommend || (products.length > 4 && isScrollable)) 
-                  ? 'overflow-x-auto snap-x snap-mandatory' 
-                  : 'overflow-x-hidden justify-start'}`}
+              className={`flex gap-4 md:gap-6 no-scrollbar py-10 w-full 
+                ${!isRecommend ? 'px-6 md:px-10 lg:px-20' : 'px-4'}
+                ${(isRecommend || (isRelated && products.length > 1) || (!isRelated && products.length > 4))
+                  ? 'snap-x snap-proximity justify-start'
+                  : 'justify-center'}`}
               style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
-                scrollPaddingLeft: (isRecommend || (products.length > 4 && isScrollable)) ? 'calc(50% - 140px)' : '0',
-                scrollPaddingRight: (isRecommend || (products.length > 4 && isScrollable)) ? 'calc(50% - 140px)' : '0'
+                overflowX: isRecommend
+                  ? 'scroll'
+                  : (isRelated && products.length > 1) || (!isRelated && products.length > 4)
+                    ? 'scroll'
+                    : 'hidden',
               }}
             >
               {isRecommend ? (
-                /* Infinite Scroll Loop (เฉพาะสินค้าแนะนำ) */
-                [...products, ...products, ...products].map((product, idx) => (
-                  <div
-                    key={`${product.id}-${idx}`}
-                    className="w-[220px] md:w-[280px] shrink-0 transition-transform duration-500 snap-center hover:scale-110 active:scale-105"
-                  >
-                    <Products
-                      id={product.id}
-                      name={product.name}
-                      price={product.price}
-                      stock={product.stock}
-                      image={product.image}
-                      rating={product.rating}
-                      reviewCount={product.reviewCount}
-                      favoriteCount={product.favoriteCount}
-                      soldCount={product.soldCount}
-                      thumbnailUrls={product.thumbnailUrls}
-                    />
-                  </div>
-                ))
+                /* Infinite Scroll Loop — repeat until ≥15 items so it always overflows the screen */
+                (() => {
+                  let repeated = [...products];
+                  while (repeated.length < 15 && products.length > 0) {
+                    repeated = [...repeated, ...products];
+                  }
+                  return repeated.map((product, idx) => (
+                    <div
+                      key={`${product.id}-${idx}`}
+                      className="w-[220px] md:w-[280px] shrink-0 transition-transform duration-500 snap-start hover:scale-110 active:scale-105"
+                    >
+                      <Products
+                        id={product.id}
+                        name={product.name}
+                        price={product.price}
+                        stock={product.stock}
+                        image={product.image}
+                        rating={product.rating}
+                        reviewCount={product.reviewCount}
+                        favoriteCount={product.favoriteCount}
+                        soldCount={product.soldCount}
+                        thumbnailUrls={product.thumbnailUrls}
+                      />
+                    </div>
+                  ));
+                })()
               ) : (
-                /* Normal Slider for Promotion */
+                /* Normal Slider for Promotion / Related */
                 products.map((product) => (
                   <div key={product.id} className="w-[220px] md:w-[280px] shrink-0 transition-transform duration-500 snap-center hover:scale-110 active:scale-105">
                     <Products
@@ -210,12 +217,12 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
               <div className="flex flex-col items-center mt-4">
                 {/* แถบเส้น Progress Bar */}
                 <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden mb-4">
-                  <div 
+                  <div
                     className="h-full bg-[#256d45] transition-all duration-300"
                     style={{ width: `${scrollProgress}%` }}
                   />
                 </div>
-                
+
                 {/* ไอคอนใบ้การเลื่อน */}
                 <div className="flex items-center gap-2 text-[#256d45] opacity-60">
                   <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">

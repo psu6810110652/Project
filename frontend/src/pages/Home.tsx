@@ -43,7 +43,7 @@ const Home: React.FC = () => {
         }));
         setPromotions(processedPromos);
 
-        // Process Featured
+        // Process Featured — ถ้าน้อยกว่า 5 ให้เติมจาก allProducts เพื่อให้ Carousel เลื่อนได้
         const processedFeatured = featuredRes.data.map((p: any) => ({
           ...p,
           image: getFirstImage(p),
@@ -55,7 +55,34 @@ const Home: React.FC = () => {
           favoriteCount: Number(p.favoriteCount) || 0,
           soldCount: Number(p.soldCount) || 0
         }));
-        setFeatured(processedFeatured);
+
+        // Fallback: ถ้า Featured < 5 ให้เติมจาก allProducts จนครบ 8 ชิ้น
+        let finalFeatured = processedFeatured;
+        if (processedFeatured.length < 5) {
+          const allData = allRes.data;
+          const items = Array.isArray(allData?.items)
+            ? allData.items
+            : (Array.isArray(allData) ? allData : []);
+
+          const featuredIds = new Set(processedFeatured.map((p: any) => p.id));
+          const fallbackProducts = items
+            .filter((p: any) => !featuredIds.has(p.id))
+            .slice(0, 8 - processedFeatured.length)
+            .map((p: any) => ({
+              ...p,
+              image: getFirstImage(p),
+              stock: p.stockQuantity ?? p.stock ?? 0,
+              isRecommend: true,
+              isPromotion: p.isPromotion || false,
+              rating: Number(p.rating) || 0,
+              reviewCount: Number(p.reviewCount) || 0,
+              favoriteCount: Number(p.favoriteCount) || 0,
+              soldCount: Number(p.soldCount) || 0
+            }));
+          finalFeatured = [...processedFeatured, ...fallbackProducts];
+        }
+
+        setFeatured(finalFeatured);
 
         // Process All Products
         const allData = allRes.data;
