@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Star, Share2, ChevronLeft, ChevronRight, Heart, ChevronDown, ChevronUp } from 'lucide-react'; 
+import { Star, Share2, ChevronLeft, ChevronRight, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../services/api';
 
 // 🌟 1. นำเอา Comment ออก เพื่อเรียกใช้งานระบบตะกร้า
-import { useCart } from '../context/CartContext'; 
+import { useCart } from '../context/CartContext';
+import { Box } from '../components/banner';
 
 export const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    
+
     // 🌟 2. นำเอา Comment ออก เพื่อใช้งานฟังก์ชัน addToCart
-    const { addToCart } = useCart(); 
+    const { addToCart } = useCart();
 
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -19,22 +20,22 @@ export const ProductDetail: React.FC = () => {
     const [productLoading, setProductLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-    
+
     // State สำหรับสลับ Tab และการแสดงผลเพิ่มเติม
     const [activeTab, setActiveTab] = useState<'description' | 'howToUse'>('description');
     const [showFullDescription, setShowFullDescription] = useState(false);
     const [showFullHowToUse, setShowFullHowToUse] = useState(false);
-    
+
     // Stats & Favorites
     const [averageRating, setAverageRating] = useState(0);
     const [totalReviews, setTotalReviews] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
-    
+
     // Related Products & Modals
     const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
     const [relatedLoading, setRelatedLoading] = useState(false);
     const [showAllImagesModal, setShowAllImagesModal] = useState(false);
-    
+
     const carouselRef = useRef<HTMLDivElement>(null);
 
     // ฟังก์ชันแปลงรูปภาพ
@@ -92,7 +93,7 @@ export const ProductDetail: React.FC = () => {
             try {
                 const response = await api.get(`/product/category/${categoryId}?limit=6`);
                 const items = response.data.items || response.data;
-                
+
                 if (Array.isArray(items)) {
                     const related = items.filter((p: any) => p.id !== id).slice(0, 4);
                     setRelatedProducts(related);
@@ -110,11 +111,11 @@ export const ProductDetail: React.FC = () => {
 
     const parsedImageUrls = getParsedImages(product?.imageUrls);
     const parsedThumbnailUrls = getParsedImages(product?.thumbnailUrls);
-    
-    const currentImages = parsedImageUrls.length > 0 
-        ? parsedImageUrls 
-        : (parsedThumbnailUrls.length > 0 
-            ? parsedThumbnailUrls 
+
+    const currentImages = parsedImageUrls.length > 0
+        ? parsedImageUrls
+        : (parsedThumbnailUrls.length > 0
+            ? parsedThumbnailUrls
             : (product?.imageUrl ? [product.imageUrl] : []));
 
     const displayImages = currentImages.length === 0 ? [
@@ -221,26 +222,20 @@ export const ProductDetail: React.FC = () => {
         ));
     };
 
-    const getRelatedImage = (item: any) => {
-        const thumbs = getParsedImages(item.thumbnailUrls);
-        const imgs = getParsedImages(item.imageUrls);
-        return item.thumbnailUrl || thumbs[0] || item.image || imgs[0] || 'https://placehold.co/400x400/f1f5f9/94a3b8?text=No+Image';
-    };
-
     // จัดการระบบ "แสดงเพิ่มเติม" สำหรับรายละเอียด
     const descriptionText = product?.description || product?.detail?.description || 'ไม่มีคำอธิบายสินค้า';
     const descriptionLines = descriptionText.split('\n');
     const isLongDescription = descriptionLines.length > 10;
-    const displayedDescription = isLongDescription && !showFullDescription 
-        ? descriptionLines.slice(0, 10).join('\n') 
+    const displayedDescription = isLongDescription && !showFullDescription
+        ? descriptionLines.slice(0, 10).join('\n')
         : descriptionText;
 
     // จัดการระบบ "แสดงเพิ่มเติม" สำหรับวิธีใช้งาน
     const howToUseText = product?.howToUse || product?.detail?.howToUse || 'ไม่มีข้อมูลวิธีใช้งาน';
     const howToUseLines = howToUseText.split('\n');
     const isLongHowToUse = howToUseLines.length > 10;
-    const displayedHowToUse = isLongHowToUse && !showFullHowToUse 
-        ? howToUseLines.slice(0, 10).join('\n') 
+    const displayedHowToUse = isLongHowToUse && !showFullHowToUse
+        ? howToUseLines.slice(0, 10).join('\n')
         : howToUseText;
 
     return (
@@ -266,9 +261,9 @@ export const ProductDetail: React.FC = () => {
                     <div className="container mx-auto px-4 max-w-6xl">
                         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6 text-left">
                             <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-                                
+
                                 {/* ---------------- ส่วนรูปภาพ ---------------- */}
-                                <div className="flex flex-col w-full md:w-[450px] lg:w-[500px] flex-shrink-0">
+                                <div className="flex flex-col w-full md:w-[400px] lg:w-[400px] flex-shrink-0">
                                     <div className="relative w-full aspect-square border-2 border-gray-200 rounded-xl bg-gray-50 overflow-hidden group">
                                         <div className="w-full h-full p-4 flex items-center justify-center cursor-pointer" onClick={() => setShowAllImagesModal(true)}>
                                             <img src={displayImages[selectedImageIndex]} alt={product.name} className="max-w-full max-h-full object-contain" />
@@ -366,7 +361,7 @@ export const ProductDetail: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <button onClick={handleAddToCart} disabled={isLoading} className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-3 rounded-xl hover:bg-[#cbe6a8] transition shadow-sm">
+                                    <button onClick={handleAddToCart} disabled={isLoading} className="w-full bg-[#dcf0c3] text-[#1f502c] font-bold text-lg py-3! rounded-xl hover:bg-[#cbe6a8] transition shadow-sm">
                                         🛒 {isLoading ? 'กำลังเพิ่ม...' : 'เพิ่มไปยังรถเข็น'}
                                     </button>
                                 </div>
@@ -377,24 +372,22 @@ export const ProductDetail: React.FC = () => {
                         <div>
                             {/* หัวข้อ Tabs */}
                             <div className="flex gap-1">
-                                <button 
-                                    onClick={() => setActiveTab('description')} 
-                                    className={`font-bold !py-3 !px-8 rounded-t-xl transition-colors ${
-                                        activeTab === 'description' ? 'bg-[#3a7c50] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                    }`}
+                                <button
+                                    onClick={() => setActiveTab('description')}
+                                    className={`font-bold !py-3 !px-8 rounded-t-xl transition-colors ${activeTab === 'description' ? 'bg-[#3a7c50] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        }`}
                                 >
                                     รายละเอียดสินค้า
                                 </button>
-                                <button 
-                                    onClick={() => setActiveTab('howToUse')} 
-                                    className={`font-bold py-3 !px-8 rounded-t-xl transition-colors ${
-                                        activeTab === 'howToUse' ? 'bg-[#3a7c50] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                                    }`}
+                                <button
+                                    onClick={() => setActiveTab('howToUse')}
+                                    className={`font-bold py-3 !px-8 rounded-t-xl transition-colors ${activeTab === 'howToUse' ? 'bg-[#3a7c50] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        }`}
                                 >
                                     วิธีใช้งาน
                                 </button>
                             </div>
-                            
+
                             {/* เนื้อหา Tabs */}
                             <div className="bg-[#fdfcf6] border-t-4 border-[#3a7c50] rounded-b-xl shadow-sm p-6 text-left min-h-[150px]">
                                 {/* เนื้อหา: รายละเอียดสินค้า */}
@@ -405,9 +398,9 @@ export const ProductDetail: React.FC = () => {
                                                 {displayedDescription}
                                                 {isLongDescription && !showFullDescription && <span className="text-gray-400">...</span>}
                                             </p>
-                                            
+
                                             {isLongDescription && (
-                                                <button 
+                                                <button
                                                     onClick={() => setShowFullDescription(!showFullDescription)}
                                                     className="mt-3 flex items-center gap-1 text-[#2a6b3b] font-semibold hover:text-[#1f502c] transition-colors"
                                                 >
@@ -419,15 +412,15 @@ export const ProductDetail: React.FC = () => {
                                                 </button>
                                             )}
                                         </div>
-                                        
+
                                         {/* 🌟 ส่วนแสดง รหัสสินค้า, หมวดหมู่ และ คุณสมบัติ (Specifications) */}
                                         <div className="pt-4 mt-4 border-t border-gray-200">
                                             <p className="text-sm text-gray-600"><span className="font-medium">รหัสสินค้า:</span> {product.id}</p>
-                                            
+
                                             {(product.type || product.detail?.type) && (
                                                 <p className="text-sm text-gray-600 mt-1"><span className="font-medium">ประเภท:</span> {product.type || product.detail?.type}</p>
                                             )}
-                                            
+
                                             {product.category && (
                                                 <p className="text-sm text-gray-600 mt-1"><span className="font-medium">หมวดหมู่:</span> {product.category.name}</p>
                                             )}
@@ -467,9 +460,9 @@ export const ProductDetail: React.FC = () => {
                                                 {displayedHowToUse}
                                                 {isLongHowToUse && !showFullHowToUse && <span className="text-gray-400">...</span>}
                                             </p>
-                                            
+
                                             {isLongHowToUse && (
-                                                <button 
+                                                <button
                                                     onClick={() => setShowFullHowToUse(!showFullHowToUse)}
                                                     className="mt-3 flex items-center gap-1 text-[#2a6b3b] font-semibold hover:text-[#1f502c] transition-colors"
                                                 >
@@ -486,29 +479,22 @@ export const ProductDetail: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ---------------- สินค้าแนะนำ ---------------- */}
-                        {!relatedLoading && relatedProducts.length > 0 && (
-                            <div className="mt-12 mb-8 bg-[#FFFEF2] rounded-3xl p-6 md:p-8 shadow-sm border border-[#e6eed6]">
-                                <div className="flex flex-col items-center justify-center mb-8">
-                                    <h2 className="text-3xl font-bold text-[#1f502c]">สินค้าที่คล้ายกัน</h2>
-                                    <div className="h-[3px] w-256 bg-[#1f502c] mt-3 rounded-full"></div>
-                                </div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                                    {relatedProducts.map((item) => (
-                                        <div key={item.id} onClick={() => navigate(`/product/${item.id}`)} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer border border-gray-100 group">
-                                            <div className="aspect-square bg-gray-50 overflow-hidden">
-                                                <img src={getRelatedImage(item)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-                                            </div>
-                                            <div className="p-4 text-left">
-                                                <h3 className="font-medium text-gray-800 line-clamp-2 text-sm sm:text-base mb-2 group-hover:text-[#2a6b3b]">{item.name}</h3>
-                                                <div className="text-lg font-bold text-[#1f502c]">฿{item.isPromotion && item.promotionPrice ? item.promotionPrice : item.price}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
+
+                    {/* ---------------- สินค้าแนะนำ (แบบเดียวกับหน้า Home) - ย้ายออกมานอก Container เพื่อให้เต็มจอ ---------------- */}
+                    {!relatedLoading && relatedProducts.length > 0 && (
+                        <div className="mt-12 w-full">
+                            <Box
+                                allProducts={relatedProducts.map(p => ({
+                                    ...p,
+                                    isRecommend: p.isRecommend || false,
+                                    isPromotion: p.isPromotion || false
+                                }))}
+                                type="related"
+                                title="สินค้าที่คล้ายกัน"
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -523,7 +509,7 @@ export const ProductDetail: React.FC = () => {
                         <div className="p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                             {displayImages.map((image, idx) => (
                                 <div key={idx} onClick={() => { setSelectedImageIndex(idx); setShowAllImagesModal(false); }} className={`aspect-square rounded-xl overflow-hidden border-2 cursor-pointer ${idx === selectedImageIndex ? 'border-[#2a6b3b]' : 'border-transparent'}`}>
-                                    <img src={image} className="w-full h-full object-cover" alt="รูปขยาย"/>
+                                    <img src={image} className="w-full h-full object-cover" alt="รูปขยาย" />
                                 </div>
                             ))}
                         </div>

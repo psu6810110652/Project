@@ -4,22 +4,26 @@ import { type ProductCard } from '../types';
 
 interface BoxProps {
   allProducts: (ProductCard & {
-    isRecommend: boolean;
-    isPromotion: boolean;
+    isRecommend?: boolean;
+    isPromotion?: boolean;
   })[];
-  type: 'recommend' | 'promotion' | 'all';
+  type: 'recommend' | 'promotion' | 'all' | 'related';
+  title?: string;
   onLoadMore?: () => void;
   hasMore?: boolean;
   loadingMore?: boolean;
 }
 
-export const Box = ({ allProducts, type, onLoadMore, hasMore, loadingMore }: BoxProps): JSX.Element | null => {
+export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore, loadingMore }: BoxProps): JSX.Element | null => {
   const isRecommend = type === 'recommend';
-  const title = isRecommend ? "สินค้าแนะนำ" : type === 'promotion' ? "สินค้าโปรโมชั่น" : "สินค้าทั้งหมด";
+  const isRelated = type === 'related';
+  const isPromotion = type === 'promotion';
+  
+  const title = customTitle || (isRecommend ? "สินค้าแนะนำ" : isPromotion ? "สินค้าโปรโมชั่น" : "สินค้าทั้งหมด");
 
   // 1. กรองข้อมูล
   let products = allProducts.filter(product => {
-    if (type === 'all') return true;
+    if (type === 'all' || type === 'related') return true;
     return isRecommend ? product.isRecommend : product.isPromotion;
   });
 
@@ -31,12 +35,19 @@ export const Box = ({ allProducts, type, onLoadMore, hasMore, loadingMore }: Box
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrollable, setIsScrollable] = useState(false);
 
   const handleScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      const progress = (scrollLeft / (scrollWidth - clientWidth)) * 100;
-      setScrollProgress(progress);
+      const totalScroll = scrollWidth - clientWidth;
+      
+      // อัปเดตสถานะว่าเลื่อนได้หรือไม่
+      setIsScrollable(totalScroll > 10);
+      
+      if (totalScroll > 0) {
+        setScrollProgress((scrollLeft / totalScroll) * 100);
+      }
     }
   };
 
@@ -66,11 +77,23 @@ export const Box = ({ allProducts, type, onLoadMore, hasMore, loadingMore }: Box
     return () => clearInterval(interval);
   }, [type, products.length, isHovered]);
 
-  // ระบบเช็คปุ่มกด (สำหรับโปรโมชั่น)
+  // ระบบเช็ค Scroll Progress และตั้งค่าเริ่มต้นสำหรับ Infinite Loop
   useEffect(() => {
     const scrollContainer = scrollRef.current;
     if (scrollContainer) {
       handleScroll();
+      
+      // ถ้าเป็นสินค้าแนะนำ (Infinite Loop) ให้เริ่มที่เซตตรงกลางเพื่อให้ตัวแรกอยู่กลางจอพอดี
+      if (isRecommend) {
+        const scrollToMiddle = () => {
+          if (scrollContainer.scrollWidth > 0) {
+            scrollContainer.scrollLeft = scrollContainer.scrollWidth / 3;
+          }
+        };
+        // รอให้ DOM render เสร็จก่อนคำนวณ
+        setTimeout(scrollToMiddle, 100);
+      }
+
       scrollContainer.addEventListener('scroll', handleScroll);
       window.addEventListener('resize', handleScroll);
       return () => {
@@ -83,8 +106,8 @@ export const Box = ({ allProducts, type, onLoadMore, hasMore, loadingMore }: Box
   if (products.length === 0) return null;
 
   const isAll = type === 'all';
-  // ทั้งสินค้าแนะนำและโปรโมชั่นให้กว้างสุดจอ ส่วน 'all' (Grid) ให้มีขอบปกติ
-  const containerClass = (isRecommend || type === 'promotion')
+  // ทั้งสินค้าแนะนำ, โปรโมชั่น และสินค้าที่คล้ายกัน ให้กว้างสุดจอ
+  const containerClass = (isRecommend || isPromotion || isRelated)
     ? "w-full"
     : "w-full max-w-7xl mx-auto px-4 md:px-10";
 
@@ -128,16 +151,20 @@ export const Box = ({ allProducts, type, onLoadMore, hasMore, loadingMore }: Box
           >
             <div
               ref={scrollRef}
-              className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-10 w-full snap-x snap-mandatory"
+              className={`flex gap-4 md:gap-6 no-scrollbar scroll-smooth py-10 w-full 
+                ${!isRecommend ? 'px-6 md:px-10 lg:px-20' : ''}
+                ${(isRecommend || (products.length > 4 && isScrollable)) 
+                  ? 'overflow-x-auto snap-x snap-mandatory' 
+                  : 'overflow-x-hidden justify-start'}`}
               style={{
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
-                scrollPaddingLeft: 'calc(50% - 140px)',
-                scrollPaddingRight: 'calc(50% - 140px)'
+                scrollPaddingLeft: (isRecommend || (products.length > 4 && isScrollable)) ? 'calc(50% - 140px)' : '0',
+                scrollPaddingRight: (isRecommend || (products.length > 4 && isScrollable)) ? 'calc(50% - 140px)' : '0'
               }}
             >
               {isRecommend ? (
-                /* Infinite Scroll Loop (เบิ้ล 3 ชุดเพื่อให้เลื่อนได้ยาวๆ) */
+                /* Infinite Scroll Loop (เฉพาะสินค้าแนะนำ) */
                 [...products, ...products, ...products].map((product, idx) => (
                   <div
                     key={`${product.id}-${idx}`}
@@ -178,27 +205,29 @@ export const Box = ({ allProducts, type, onLoadMore, hasMore, loadingMore }: Box
               )}
             </div>
 
-            {/* ✅ Scroll Indicator & Hint */}
-            <div className="flex flex-col items-center mt-4">
-              {/* แถบเส้น Progress Bar */}
-              <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden mb-4">
-                <div 
-                  className="h-full bg-[#256d45] transition-all duration-300"
-                  style={{ width: `${scrollProgress}%` }}
-                />
+            {/* ✅ Scroll Indicator & Hint - แสดงเฉพาะเมื่อมีเนื้อหาที่ต้องเลื่อน และสินค้า > 4 (สำหรับแบบไม่ Loop) */}
+            {(isRecommend ? isScrollable : (isScrollable && products.length > 4)) && (
+              <div className="flex flex-col items-center mt-4">
+                {/* แถบเส้น Progress Bar */}
+                <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden mb-4">
+                  <div 
+                    className="h-full bg-[#256d45] transition-all duration-300"
+                    style={{ width: `${scrollProgress}%` }}
+                  />
+                </div>
+                
+                {/* ไอคอนใบ้การเลื่อน */}
+                <div className="flex items-center gap-2 text-[#256d45] opacity-60">
+                  <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span className="text-sm font-medium">Scroll to explore</span>
+                  <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </div>
               </div>
-              
-              {/* ไอคอนใบ้การเลื่อน */}
-              <div className="flex items-center gap-2 text-[#256d45] opacity-60">
-                <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span className="text-sm font-medium">Scroll to explore</span>
-                <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
