@@ -179,7 +179,6 @@ export default function Order() {
     <ConfigProvider
       theme={{
         token: {
-          fontFamily: "'Prompt', sans-serif",
           colorPrimary: '#256D45',
         },
         components: {
@@ -191,7 +190,7 @@ export default function Order() {
         },
       }}
     >
-      <div className="min-h-screen bg-[#DCEDC1] p-6 lg:p-10 font-['Prompt'] w-full">
+      <div className="min-h-screen bg-[#DCEDC1] p-6 lg:p-10 w-full">
         <div className="max-w-400 mx-auto">
 
           {/* หัวข้อ */}

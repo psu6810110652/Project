@@ -18,7 +18,7 @@ const ManageCategories: React.FC = () => {
     }, []);
 
     return (
-        <div className="flex flex-col gap-10 font-['Prompt'] w-full">
+        <div className="flex flex-col gap-10 w-full min-h-screen bg-[#DCEDC1] p-6 lg:p-10">
             <div className="flex flex-col items-center justify-center w-full mx-auto">
                 <h1 className="text-6xl font-semibold text-[#256D45] drop-shadow-md [-webkit-text-stroke:1.75px_#256d45] tracking-[0.05em]">
                     จัดการสินค้า

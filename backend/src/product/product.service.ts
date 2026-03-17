@@ -15,22 +15,10 @@ export class ProductService {
     private readonly productRepository: Repository<Product>,
   ) { }
 
-  private readonly PRODUCT_SUMMARY_SELECT: (keyof Product)[] = [
-    'id',
-    'name',
-    'price',
-    'promotionPrice',
-    'thumbnailUrls',
-    'stockQuantity',
-    'isPromotion',
-    'isFeatured',
-    'favoriteCount',
-    'createdAt'
-  ];
+
 
   private addStatsToQuery(query: any) {
     return query
-      .select(this.PRODUCT_SUMMARY_SELECT.map(f => `product.${String(f)}`))
       .addSelect('(SELECT COUNT(*) FROM reviews r WHERE r."productId" = product.id)', 'reviewCount')
       .addSelect('(SELECT ROUND(AVG(r2.rating)::numeric, 1) FROM reviews r2 WHERE r2."productId" = product.id)', 'avgRating')
       .addSelect(`(
@@ -65,7 +53,7 @@ export class ProductService {
   }
 
   // ฟังก์ชันใหม่สำหรับดึงสินค้าตามหมวดหมู่
-  async findAllByCategory(categoryId: number, limit: number = 20) {
+  async findAllByCategory(categoryId: number, limit: number = 100) {
     const query = this.productRepository.createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.detail', 'detail')

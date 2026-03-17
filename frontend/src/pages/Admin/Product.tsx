@@ -119,7 +119,7 @@ const ViewProducts: React.FC = () => {
                 setLoading(true);
                 const [catResponse, prodResponse] = await Promise.all([
                     api.get(`/category/${categoryId}`),
-                    api.get(`/product/category/${categoryId}`)
+                    api.get(`/product/category/${categoryId}?limit=1000`)
                 ]);
                 setCategory(catResponse.data);
                 setProducts(prodResponse.data);
@@ -139,8 +139,7 @@ const ViewProducts: React.FC = () => {
         <ConfigProvider
             theme={{
                 token: {
-                    colorPrimary: '#256D45',
-                    fontFamily: 'Prompt',
+                    colorPrimary: '#256D45'
                 },
                 components: {
                     Table: {
@@ -153,7 +152,7 @@ const ViewProducts: React.FC = () => {
                 },
             }}
         >
-            <div className="flex flex-col gap-4 md:gap-6 font-['Prompt'] w-full">
+            <div className="min-h-screen bg-[#DCEDC1] p-6 lg:p-10 w-full">
                 {contextHolder}
                 {/* Header */}
                 <div className="flex flex-col w-full mx-auto mb-4 md:mb-6">
@@ -183,7 +182,7 @@ const ViewProducts: React.FC = () => {
                         loading={loading}
                         scroll={{ x: 800 }} // เพิ่มตัวนี้เพื่อให้ไถตารางแนวนอนได้ในจอมือถือ
                         pagination={{
-                            pageSize: 6,
+                            pageSize: 10,
                             placement: ['bottomCenter'],
                             align: 'center',
                             className: "py-6"

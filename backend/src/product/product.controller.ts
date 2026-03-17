@@ -40,12 +40,12 @@ export class ProductController {
 
   @Get()
   async findAll(@Query('page') page: string, @Query('limit') limit: string) {
-    return this.productService.findAll(+page || 1, +limit || 20);
+    return this.productService.findAll(+page || 1, +limit || 100);
   }
 
   @Get('category/:categoryId')
   async findByCategory(@Param('categoryId') categoryId: string, @Query('limit') limit: string) {
-    return this.productService.findAllByCategory(+categoryId, +limit || 10);
+    return this.productService.findAllByCategory(+categoryId, +limit || 100);
   }
 
   @Get(':id')

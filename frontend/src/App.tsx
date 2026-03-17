@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Menu, X, Loader2 } from 'lucide-react';
+import { ConfigProvider } from 'antd';
 import './App.css'
 
 
@@ -51,7 +52,7 @@ function UserLayout() {
             <Routes>
               <Route path="/" element={<Home />} />
               {/* ย้าย /:category ลงไปไว้ล่างสุด */}
-              
+
               {/* เส้นทางที่ระบุชื่อชัดเจน ให้เอาไว้ด้านบนทั้งหมด */}
               <Route path="/cart" element={<Cart />} />
               <Route path="/profile" element={<Profile />} />
@@ -63,7 +64,7 @@ function UserLayout() {
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/review/:productId" element={<ReviewPage />} />
               <Route path="/profile/review/:orderId" element={<EditReviewPage />} />
-              
+
               {/* 🟢 หน้าลืมรหัสผ่านของเรา */}
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -148,22 +149,31 @@ function AdminLayout() {
 
 function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <AuthProvider>
-        <Routes>
-          <Route path="/*" element={<UserLayout />} />
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoute allowedRole="Admin">
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </AuthProvider>
-    </Router>
+    <ConfigProvider
+      theme={{
+        token: {
+          fontFamily: "Prompt",
+          colorPrimary: '#256D45',
+        },
+      }}
+    >
+      <Router>
+        <ScrollToTop />
+        <AuthProvider>
+          <Routes>
+            <Route path="/*" element={<UserLayout />} />
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute allowedRole="Admin">
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </Router>
+    </ConfigProvider>
   )
 }
 
