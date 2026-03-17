@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, type JSX } from 'react';
+import { useRef, useState, useEffect, useMemo, type JSX } from 'react';
 import { Products } from './products';
 import { type ProductCard } from '../types';
 
@@ -21,16 +21,18 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
 
   const title = customTitle || (isRecommend ? "สินค้าแนะนำ" : isPromotion ? "สินค้าโปรโมชั่น" : "สินค้าทั้งหมด");
 
-  // 1. กรองข้อมูล
-  let products = allProducts.filter(product => {
-    if (type === 'all' || type === 'related') return true;
-    return isRecommend ? product.isRecommend : product.isPromotion;
-  });
+  // 1. กรองข้อมูล (ใช้ useMemo เพื่อให้ reference นิ่ง ไม่รัน useEffect พร่ำเพรื่อ)
+  const products = useMemo(() => {
+    let list = allProducts.filter(product => {
+      if (type === 'all' || type === 'related') return true;
+      return isRecommend ? product.isRecommend : product.isPromotion;
+    });
 
-  // 2. ตัดจำนวนเฉพาะสินค้าแนะนำ (ถ้ามีเยอะเกินไป)
-  if (isRecommend && products.length > 12) {
-    products = products.slice(0, 12);
-  }
+    if (isRecommend && list.length > 12) {
+      return list.slice(0, 12);
+    }
+    return list;
+  }, [allProducts, type, isRecommend]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -41,6 +43,18 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
       const totalScroll = scrollWidth - clientWidth;
+
+      // ✅ ระบบ Seamless Infinite Loop สำหรับการเลื่อนด้วยมือ
+      if (isRecommend) {
+        // ถ้าเลื่อนไปทางขวาจนเกินชุดที่ 2 (ใช้ระยะเผื่อเล็กน้อยเพื่อไม่ให้กระตุก)
+        if (scrollLeft >= (scrollWidth * 2 / 3)) {
+          scrollRef.current.scrollLeft = scrollLeft - (scrollWidth / 3);
+        }
+        // ถ้าเลื่อนไปทางซ้ายจนต่ำกว่าชุดแรก
+        else if (scrollLeft <= 5) {
+          scrollRef.current.scrollLeft = scrollLeft + (scrollWidth / 3);
+        }
+      }
 
       // อัปเดตสถานะว่าเลื่อนได้หรือไม่
       setIsScrollable(totalScroll > 10);
@@ -58,14 +72,15 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
     const interval = setInterval(() => {
       const container = scrollRef.current;
       if (container) {
-        const { scrollLeft, scrollWidth, clientWidth } = container;
+        const { scrollLeft, scrollWidth } = container;
 
         const firstItem = container.firstElementChild as HTMLElement;
         const gap = window.innerWidth >= 768 ? 24 : 16; // md:gap-6 คือ 24px, gap-4 คือ 16px
         const scrollAmount = firstItem.offsetWidth + gap;
 
-        if (scrollLeft >= (scrollWidth * 2 / 3) - clientWidth) {
-          container.scrollTo({ left: 0, behavior: 'auto' });
+        if (scrollLeft >= (scrollWidth * 2 / 3)) {
+          // ถ้าถึงจุดสิ้นสุดชุดที่ 2 ให้กระโดดกลับไปจุดเริ่มต้นชุดที่ 2 ทันที (เนียนๆ)
+          container.scrollTo({ left: scrollWidth / 3, behavior: 'auto' });
         } else {
           container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
         }
@@ -99,7 +114,7 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
         window.removeEventListener('resize', handleScroll);
       };
     }
-  }, [products]);
+  }, [products.length, type]); // ✅ รันเฉพาะเมื่อข้อมูลเปลี่ยนจริงๆ เท่านั้น!
 
   if (products.length === 0) return null;
 
@@ -165,13 +180,17 @@ export const Box = ({ allProducts, type, title: customTitle, onLoadMore, hasMore
               }}
             >
               {isRecommend ? (
-                /* Infinite Scroll Loop — repeat until ≥15 items so it always overflows the screen */
+                /* Infinite Scroll Loop — ensure exactly 3 sets for seamless auto-scroll jump */
                 (() => {
-                  let repeated = [...products];
-                  while (repeated.length < 15 && products.length > 0) {
-                    repeated = [...repeated, ...products];
+                  let baseProducts = [...products];
+                  // Pad the base set to ensure at least 5 items so that 1 set overflows standard screens
+                  while (baseProducts.length < 5 && baseProducts.length > 0) {
+                    baseProducts = [...baseProducts, ...products];
                   }
-                  return repeated.map((product, idx) => (
+                  // Create exactly 3 sets for the scroll calculation (scrollWidth * 2/3) to work seamlessly
+                  const tripleSet = [...baseProducts, ...baseProducts, ...baseProducts];
+                  
+                  return tripleSet.map((product, idx) => (
                     <div
                       key={`${product.id}-${idx}`}
                       className="w-[220px] md:w-[280px] shrink-0 transition-transform duration-500 snap-start hover:scale-110 active:scale-105"
