@@ -26,16 +26,14 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;
 
-  @Column({ default: false })
-  isGoogleLogin: boolean;
-
   @Column({ nullable: true })
   phone?: string;
 
-  @CreateDateColumn()
+  // แก้ไขให้ตรงกับ DBeaver (ใช้ชื่อ createdAt และ updatedAt)
+  @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updatedAt' })
   updatedAt: Date;
 
   @Column({ nullable: true })
@@ -44,41 +42,22 @@ export class User {
   @Column({ nullable: true })
   occupation?: string;
 
-  @Column({ type: 'text', nullable: true })
-  addressSummary?: string; // เก็บที่อยู่แบบ String ทีเดียวทั้งหมด
-
   @OneToMany(() => Address, (address) => address.user)
   addresses: Address[];
 
   @OneToMany(() => Favorite, (favorite) => favorite.user)
   favorites: Favorite[];
 
+
   @Column({ name: 'favorites_data', type: 'jsonb', default: [] })
   favoritesData: any[];
 
+  // ===== สำหรับระบบรีเซ็ตรหัสผ่าน =====
   @Column({ nullable: true })
-  resetPasswordToken: string;
+  resetPasswordToken?: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  resetPasswordExpire: Date;
+  resetPasswordExpire?: Date;
 
-  // ===== PDPA Consent Fields =====
-
-  @Column({ name: 'agreed_to_terms', default: false })
-  agreedToTerms: boolean;               // บังคับ — ยอมรับ Terms & Privacy Policy
-
-  @Column({ name: 'terms_version', nullable: true })
-  termsVersion: string;                 // เวอร์ชันที่ยอมรับ เช่น "1.0"
-
-  @Column({ name: 'terms_agreed_at', type: 'timestamp', nullable: true })
-  termsAgreedAt: Date;                  // เวลาที่กด ยอมรับ
-
-  @Column({ name: 'marketing_consent', default: false })
-  marketingConsent: boolean;            // ไม่บังคับ — รับโปรโมชัน
-
-  @Column({ name: 'marketing_consent_at', type: 'timestamp', nullable: true })
-  marketingConsentAt: Date;             // เวลาที่ติ๊กรับข่าวสาร
-
-  @Column({ name: 'consent_ip_address', nullable: true })
-  consentIpAddress: string;             // IP ที่ใช้สมัคร (หลักฐานตาม PDPA)
+  // หมายเหตุ: ลบคอลัมน์ Reset Password และ PDPA ออกทั้งหมดเพื่อให้ตรงกับตาราง AWS
 }
