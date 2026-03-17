@@ -9,6 +9,9 @@ const Home: React.FC = () => {
   const [promotions, setPromotions] = useState<any[]>([]);
   const [featured, setFeatured] = useState<any[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     // ฟังก์ชันช่วยจัดการรูปภาพ
@@ -56,10 +59,10 @@ const Home: React.FC = () => {
 
         // Process All Products
         const allData = allRes.data;
-        const items = Array.isArray(allData?.items) 
-          ? allData.items 
+        const items = Array.isArray(allData?.items)
+          ? allData.items
           : (Array.isArray(allData) ? allData : []);
-          
+
         const processedAll = items.map((p: any) => ({
           ...p,
           image: getFirstImage(p),
@@ -80,6 +83,53 @@ const Home: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const fetchMore = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const res = await api.get(`/product?page=${nextPage}&limit=20`);
+      const allData = res.data;
+      
+      const items = Array.isArray(allData?.items) 
+        ? allData.items 
+        : (Array.isArray(allData) ? allData : []);
+
+      if (items.length === 0) {
+        setHasMore(false);
+      } else {
+        const getFirstImage = (p: any) => {
+          const urls = p.thumbnailUrls || p.imageUrls || p.thumbnailUrl || p.imageUrl;
+          return Array.isArray(urls) ? urls[0] : urls;
+        };
+
+        const processedNext = items.map((p: any) => ({
+          ...p,
+          image: getFirstImage(p),
+          stock: p.stockQuantity ?? p.stock ?? 0,
+          isRecommend: p.isFeatured || false,
+          isPromotion: p.isPromotion || false,
+          rating: Number(p.rating) || 0,
+          reviewCount: Number(p.reviewCount) || 0,
+          favoriteCount: Number(p.favoriteCount) || 0,
+          soldCount: Number(p.soldCount) || 0
+        }));
+
+        setAllProducts(prev => [...prev, ...processedNext]);
+        setCurrentPage(nextPage);
+        
+        if (allData.lastPage && nextPage >= allData.lastPage) {
+          setHasMore(false);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching more products:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
     <div className="mb-10 relative overflow-hidden">
@@ -118,7 +168,13 @@ const Home: React.FC = () => {
         <Box allProducts={promotions} type="promotion" />
 
         {/* สินค้าทั้งหมด */}
-        <Box allProducts={allProducts} type="all" />
+        <Box 
+          allProducts={allProducts} 
+          type="all" 
+          onLoadMore={fetchMore}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+        />
       </div>
     </div>
   );

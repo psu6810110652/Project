@@ -33,6 +33,7 @@ import Footer from './components/Footer';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminSearchProvider } from './context/AdminSearchContext';
 import BarAdmin from './components/BarAdmin';
+import ScrollToTop from './components/ScrollToTop';
 
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] text-[#256D45]">
@@ -148,6 +149,7 @@ function AdminLayout() {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
           <Route path="/*" element={<UserLayout />} />

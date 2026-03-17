@@ -42,7 +42,6 @@ export interface Product {
     isRecommend: boolean;
     isPromotion: boolean;
     stockQuantity?: number;
-    favoriteCount?: number;
     specifications?: Record<string, any>;
     howToUse?: string;
 }
