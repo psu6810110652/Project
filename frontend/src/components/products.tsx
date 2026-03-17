@@ -24,7 +24,7 @@ export const Products = (props: ExtendedProductCard) => {
     useEffect(() => {
         if (props.id) {
             setIsFavorite(FavoritesService.isFavorite(props.id));
-            
+
             // ใช้ข้อมูลจาก props ที่ Home.tsx ส่งมาโดยตรง (จาก Supabase)
             // ไม่ต้องดึงข้อมูลใหม่ เพราะ Home.tsx ดึงจาก Supabse มาแล้ว
             setProductData({
@@ -46,25 +46,25 @@ export const Products = (props: ExtendedProductCard) => {
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!props.id) return;
-        
+
         const newFavoriteStatus = FavoritesService.toggleFavorite(props.id);
         setIsFavorite(newFavoriteStatus);
-        
+
         // Update favorite count on backend with proper synchronization
         try {
             // Fetch current product data to get accurate favorite count
             const productResponse = await api.get(`/product/${props.id}`);
             const currentProduct = productResponse.data;
             const currentFavoriteCount = Number(currentProduct.favoriteCount) || 0;
-            
+
             const newFavoriteCount = newFavoriteStatus ? currentFavoriteCount + 1 : Math.max(0, currentFavoriteCount - 1);
-            
+
             // Update local state immediately for better UX
             setProductData(prev => ({
                 ...prev,
                 favoriteCount: newFavoriteCount
             }));
-            
+
             // Update backend
             await api.patch(`/product/${props.id}/stats`, {
                 favoriteCount: newFavoriteCount
@@ -85,7 +85,7 @@ export const Products = (props: ExtendedProductCard) => {
     // ฟังก์ชันจัดการรูปภาพแบบฉลาดสุดๆ (พร้อม Image Transformation และ Thumbnail)
     const getDisplayImage = () => {
         let finalImage = '';
-        
+
         // 1. ลองใช้ Thumbnail ก่อน (ประหยัดสุด)
         const thumbnails = props.thumbnailUrls;
         if (thumbnails) {
@@ -95,7 +95,7 @@ export const Products = (props: ExtendedProductCard) => {
                 try {
                     const parsed = JSON.parse(thumbnails);
                     if (Array.isArray(parsed) && parsed.length > 0) finalImage = parsed[0];
-                } catch (e) {}
+                } catch (e) { }
             } else if (typeof thumbnails === 'string') {
                 finalImage = thumbnails;
             }
@@ -109,13 +109,13 @@ export const Products = (props: ExtendedProductCard) => {
                 try {
                     const parsed = JSON.parse(props.imageUrls);
                     if (Array.isArray(parsed) && parsed.length > 0) finalImage = parsed[0];
-                } catch (e) {}
+                } catch (e) { }
             }
         }
 
         if (!finalImage) finalImage = props.imageUrl || props.image || '';
         if (!finalImage) return 'https://placehold.co/290x290/f1f5f9/94a3b8?text=No+Image';
-        
+
         // ใช้ Image Transformation เพื่อลด Egress (Resize เป็น 400px สำหรับ Thumbnail)
         return optimizeImage(finalImage, { width: 400, quality: 80 });
     };
@@ -129,7 +129,7 @@ export const Products = (props: ExtendedProductCard) => {
             onClick={handleProductClick}
         >
             <div className="w-full h-full bg-[#fffef2] flex flex-col rounded-[18px] p-4 shadow-[0px_3px_14px_#00000025] hover:shadow-[0px_7px_20px_#00000040] transition-all duration-300">
-                
+
                 {/* ✅ 2. กรอบรูปภาพ: ลบ absolute ออก ใช้ flex ยืดหยุ่น */}
                 <div className="relative w-full aspect-square bg-white rounded-[14px] overflow-hidden border-2 border-solid border-[#256d45] shadow-[0px_3px_6px_#00000020] group-hover/card:border-[var(--color-primary-hover)] transition-colors mb-4">
                     <img
@@ -160,7 +160,7 @@ export const Products = (props: ExtendedProductCard) => {
 
                 {/* ✅ 3. ส่วนข้อความด้านล่าง: ลบ absolute ออก ให้มันไหลต่อจากรูปภาพตามธรรมชาติ */}
                 <div className="flex flex-col flex-1 text-[#256d45]">
-                    
+
                     {/* ชื่อสินค้า */}
                     <div className="text-lg md:text-xl text-left font-semibold tracking-wide leading-tight line-clamp-2 mb-2">
                         {props.name}
@@ -174,7 +174,7 @@ export const Products = (props: ExtendedProductCard) => {
                                     const rating = Number(productData.rating || 0);
                                     const isFull = star <= Math.floor(rating);
                                     const isHalf = !isFull && star <= Math.ceil(rating) && (rating % 1 >= 0.5);
-                                    
+
                                     return (
                                         <div key={star} className="relative inline-block leading-none">
                                             <span className="text-base text-gray-300">★</span>
