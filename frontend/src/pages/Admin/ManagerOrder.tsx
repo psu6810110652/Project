@@ -6,9 +6,8 @@ import { message, Modal } from 'antd'; // เพิ่ม Modal ตรงนี�
 
 const COURIER_NAMES: Record<string, string> = {
     'thailand-post': 'ไปรษณีย์ไทย',
-    'flash-express': 'Flash',
+    'flashexpress': 'Flash',
     'kerry-logistics': 'Kerry',
-    'jt-express': 'J&T'
 };
 
 export default function ManagerOrder() {
@@ -215,7 +214,6 @@ export default function ManagerOrder() {
                                         <option value="thailand-post">ไปรษณีย์ไทย</option>
                                         <option value="flash-express">Flash</option>
                                         <option value="kerry-logistics">Kerry</option>
-                                        <option value="jt-express">J&T</option>
                                     </select>
                                 </div>
                                 <div className="flex flex-col gap-2 relative">
