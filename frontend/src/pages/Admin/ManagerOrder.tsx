@@ -212,7 +212,7 @@ export default function ManagerOrder() {
                                     >
                                         <option value="">-- เลือกขนส่ง --</option>
                                         <option value="thailand-post">ไปรษณีย์ไทย</option>
-                                        <option value="flash-express">Flash</option>
+                                        <option value="flashexpress">Flash</option>
                                         <option value="kerry-logistics">Kerry</option>
                                     </select>
                                 </div>
@@ -236,13 +236,13 @@ export default function ManagerOrder() {
                             <div className="mt-2 flex flex-col gap-2 bg-[#E8F3EE] border-2 border-[#256D45]/30 rounded-xl p-4 shadow-sm relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#256D45]/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
                                 <div className="font-bold text-lg md:text-xl flex flex-col gap-1">
-                                    {order.courierSlug && (
-                                        <div>ขนส่ง: <span className="text-gray-800 ml-2 font-semibold">{COURIER_NAMES[order.courierSlug] || order.courierSlug}</span></div>
+                                    {courierSlug && (
+                                        <div>ขนส่ง: <span className="text-gray-800 ml-2 font-semibold">{COURIER_NAMES[courierSlug] || courierSlug}</span></div>
                                     )}
-                                    <div>เลขพัสดุ: <span className="text-gray-800 ml-2 bg-white px-3 py-1 rounded-lg border border-gray-200">{order.trackingNumber}</span></div>
+                                    <div>เลขพัสดุ: <span className="text-gray-800 ml-2 bg-white px-3 py-1 rounded-lg border border-gray-200">{trackingNumber}</span></div>
                                 </div>
                                 <a
-                                    href={`https://www.aftership.com/track/${order.courierSlug}/${order.trackingNumber}`}
+                                    href={`https://www.aftership.com/track/${courierSlug}/${trackingNumber}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="bg-[#256D45] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 mt-2 hover:bg-[#1A5434] transition-colors shadow-md text-lg"
