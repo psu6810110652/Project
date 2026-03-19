@@ -1,18 +1,18 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000', 
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
 });
 
 api.interceptors.request.use(
   (config) => {
 
     const token = localStorage.getItem('token');
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -27,9 +27,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       if (!window.location.pathname.includes('/login')) {
-      console.warn('Token หมดอายุหรือไม่มีสิทธิ์เข้าถึง กำลังนำไปสู่หน้าเข้าสู่ระบบ...');
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+        console.warn('Token หมดอายุหรือไม่มีสิทธิ์เข้าถึง กำลังนำไปสู่หน้าเข้าสู่ระบบ...');
+        localStorage.removeItem('token');
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);

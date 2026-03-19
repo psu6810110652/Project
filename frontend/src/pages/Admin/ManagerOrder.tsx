@@ -4,12 +4,20 @@ import api from '../../services/api';
 import { type OrderData } from '../../types';
 import { message, Modal } from 'antd'; // เพิ่ม Modal ตรงนี้
 
+const COURIER_NAMES: Record<string, string> = {
+    'thailand-post': 'ไปรษณีย์ไทย',
+    'flash-express': 'Flash',
+    'kerry-logistics': 'Kerry',
+    'jt-express': 'J&T'
+};
+
 export default function ManagerOrder() {
     const { orderId } = useParams<{ orderId: string }>();
     const navigate = useNavigate();
     const [order, setOrder] = useState<OrderData | null>(null);
     const [loading, setLoading] = useState(true);
     const [trackingNumber, setTrackingNumber] = useState('');
+    const [courierSlug, setCourierSlug] = useState('');
 
     // State สำหรับเปิด/ปิดรูปสลิปเต็ม
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -22,6 +30,7 @@ export default function ManagerOrder() {
                 console.log("👉 ข้อมูลที่ได้จาก API:", res.data);
                 setOrder(res.data);
                 if (res.data.trackingNumber) setTrackingNumber(res.data.trackingNumber);
+                if (res.data.courierSlug) setCourierSlug(res.data.courierSlug);
             }
         } catch (err) {
             console.error(err);
@@ -46,6 +55,7 @@ export default function ManagerOrder() {
             await api.put(`/api/admin/orders/${orderId}/status`, {
                 status: newStatus,
                 trackingNumber: trackingNumber.trim() || undefined,
+                courierSlug: courierSlug || undefined,
                 cancelReason: newStatus === 'cancelled' ? 'สลิปไม่ถูกต้อง' : undefined
             });
             message.success("อัปเดตสถานะสำเร็จ");
@@ -189,19 +199,37 @@ export default function ManagerOrder() {
                             </div>
                         </div>
 
-                        {/* บล็อกสำหรับกรอกเลขพัสดุ */}
+                        {/* บล็อกสำหรับกรอกเลขพัสดุและเลือกขนส่ง */}
                         {order.status === 'pending_delivery' && (
-                            <div className="mt-2 flex flex-col gap-2 relative">
-                                <label className="font-bold text-lg flex items-center gap-2">
-                                    <span className="bg-[#256D45] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow-md">📦</span> เลขไปรษณีย์
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="เช่น EB123456789TH"
-                                    value={trackingNumber}
-                                    onChange={(e) => setTrackingNumber(e.target.value)}
-                                    className="border-[2.5px] border-[#256D45] rounded-xl px-4 py-3 bg-white outline-none focus:ring-4 focus:ring-[#256D45]/20 font-medium text-lg shadow-sm placeholder-gray-400"
-                                />
+                            <div className="mt-2 flex flex-col gap-4">
+                                <div className="flex flex-col gap-2 relative">
+                                    <label className="font-bold text-lg flex items-center gap-2">
+                                        <span className="bg-[#256D45] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow-md">🚚</span> เลือกขนส่ง
+                                    </label>
+                                    <select
+                                        value={courierSlug}
+                                        onChange={(e) => setCourierSlug(e.target.value)}
+                                        className="border-[2.5px] border-[#256D45] rounded-xl px-4 py-3 bg-white outline-none focus:ring-4 focus:ring-[#256D45]/20 font-medium text-lg shadow-sm"
+                                    >
+                                        <option value="">-- เลือกขนส่ง --</option>
+                                        <option value="thailand-post">ไปรษณีย์ไทย</option>
+                                        <option value="flash-express">Flash</option>
+                                        <option value="kerry-logistics">Kerry</option>
+                                        <option value="jt-express">J&T</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-2 relative">
+                                    <label className="font-bold text-lg flex items-center gap-2">
+                                        <span className="bg-[#256D45] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm shadow-md">📦</span> เลขพัสดุ
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="เช่น EB123456789TH"
+                                        value={trackingNumber}
+                                        onChange={(e) => setTrackingNumber(e.target.value)}
+                                        className="border-[2.5px] border-[#256D45] rounded-xl px-4 py-3 bg-white outline-none focus:ring-4 focus:ring-[#256D45]/20 font-medium text-lg shadow-sm placeholder-gray-400"
+                                    />
+                                </div>
                             </div>
                         )}
 
@@ -209,9 +237,14 @@ export default function ManagerOrder() {
                         {order.trackingNumber && (
                             <div className="mt-2 flex flex-col gap-2 bg-[#E8F3EE] border-2 border-[#256D45]/30 rounded-xl p-4 shadow-sm relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#256D45]/10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150"></div>
-                                <div className="font-bold text-lg md:text-xl">เลขพัสดุ: <span className="text-gray-800 ml-2 bg-white px-3 py-1 rounded-lg border border-gray-200">{order.trackingNumber}</span></div>
+                                <div className="font-bold text-lg md:text-xl flex flex-col gap-1">
+                                    {order.courierSlug && (
+                                        <div>ขนส่ง: <span className="text-gray-800 ml-2 font-semibold">{COURIER_NAMES[order.courierSlug] || order.courierSlug}</span></div>
+                                    )}
+                                    <div>เลขพัสดุ: <span className="text-gray-800 ml-2 bg-white px-3 py-1 rounded-lg border border-gray-200">{order.trackingNumber}</span></div>
+                                </div>
                                 <a
-                                    href={`https://track.thailandpost.co.th/?trackNumber=${order.trackingNumber}`}
+                                    href={`https://www.aftership.com/track/${order.courierSlug}/${order.trackingNumber}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="bg-[#256D45] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 mt-2 hover:bg-[#1A5434] transition-colors shadow-md text-lg"

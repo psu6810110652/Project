@@ -39,6 +39,9 @@ export class Order {
     @Column({ name: 'tracking_number', nullable: true })
     trackingNumber: string;
 
+    @Column({ name: 'courier_slug', nullable: true })
+    courierSlug: string;
+
     @Column({ name: 'customer_id', nullable: true })
     customerId: string;
 

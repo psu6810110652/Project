@@ -103,9 +103,10 @@ export class OrdersController {
         @Param('id') id: string,
         @Body('status') status: string,
         @Body('trackingNumber') trackingNumber?: string,
+        @Body('courierSlug') courierSlug?: string,
         @Body('cancelReason') cancelReason?: string
     ) {
-        return this.ordersService.updateStatus(id, status, trackingNumber, cancelReason);
+        return this.ordersService.updateStatus(id, status, trackingNumber, cancelReason, courierSlug);
     }
 
     // 👤 User ยกเลิกออเดอร์ตัวเอง ได้เฉพาะตอนที่ยังรอการยืนยัน

@@ -85,6 +85,7 @@ export interface OrderData {
     address?: string;
     phone?: string;
     trackingNumber?: string;
+    courierSlug?: string;
     slipUrl?: string;
     cancelReason?: string;
 }

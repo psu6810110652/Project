@@ -81,6 +81,7 @@ export class OrdersService {
                 'createdAt',
                 'updatedAt',
                 'trackingNumber',
+                'courierSlug',
                 'customerId',
                 'cancelReason',
             ],
@@ -104,6 +105,7 @@ export class OrdersService {
                 'createdAt',
                 'updatedAt',
                 'trackingNumber',
+                'courierSlug',
                 'customerId',
                 'cancelReason',
             ],
@@ -130,13 +132,17 @@ export class OrdersService {
         return order;
     }
 
-    async updateStatus(id: string, status: string, trackingNumber?: string, cancelReason?: string): Promise<Order> {
+    async updateStatus(id: string, status: string, trackingNumber?: string, cancelReason?: string, courierSlug?: string): Promise<Order> {
         const order = await this.findOne(id);
         const previousStatus = order.status;
         order.status = status;
 
         if (trackingNumber !== undefined) {
             order.trackingNumber = trackingNumber;
+        }
+
+        if (courierSlug !== undefined) {
+            order.courierSlug = courierSlug;
         }
 
         if (cancelReason !== undefined) {

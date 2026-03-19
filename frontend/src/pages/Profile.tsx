@@ -397,9 +397,9 @@ const Profile = () => {
           key: 'trackingNumber',
           width: '17%',
           align: 'center',
-          render: (text) => text ? (
+          render: (text, record) => text ? (
             <a
-              href={`https://track.thailandpost.co.th/?trackNumber=${text}`}
+              href={`https://www.aftership.com/track/${record.courierSlug}/${text}`}
               target="_blank"
               rel="noopener noreferrer"
               title="เช็คพัสดุ"
